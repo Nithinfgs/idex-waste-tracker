@@ -1,0 +1,300 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+
+:root {
+  /* Design Tokens from PDF Specification */
+  --color-primary: #2E7D32;       /* Deep Green - Sustainability, nature */
+  --color-secondary: #81C784;     /* Light Green - Cards, charts */
+  --color-accent: #F9A825;        /* Amber - Notifications, warnings */
+  --color-error: #D32F2F;         /* Red - Failed, cancellation */
+  --color-background: #F8FAFC;    /* Off-white background */
+  --color-text-primary: #212121;  /* Dark Grey for primary text */
+  --color-text-secondary: #616161;/* Medium Grey for secondary text */
+  --color-white: #FFFFFF;
+  --color-border: #E2E8F0;
+
+  /* Typography */
+  --font-primary: 'Inter', sans-serif;
+  --font-display: 'Poppins', sans-serif;
+
+  /* Layout / Spacing (8px grid system) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Shape / Borders */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  
+  /* Shadows - Very subtle as per spec */
+  --shadow-subtle: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.05);
+
+  /* Touch targets minimum */
+  --touch-target-size: 48px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile first layout container */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px; /* Cap container for desktop/tablet view */
+  margin: 0 auto;
+  background-color: var(--color-white);
+  box-shadow: 0 0 20px rgba(0,0,0,0.02);
+  position: relative;
+  padding-bottom: 72px; /* Navigation bottom bar clearance */
+}
+
+@media (min-width: 360px) {
+  /* Fluid scaling adjustments if viewport is wider */
+}
+
+/* Heading Typography */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* Accessibility & Interaction Styles */
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+}
+
+/* Focus indicator for keyboard navigation */
+*:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  min-height: var(--touch-target-size);
+  min-width: var(--touch-target-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+/* Button scaling micro-interaction (scale down briefly to 98%) */
+button:active {
+  transform: scale(0.98);
+}
+
+/* Primary Green Button */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-family: var(--font-display);
+  font-weight: 500;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-subtle);
+}
+
+.btn-primary:hover {
+  background-color: #246428;
+}
+
+.btn-primary:disabled {
+  background-color: var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Secondary Outlined Button */
+.btn-secondary {
+  border: 1px solid var(--color-border);
+  background-color: var(--color-white);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  width: 100%;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-background);
+}
+
+/* Danger Button */
+.btn-danger {
+  background-color: var(--color-error);
+  color: var(--color-white);
+  font-weight: 500;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  width: 100%;
+}
+
+.btn-danger:hover {
+  background-color: #b71c1c;
+}
+
+/* Card Styling - 12-16px rounded, subtle shadow, no thick borders */
+.card {
+  background-color: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-subtle);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Card slight lift micro-interaction when tapped */
+.card-interactive:active {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Form controls */
+.form-group {
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.form-input {
+  min-height: var(--touch-target-size);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  width: 100%;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  background-color: var(--color-white);
+}
+
+/* Notification Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  line-height: 1;
+}
+
+.badge-available { background-color: rgba(129, 199, 132, 0.2); color: #1b5e20; }
+.badge-reserved { background-color: rgba(249, 168, 37, 0.2); color: #f57f17; }
+.badge-intransit { background-color: rgba(33, 150, 243, 0.2); color: #0d47a1; }
+.badge-awaiting { background-color: rgba(103, 58, 183, 0.2); color: #4a148c; }
+.badge-collected { background-color: rgba(97, 97, 97, 0.2); color: #212121; }
+
+/* Status dot indicator */
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-available { background-color: var(--color-secondary); }
+.dot-reserved { background-color: var(--color-accent); }
+.dot-intransit { background-color: #2196F3; }
+.dot-awaiting { background-color: #673AB7; }
+.dot-collected { background-color: #616161; }
+
+/* Leaflet Map overrides for custom theme matching */
+.leaflet-container {
+  border-radius: var(--border-radius-lg);
+  font-family: inherit;
+  z-index: 1;
+  border: 1px solid var(--color-border);
+}
+
+/* Leaflet popup overrides */
+.leaflet-popup-content-wrapper {
+  border-radius: var(--border-radius-md) !important;
+  box-shadow: var(--shadow-md) !important;
+  padding: var(--spacing-xs) !important;
+}
+
+.leaflet-popup-content {
+  margin: var(--spacing-sm) !important;
+}
+
+/* Dark Theme Override class */
+.dark-theme {
+  --color-background: #121212;
+  --color-white: #1E1E1E;
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #B0B0B0;
+  --color-border: #333333;
+}
+/* Style adjustments for dark theme */
+.dark-theme body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+.dark-theme #root {
+  background-color: var(--color-white);
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+.dark-theme header, .dark-theme nav {
+  background-color: #1E1E1E !important;
+  border-color: var(--color-border) !important;
+}
+.dark-theme .btn-secondary {
+  background-color: #2D2D2D !important;
+  border-color: #444444 !important;
+  color: #F5F5F5 !important;
+}
+.dark-theme .btn-secondary:hover {
+  background-color: #3D3D3D !important;
+}
+.dark-theme input, .dark-theme select, .dark-theme textarea {
+  background-color: #2D2D2D !important;
+  border-color: #444444 !important;
+  color: #F5F5F5 !important;
+}
+.dark-theme .leaflet-popup-content-wrapper {
+  background: #1E1E1E !important;
+  color: #F5F5F5 !important;
+}
+.dark-theme .leaflet-popup-tip {
+  background: #1E1E1E !important;
+}
+
