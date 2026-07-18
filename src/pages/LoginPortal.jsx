@@ -62,11 +62,11 @@ export default function LoginPortal({ onLoginSuccess }) {
       // Set roles and profiles
       setCurrentRole(role);
       if (role === 'school') {
-        const found = schools.find(s => s.contact.includes(phone) || s.id === 'sch-1');
+        const found = schools.find(s => (s.contact && s.contact.includes(phone)) || s.id === 'sch-1');
         setSelectedSchoolId(found ? found.id : 'sch-1');
         setStep('onboarding');
       } else if (role === 'collector') {
-        const found = collectors.find(c => c.phone.includes(phone) || c.id === 'col-1');
+        const found = collectors.find(c => (c.phone && c.phone.includes(phone)) || (c.contact && c.contact.includes(phone)) || c.id === 'col-1');
         setSelectedCollectorId(found ? found.id : 'col-1');
         setStep('onboarding');
       } else {
