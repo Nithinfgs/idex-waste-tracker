@@ -251,11 +251,62 @@ app.post('/api/history', async (req, res) => {
   res.json({ success: true });
 });
 
+// Database Auto-Initialization & Seeding
+async function initializeDatabase() {
+  if (!pool) return;
+  console.log('⚡ Running database auto-initialization...');
+  try {
+    // 1. Read and run schema.sql to create tables if they do not exist
+    const schemaPath = path.join(__dirname, 'schema.sql');
+    if (fs.existsSync(schemaPath)) {
+      const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+      await pool.query(schemaSql);
+      console.log('✅ PostgreSQL tables verified/created successfully.');
+    }
+
+    // 2. Check and seed schools
+    const schoolCheck = await pool.query('SELECT COUNT(*) FROM schools');
+    const schoolCount = parseInt(schoolCheck.rows[0].count);
+    if (schoolCount === 0) {
+      console.log(`🌱 Seeding database with ${db.schools.length} schools...`);
+      for (const s of db.schools) {
+        await pool.query(
+          'INSERT INTO schools (id, name, district, latitude, longitude, student_strength, drum_capacity, contact, address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (id) DO NOTHING',
+          [s.id, s.name, s.district, s.latitude, s.longitude, s.student_strength, s.drum_capacity, s.contact, s.address]
+        );
+      }
+      console.log('✅ Schools seeded successfully!');
+    } else {
+      console.log(`ℹ️ Schools table already contains ${schoolCount} records. Skipping seed.`);
+    }
+
+    // 3. Check and seed collectors
+    const collectorCheck = await pool.query('SELECT COUNT(*) FROM collectors');
+    const collectorCount = parseInt(collectorCheck.rows[0].count);
+    if (collectorCount === 0) {
+      console.log(`🌱 Seeding database with ${db.collectors.length} collectors...`);
+      for (const c of db.collectors) {
+        await pool.query(
+          'INSERT INTO collectors (id, name, collector_type, vehicle, radius, latitude, longitude) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING',
+          [c.id, c.name, c.collector_type || c.collectorType, c.vehicle, c.radius, c.latitude, c.longitude]
+        );
+      }
+      console.log('✅ Collectors seeded successfully!');
+    } else {
+      console.log(`ℹ️ Collectors table already contains ${collectorCount} records. Skipping seed.`);
+    }
+
+  } catch (err) {
+    console.error('❌ Database auto-initialization/seeding failed:', err.message);
+  }
+}
+
 // Root check
 app.get('/', (req, res) => {
   res.send('IDEX Waste Tracker Cloud Sync API is active!');
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
+  await initializeDatabase();
 });
