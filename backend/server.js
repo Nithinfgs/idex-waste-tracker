@@ -264,21 +264,35 @@ async function initializeDatabase() {
       console.log('✅ PostgreSQL tables verified/created successfully.');
     }
 
-    // 2. Check and seed schools
-    const schoolCheck = await pool.query('SELECT COUNT(*) FROM schools');
-    const schoolCount = parseInt(schoolCheck.rows[0].count);
-    if (schoolCount === 0) {
-      console.log(`🌱 Seeding database with ${db.schools.length} schools...`);
-      for (const s of db.schools) {
-        await pool.query(
-          'INSERT INTO schools (id, name, district, latitude, longitude, student_strength, drum_capacity, contact, address) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (id) DO NOTHING',
-          [s.id, s.name, s.district, s.latitude, s.longitude, s.student_strength, s.drum_capacity, s.contact, s.address]
-        );
-      }
-      console.log('✅ Schools seeded successfully!');
-    } else {
-      console.log(`ℹ️ Schools table already contains ${schoolCount} records. Skipping seed.`);
+    // 2. Check and seed/update schools
+    console.log(`🌱 Seeding/Updating ${db.schools.length} schools in database...`);
+    for (const s of db.schools) {
+      await pool.query(
+        `INSERT INTO schools (
+          id, name, district, latitude, longitude, student_strength, drum_capacity, contact, address, 
+          menu_mon, menu_tue, menu_wed, menu_thu, menu_fri
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          district = EXCLUDED.district,
+          latitude = EXCLUDED.latitude,
+          longitude = EXCLUDED.longitude,
+          student_strength = EXCLUDED.student_strength,
+          drum_capacity = EXCLUDED.drum_capacity,
+          contact = EXCLUDED.contact,
+          address = EXCLUDED.address,
+          menu_mon = EXCLUDED.menu_mon,
+          menu_tue = EXCLUDED.menu_tue,
+          menu_wed = EXCLUDED.menu_wed,
+          menu_thu = EXCLUDED.menu_thu,
+          menu_fri = EXCLUDED.menu_fri`,
+        [
+          s.id, s.name, s.district, s.latitude, s.longitude, s.student_strength, s.drum_capacity, s.contact, s.address,
+          s.menu_mon || '', s.menu_tue || '', s.menu_wed || '', s.menu_thu || '', s.menu_fri || ''
+        ]
+      );
     }
+    console.log('✅ Schools synchronized successfully!');
 
     // 3. Check and seed collectors
     const collectorCheck = await pool.query('SELECT COUNT(*) FROM collectors');

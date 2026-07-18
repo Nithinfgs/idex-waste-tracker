@@ -9,7 +9,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "2XC2+237, Ramalingam Colony, Saibaba Colony, Coimbatore, Tamil Nadu 641043"
+      "address": "2XC2+237, Ramalingam Colony, Saibaba Colony, Coimbatore, Tamil Nadu 641043",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-2",
@@ -20,7 +25,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "0422 245 0431",
-      "address": "Mettupalayam Rd, behind Naga Sai Temple, Kuppakonam Pudur, Coimbatore, Tamil Nadu 641038"
+      "address": "Mettupalayam Rd, behind Naga Sai Temple, Kuppakonam Pudur, Coimbatore, Tamil Nadu 641038",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-3",
@@ -31,7 +41,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "2, Alagesan Rd, Ramalingam Colony, Saibaba Colony, Coimbatore, Tamil Nadu 641011"
+      "address": "2, Alagesan Rd, Ramalingam Colony, Saibaba Colony, Coimbatore, Tamil Nadu 641011",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-4",
@@ -42,7 +57,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "Govt. Girls Secondry School Asokapuram, NGGO Colony Rd, NGGO Colony, Thudiyalur, Kurudampalayam, Tamil Nadu 641022"
+      "address": "Govt. Girls Secondry School Asokapuram, NGGO Colony Rd, NGGO Colony, Thudiyalur, Kurudampalayam, Tamil Nadu 641022",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-5",
@@ -53,7 +73,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "3WVW+242, NGGO Colony, Thudiyalur, Kurudampalayam, Tamil Nadu 641022"
+      "address": "3WVW+242, NGGO Colony, Thudiyalur, Kurudampalayam, Tamil Nadu 641022",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-6",
@@ -64,7 +89,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "19, Thudiyalur - Saravanampatti Rd, Vellakinar Village, Coimbatore, Tamil Nadu 641029"
+      "address": "19, Thudiyalur - Saravanampatti Rd, Vellakinar Village, Coimbatore, Tamil Nadu 641029",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-7",
@@ -75,7 +105,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "3WVJ+P6X, Thoppampatti, K. Vadamadurai, Kurudampalay am, Tamil Nadu 641017"
+      "address": "3WVJ+P6X, Thoppampatti, K. Vadamadurai, Kurudampalay am, Tamil Nadu 641017",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-8",
@@ -86,7 +121,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "3WRV+VW8, Asokapuram, NGGO Colony, Coimbatore, Kurudampala yam, Tamil Nadu 641022"
+      "address": "3WRV+VW8, Asokapuram, NGGO Colony, Coimbatore, Kurudampala yam, Tamil Nadu 641022",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-9",
@@ -97,7 +137,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "2-1, Edayarpala yam - Koundampala yam Rd, Anbu Nagar, P and T Colony, Koundampala yam, Coimbatore, Tamil Nadu 641030"
+      "address": "2-1, Edayarpala yam - Koundampala yam Rd, Anbu Nagar, P and T Colony, Koundampala yam, Coimbatore, Tamil Nadu 641030",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-10",
@@ -108,7 +153,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "0422 233 1307",
-      "address": "Gopala, Swamy Street, Sridevi Nagar, Ganapathy, Coimbatore, Tamil Nadu 641006"
+      "address": "Gopala, Swamy Street, Sridevi Nagar, Ganapathy, Coimbatore, Tamil Nadu 641006",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-11",
@@ -119,7 +169,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "0422 252 8234",
-      "address": "258, VKK Menon Rd, Siddhapudur, New Siddhapudur, Coimbatore, Tamil Nadu 641044"
+      "address": "258, VKK Menon Rd, Siddhapudur, New Siddhapudur, Coimbatore, Tamil Nadu 641044",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-12",
@@ -130,7 +185,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "2W8F+QMC, Marudhamalai Rd, P N Pudur, Coimbatore, Tamil Nadu 641041"
+      "address": "2W8F+QMC, Marudhamalai Rd, P N Pudur, Coimbatore, Tamil Nadu 641041",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-13",
@@ -141,7 +201,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "2WF5+M5Q, Marudhamalai Rd, V.N.R. Nagar, Vadavalli, Coimbatore, Tamil Nadu 641041"
+      "address": "2WF5+M5Q, Marudhamalai Rd, V.N.R. Nagar, Vadavalli, Coimbatore, Tamil Nadu 641041",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-14",
@@ -152,7 +217,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "084383 40384",
-      "address": "XX94+29H JP MASALA BUILDING, 4/1A, Palakkad - Coimbatore Rd, near Government Hr. Sec. School, Kuniyamuthur, Tamil Nadu 641008"
+      "address": "XX94+29H JP MASALA BUILDING, 4/1A, Palakkad - Coimbatore Rd, near Government Hr. Sec. School, Kuniyamuthur, Tamil Nadu 641008",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-15",
@@ -163,7 +233,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "11, Oppanakara Street, Near lakshmi Vilas, Ukkadam, Coimbatore, Tamil Nadu 641016"
+      "address": "11, Oppanakara Street, Near lakshmi Vilas, Ukkadam, Coimbatore, Tamil Nadu 641016",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-16",
@@ -174,7 +249,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "2W5X+C7C, W Sambandam Rd, R.S. Puram, Coimbatore, Tamil Nadu 641002"
+      "address": "2W5X+C7C, W Sambandam Rd, R.S. Puram, Coimbatore, Tamil Nadu 641002",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-17",
@@ -185,7 +265,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "32GM+H2W, Saravanampatti Kalapatti Rd, Kalapatti, Coimbatore, Tamil Nadu 641048"
+      "address": "32GM+H2W, Saravanampatti Kalapatti Rd, Kalapatti, Coimbatore, Tamil Nadu 641048",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-18",
@@ -196,7 +281,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "0422 239 7018",
-      "address": "XXV3+RW4, Raja Street Beside Sub Registrar Office Tharmutti veedhi, Town Hall, Coimbatore, Tamil Nadu 641001"
+      "address": "XXV3+RW4, Raja Street Beside Sub Registrar Office Tharmutti veedhi, Town Hall, Coimbatore, Tamil Nadu 641001",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-19",
@@ -207,7 +297,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "Patel Road, Cross Cut Rd, Chinniyam palayam, Tatabad, Gandhipuram, Coimbatore, Tamil Nadu 641027"
+      "address": "Patel Road, Cross Cut Rd, Chinniyam palayam, Tatabad, Gandhipuram, Coimbatore, Tamil Nadu 641027",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-20",
@@ -218,7 +313,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "XXX6+4FR, Variety Hall Rd, Town Hall, Coimbatore, Tamil Nadu 641001"
+      "address": "XXX6+4FR, Variety Hall Rd, Town Hall, Coimbatore, Tamil Nadu 641001",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-21",
@@ -229,7 +329,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "",
-      "address": "Ukkadam, 82, Lane St, South Ukkadam, Coimbatore, Tamil Nadu 641001"
+      "address": "Ukkadam, 82, Lane St, South Ukkadam, Coimbatore, Tamil Nadu 641001",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     },
     {
       "id": "sch-22",
@@ -240,7 +345,12 @@
       "student_strength": 300,
       "drum_capacity": 150,
       "contact": "0422 239 6610",
-      "address": "XXW7+HCP, Ismail St, Town Hall, Coimbatore, Tamil Nadu 641001"
+      "address": "XXW7+HCP, Ismail St, Town Hall, Coimbatore, Tamil Nadu 641001",
+      "menu_mon": "1st/3rd Week:Vegetable Biriyani with Pepper Egg 2nd/4th Week: Sambar Sadham (Bisibelabath) with Onion Tomato Masala Egg.",
+      "menu_tue": "Black Bengal Gram Pulav with Tomato Masala Egg. Mixed Meal Maker with Vegetable Rice and Pepper Egg",
+      "menu_wed": "Tomato Rice with Pepper Egg Tamarind Rice with Tomato Masala Egg",
+      "menu_thu": "Rice, Sambar and Boiled Egg Lemon Rice, Sundal and Tomato Egg",
+      "menu_fri": "Curry Leaf Rice / Keerai Sadham with Masala Egg and Chilly Fried Potato. Rice, Sambar and Boiled Egg with Fried Potato."
     }
   ],
   "collectors": [

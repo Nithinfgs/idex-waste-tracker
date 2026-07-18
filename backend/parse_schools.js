@@ -77,6 +77,11 @@ try {
     const rawCapacity = parseInt(row[6]) || 150;
     const rawContact = row[7] || '';
     const rawAddress = row[8] || '';
+    const rawMenuMon = row[9] || '';
+    const rawMenuTue = row[10] || '';
+    const rawMenuWed = row[11] || '';
+    const rawMenuThu = row[12] || '';
+    const rawMenuFri = row[13] || '';
 
     // Normalize IDs to sch-1, sch-2, etc.
     let id = rawId.toLowerCase().trim().replace(/\s+/g, '-');
@@ -93,7 +98,12 @@ try {
       student_strength: rawStrength,
       drum_capacity: rawCapacity,
       contact: rawContact.trim(),
-      address: rawAddress.replace(/\s+/g, ' ').trim()
+      address: rawAddress.replace(/\s+/g, ' ').trim(),
+      menu_mon: rawMenuMon.replace(/\s+/g, ' ').trim(),
+      menu_tue: rawMenuTue.replace(/\s+/g, ' ').trim(),
+      menu_wed: rawMenuWed.replace(/\s+/g, ' ').trim(),
+      menu_thu: rawMenuThu.replace(/\s+/g, ' ').trim(),
+      menu_fri: rawMenuFri.replace(/\s+/g, ' ').trim()
     });
   }
 

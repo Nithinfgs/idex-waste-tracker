@@ -201,7 +201,12 @@ export const StateProvider = ({ children }) => {
             studentStrength: parseInt(s.student_strength || s.studentStrength || 0),
             drumCapacity: parseInt(s.drum_capacity || s.drumCapacity || 0),
             contact: s.contact,
-            address: s.address
+            address: s.address,
+            menuMon: s.menu_mon || s.menuMon || '',
+            menuTue: s.menu_tue || s.menuTue || '',
+            menuWed: s.menu_wed || s.menuWed || '',
+            menuThu: s.menu_thu || s.menuThu || '',
+            menuFri: s.menu_fri || s.menuFri || ''
           }));
           setSchools(mappedSchools);
         }

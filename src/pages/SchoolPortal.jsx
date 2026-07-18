@@ -70,6 +70,40 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
   const [predMenu, setPredMenu] = useState('Rice & Sambhar');
   const [predDay, setPredDay] = useState('Wednesday');
 
+  const getMenuOptions = () => {
+    if (!school) return ['Rice & Sambhar'];
+    let menuStr = '';
+    const day = predDay;
+    if (day === 'Monday') menuStr = school.menuMon || school.menu_mon || '';
+    else if (day === 'Tuesday') menuStr = school.menuTue || school.menu_tue || '';
+    else if (day === 'Wednesday') menuStr = school.menuWed || school.menu_wed || '';
+    else if (day === 'Thursday') menuStr = school.menuThu || school.menu_thu || '';
+    else if (day === 'Friday') menuStr = school.menuFri || school.menu_fri || '';
+
+    if (!menuStr) return ['Rice & Sambhar'];
+
+    // Clean up menu text and split into clean lines
+    const rawLines = menuStr.split(/\n+/);
+    const cleanLines = [];
+    rawLines.forEach(line => {
+      let clean = line.replace(/^\d+(st|nd|rd|th)\s*Week\s*:\s*/i, '').trim();
+      clean = clean.replace(/^[a-zA-Z0-9\s/]+Week:\s*/i, '').trim();
+      if (clean && clean.length > 2) {
+        cleanLines.push(clean);
+      }
+    });
+
+    return cleanLines.length > 0 ? cleanLines : [menuStr];
+  };
+
+  const menuOptions = getMenuOptions();
+
+  React.useEffect(() => {
+    if (menuOptions.length > 0 && !menuOptions.includes(predMenu)) {
+      setPredMenu(menuOptions[0]);
+    }
+  }, [predDay, selectedSchoolId, menuOptions.join(',')]);
+
   // Profile forms
   const [profileData, setProfileData] = useState({
     studentStrength: school?.studentStrength || 400,
@@ -326,7 +360,9 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                   style={styles.smallInput}
                 >
                   <option value="Monday">Monday</option>
+                  <option value="Tuesday">Tuesday</option>
                   <option value="Wednesday">Wednesday</option>
+                  <option value="Thursday">Thursday</option>
                   <option value="Friday">Friday</option>
                 </select>
               </div>
@@ -339,9 +375,9 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                 onChange={(e) => setPredMenu(e.target.value)}
                 style={styles.smallInput}
               >
-                <option value="Rice & Sambhar">Rice & Sambhar</option>
-                <option value="Chapati & Dal">Chapati & Dal</option>
-                <option value="Wheat Upma">Wheat Upma</option>
+                {menuOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
               </select>
             </div>
 
