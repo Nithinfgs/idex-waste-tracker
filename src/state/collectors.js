@@ -6,8 +6,8 @@ export const INITIAL_COLLECTORS = [
     collectorType: "Farmer",
     vehicle: "Tractor",
     radius: 10, // km
-    latitude: 12.9800,
-    longitude: 77.5900,
+    latitude: 11.0210,
+    longitude: 76.9600,
     totalPickups: 34,
     rating: 4.8
   },
@@ -18,8 +18,8 @@ export const INITIAL_COLLECTORS = [
     collectorType: "Compost Company",
     vehicle: "Light Truck",
     radius: 15, // km
-    latitude: 12.9600,
-    longitude: 77.5800,
+    latitude: 10.9980,
+    longitude: 76.9500,
     totalPickups: 112,
     rating: 4.9
   },
@@ -30,8 +30,8 @@ export const INITIAL_COLLECTORS = [
     collectorType: "Organic Buyer",
     vehicle: "Three-Wheeler Auto",
     radius: 5, // km
-    latitude: 12.9750,
-    longitude: 77.6100,
+    latitude: 11.0280,
+    longitude: 76.9700,
     totalPickups: 8,
     rating: 4.5
   }

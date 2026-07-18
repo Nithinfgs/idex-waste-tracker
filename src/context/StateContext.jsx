@@ -6,10 +6,79 @@ import { INITIAL_HISTORY, createActivityLogEntry } from '../state/history';
 import { INITIAL_NOTIFICATIONS, groupNotifications } from '../state/notifications';
 import { computeStatistics, generateSchoolInsights } from '../state/dashboard';
 import { predictServings } from '../state/prediction';
+import { TRANSLATIONS } from '../state/localization';
+
+const API_URL = import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:5001`;
 
 export const StateContext = createContext();
 
 export const StateProvider = ({ children }) => {
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem('idex_language') || 'en';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('idex_language', language);
+  }, [language]);
+
+  const t = (key) => {
+    const langDict = TRANSLATIONS[language] || TRANSLATIONS['en'];
+    return langDict[key] || TRANSLATIONS['en'][key] || key;
+  };
+
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = (message, type = 'info') => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3000);
+  };
+
+  const triggerConfetti = () => {
+    const colors = ['#2E7D32', '#81C784', '#F9A825', '#43A047', '#D32F2F'];
+    for (let i = 0; i < 40; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'confetti-particle';
+      particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      particle.style.left = `${Math.random() * 100}vw`;
+      particle.style.top = `-10px`;
+      particle.style.transform = `scale(${Math.random() * 0.6 + 0.4})`;
+      
+      const speedX = (Math.random() - 0.5) * 8;
+      const speedY = Math.random() * 8 + 4;
+      let x = parseFloat(particle.style.left) * window.innerWidth / 100;
+      let y = -10;
+      
+      document.body.appendChild(particle);
+      
+      let start = null;
+      const step = (timestamp) => {
+        if (!start) start = timestamp;
+        const progress = timestamp - start;
+        x += speedX;
+        y += speedY;
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        if (progress < 1200) {
+          window.requestAnimationFrame(step);
+        } else {
+          particle.remove();
+        }
+      };
+      window.requestAnimationFrame(step);
+    }
+  };
+
+  const [syncPasscode, setSyncPasscode] = useState(() => {
+    return localStorage.getItem('idex_sync_passcode') || '';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('idex_sync_passcode', syncPasscode);
+  }, [syncPasscode]);
+
   // Authentication & Settings states
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('idex_logged_in') === 'true';
@@ -29,17 +98,33 @@ export const StateProvider = ({ children }) => {
   // Core domain data states
   const [schools, setSchools] = useState(() => {
     const local = localStorage.getItem('idex_schools');
+    if (local && (local.includes('Bengaluru') || local.includes('Bangalore'))) {
+      localStorage.removeItem('idex_schools');
+      localStorage.removeItem('idex_waste_posts');
+      localStorage.removeItem('idex_collectors');
+      localStorage.removeItem('idex_history');
+      localStorage.removeItem('idex_notifications');
+      return INITIAL_SCHOOLS;
+    }
     return local ? JSON.parse(local) : INITIAL_SCHOOLS;
   });
 
   const [wastePosts, setWastePosts] = useState(() => {
-    const local = localStorage.getItem('idex_waste_posts');
-    return local ? JSON.parse(local) : INITIAL_WASTE_POSTS;
+    const local = localStorage.getItem('idex_schools');
+    if (local && (local.includes('Bengaluru') || local.includes('Bangalore'))) {
+      return INITIAL_WASTE_POSTS;
+    }
+    const posts = localStorage.getItem('idex_waste_posts');
+    return posts ? JSON.parse(posts) : INITIAL_WASTE_POSTS;
   });
 
   const [collectors, setCollectors] = useState(() => {
-    const local = localStorage.getItem('idex_collectors');
-    return local ? JSON.parse(local) : INITIAL_COLLECTORS;
+    const local = localStorage.getItem('idex_schools');
+    if (local && (local.includes('Bengaluru') || local.includes('Bangalore'))) {
+      return INITIAL_COLLECTORS;
+    }
+    const cols = localStorage.getItem('idex_collectors');
+    return cols ? JSON.parse(cols) : INITIAL_COLLECTORS;
   });
 
   const [history, setHistory] = useState(() => {
@@ -93,6 +178,108 @@ export const StateProvider = ({ children }) => {
     localStorage.setItem('idex_offline_queue', JSON.stringify(offlineUploadQueue));
   }, [offlineUploadQueue]);
 
+  // Fetch initial data from server on mount
+  useEffect(() => {
+    const loadServerData = async () => {
+      try {
+        const [resSch, resCol, resPosts, resHist, resNotif] = await Promise.all([
+          fetch(`${API_URL}/api/schools`),
+          fetch(`${API_URL}/api/collectors`),
+          fetch(`${API_URL}/api/waste-posts`),
+          fetch(`${API_URL}/api/history`),
+          fetch(`${API_URL}/api/notifications`)
+        ]);
+
+        if (resSch.ok) {
+          const rawSchools = await resSch.json();
+          const mappedSchools = rawSchools.map(s => ({
+            id: s.id,
+            name: s.name,
+            district: s.district,
+            latitude: parseFloat(s.latitude || 0),
+            longitude: parseFloat(s.longitude || 0),
+            studentStrength: parseInt(s.student_strength || s.studentStrength || 0),
+            drumCapacity: parseInt(s.drum_capacity || s.drumCapacity || 0),
+            contact: s.contact,
+            address: s.address
+          }));
+          setSchools(mappedSchools);
+        }
+        if (resCol.ok) {
+          const rawCollectors = await resCol.json();
+          const mappedCollectors = rawCollectors.map(c => ({
+            id: c.id,
+            name: c.name,
+            collectorType: c.collector_type || c.collectorType,
+            vehicle: c.vehicle,
+            radius: parseFloat(c.radius || 0),
+            latitude: parseFloat(c.latitude || 0),
+            longitude: parseFloat(c.longitude || 0)
+          }));
+          setCollectors(mappedCollectors);
+        }
+        if (resPosts.ok) {
+          const rawPosts = await resPosts.json();
+          const mappedPosts = rawPosts.map(post => ({
+            id: post.id,
+            schoolId: post.school_id || post.schoolId,
+            status: post.status,
+            drumLevel: parseFloat(post.drum_level || post.drumLevel || 0),
+            estimatedWeight: parseFloat(post.estimated_weight || post.estimatedWeight || 0),
+            reason: post.reason,
+            collectorId: post.collector_id || post.collectorId,
+            reservedAt: post.reserved_at || post.reservedAt,
+            createdAt: post.created_at || post.createdAt || new Date().toISOString(),
+            history: post.history || [{ status: post.status, timestamp: new Date().toISOString(), message: 'Status updated' }]
+          }));
+          const uniquePosts = [];
+          const seen = new Set();
+          mappedPosts.forEach(post => {
+            if (!seen.has(post.id)) {
+              seen.add(post.id);
+              uniquePosts.push(post);
+            }
+          });
+          setWastePosts(uniquePosts);
+        }
+        if (resHist.ok) {
+          const rawHist = await resHist.json();
+          const mappedHist = rawHist.map(h => ({
+            id: h.id,
+            postId: h.post_id || h.postId,
+            schoolId: h.school_id || h.schoolId,
+            collectorId: h.collector_id || h.collectorId,
+            estimatedWeight: parseFloat(h.estimated_weight || h.estimatedWeight || 0),
+            date: h.date,
+            reason: h.reason
+          }));
+          setHistory(mappedHist);
+        }
+        if (resNotif.ok) {
+          const rawNotif = await resNotif.json();
+          const mappedNotif = rawNotif.map(n => ({
+            id: n.id,
+            targetId: n.target_id || n.targetId,
+            role: n.role,
+            title: n.title,
+            message: n.message,
+            type: n.type,
+            read: n.read,
+            createdAt: n.created_at || n.createdAt || n.timestamp,
+            timestamp: n.created_at || n.createdAt || n.timestamp || new Date().toISOString()
+          }));
+          setNotifications(mappedNotif);
+        }
+        console.log('Synchronized database data successfully from Express server!');
+      } catch (err) {
+        console.warn('API server offline. Using local storage fallback:', err.message);
+      }
+    };
+    loadServerData();
+    const interval = setInterval(loadServerData, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Save standard domain data
   useEffect(() => {
     localStorage.setItem('idex_schools', JSON.stringify(schools));
@@ -114,7 +301,24 @@ export const StateProvider = ({ children }) => {
     localStorage.setItem('idex_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
-  // Enforce reservation timeout checks periodically (every 5 seconds)
+  // Automatic background upload sync when state changes
+  useEffect(() => {
+    if (syncPasscode.trim()) {
+      const timer = setTimeout(() => {
+        uploadStateToCloud(syncPasscode);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [schools, wastePosts, collectors, history, notifications, syncPasscode]);
+
+  // Automatic background download sync on app load/mount
+  useEffect(() => {
+    if (syncPasscode.trim()) {
+      downloadStateFromCloud(syncPasscode);
+    }
+  }, []);
+
+  // Enforce reservation and transit timeout checks periodically (every 5 seconds)
   useEffect(() => {
     const interval = setInterval(() => {
       setWastePosts(prevPosts => {
@@ -122,6 +326,7 @@ export const StateProvider = ({ children }) => {
         let updated = false;
         
         const checked = prevPosts.map(post => {
+          // 1. Reservation Countdown
           if (post.status === 'Reserved' && post.reservedAt) {
             const elapsed = Date.now() - new Date(post.reservedAt).getTime();
             if (elapsed > TIMEOUT_MS) {
@@ -155,6 +360,40 @@ export const StateProvider = ({ children }) => {
               };
             }
           }
+
+          // 2. Transit Countdown (Collector arrives at site)
+          if (post.status === 'In Transit' && post.transitStartedAt) {
+            const elapsed = Date.now() - new Date(post.transitStartedAt).getTime();
+            if (elapsed > TIMEOUT_MS) {
+              updated = true;
+              
+              addSystemNotification(
+                'school',
+                post.schoolId,
+                'Collector Arrived',
+                `Collector has arrived at your kitchen. Please confirm the waste weight to complete pickup.`,
+                'warning'
+              );
+
+              addSystemNotification(
+                'collector',
+                post.collectorId,
+                'Arrived at Site',
+                `You have arrived at ${post.schoolName}. Awaiting school confirmation.`,
+                'success'
+              );
+
+              return {
+                ...post,
+                status: 'Awaiting School Confirmation',
+                history: [
+                  ...post.history,
+                  { status: 'Awaiting School Confirmation', timestamp: new Date().toISOString(), message: 'Transit completed (arrived at site).' }
+                ]
+              };
+            }
+          }
+
           return post;
         });
 
@@ -178,6 +417,20 @@ export const StateProvider = ({ children }) => {
       read: false
     };
     setNotifications(prev => [newNotif, ...prev]);
+
+    fetch(`${API_URL}/api/notifications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: newNotif.id,
+        targetId: newNotif.targetId,
+        role: newNotif.role,
+        title: newNotif.title,
+        message: newNotif.message,
+        type: newNotif.type,
+        createdAt: newNotif.timestamp
+      })
+    }).catch(err => console.warn('Failed to sync notification to backend:', err.message));
   };
 
   // --- ACTIONS ---
@@ -194,6 +447,7 @@ export const StateProvider = ({ children }) => {
 
     if (estimatedWeight > 150) {
       alert(`Data Validation Error: Waste entered is ${estimatedWeight} kg. "Please check entered value." (Limit 150 kg per post)`);
+      addToast('Please check entered value.', 'error');
       return false;
     }
 
@@ -225,6 +479,7 @@ export const StateProvider = ({ children }) => {
         `Internet offline. Log of ${estimatedWeight} kg saved locally and will auto-sync when connection returns.`,
         'warning'
       );
+      addToast('Saved locally (Offline Mode)', 'warning');
       return true;
     }
 
@@ -240,7 +495,21 @@ export const StateProvider = ({ children }) => {
       setWastePosts(prev => [newPost, ...prev]);
     }
 
-    // Notify nearby collectors
+    // Push to backend server
+    fetch(`${API_URL}/api/waste-posts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: newPost.id,
+        school_id: newPost.schoolId,
+        drumLevel: newPost.drumLevel,
+        estimatedWeight: newPost.estimatedWeight,
+        reason: newPost.reason,
+        createdAt: newPost.createdAt
+      })
+    }).catch(err => console.warn('Failed to sync new waste post to backend:', err.message));
+
+    // Notify nearby collectors and send simulated SMS alerts
     collectors.forEach(col => {
       const dist = getDistance(school.latitude, school.longitude, col.latitude, col.longitude);
       if (dist <= col.radius) {
@@ -251,6 +520,9 @@ export const StateProvider = ({ children }) => {
           `${school.name} posted ${estimatedWeight} kg of organic waste (${dist} km away).`,
           'info'
         );
+        setTimeout(() => {
+          addToast(`[SMS Alert] Sent to Farmer ${col.name} (${col.phone || '+91 98765 43220'}): ${school.name} has posted ${estimatedWeight} kg of waste nearby!`, 'success');
+        }, 1500);
       }
     });
 
@@ -261,6 +533,7 @@ export const StateProvider = ({ children }) => {
       `Your waste post of ${estimatedWeight} kg is now available.`,
       'success'
     );
+    addToast('Waste posted successfully!', 'success');
     return true;
   };
 
@@ -278,7 +551,7 @@ export const StateProvider = ({ children }) => {
           current = [newPost, ...current];
         }
 
-        // Notify collectors
+        // Notify collectors and send simulated SMS alerts
         const school = schools.find(s => s.id === newPost.schoolId);
         if (school) {
           collectors.forEach(col => {
@@ -291,6 +564,9 @@ export const StateProvider = ({ children }) => {
                 `${school.name} posted ${newPost.estimatedWeight} kg of organic waste (${dist} km away).`,
                 'info'
               );
+              setTimeout(() => {
+                addToast(`[SMS Alert] Sent to Farmer ${col.name} (${col.phone || '+91 98765 43220'}): ${school.name} has posted ${newPost.estimatedWeight} kg of waste nearby!`, 'success');
+              }, 1500);
             }
           });
         }
@@ -324,10 +600,15 @@ export const StateProvider = ({ children }) => {
     const collector = collectors.find(c => c.id === collectorId);
     if (!collector) return;
 
+    const timestamp = new Date().toISOString();
+    fetch(`${API_URL}/api/waste-posts/${postId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Reserved', collectorId, reservedAt: timestamp })
+    }).catch(err => console.warn('Failed to sync reservation status to backend:', err.message));
+
     setWastePosts(prev => prev.map(post => {
       if (post.id === postId) {
-        const timestamp = new Date().toISOString();
-        
         addSystemNotification(
           'school',
           post.schoolId,
@@ -335,6 +616,8 @@ export const StateProvider = ({ children }) => {
           `Collector ${collector.name} has reserved your waste. Expected pickup in 30 minutes.`,
           'success'
         );
+
+        addToast('Waste Reserved successfully!', 'success');
 
         return {
           ...post,
@@ -354,6 +637,12 @@ export const StateProvider = ({ children }) => {
     if (!post) return;
     const collector = collectors.find(c => c.id === post.collectorId);
 
+    fetch(`${API_URL}/api/waste-posts/${postId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'In Transit' })
+    }).catch(err => console.warn('Failed to sync transit status to backend:', err.message));
+
     setWastePosts(prev => prev.map(p => {
       if (p.id === postId) {
         const timestamp = new Date().toISOString();
@@ -364,6 +653,8 @@ export const StateProvider = ({ children }) => {
           `${collector?.name || 'Collector'} has marked the pickup in transit.`,
           'info'
         );
+
+        addToast('Transit started successfully!', 'info');
 
         return {
           ...p,
@@ -381,6 +672,12 @@ export const StateProvider = ({ children }) => {
     if (!post) return;
     const collector = collectors.find(c => c.id === post.collectorId);
 
+    fetch(`${API_URL}/api/waste-posts/${postId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Awaiting School Confirmation' })
+    }).catch(err => console.warn('Failed to sync completePickup to backend:', err.message));
+
     setWastePosts(prev => prev.map(p => {
       if (p.id === postId) {
         const timestamp = new Date().toISOString();
@@ -391,6 +688,8 @@ export const StateProvider = ({ children }) => {
           `Collector ${collector?.name || ''} has marked pickup completed. Confirm collection.`,
           'warning'
         );
+
+        addToast('Pickup completed! Awaiting school confirmation.', 'success');
 
         return {
           ...p,
@@ -419,6 +718,29 @@ export const StateProvider = ({ children }) => {
         { timestamp, message: 'Collection confirmed and finalized by School.' }
       ]
     };
+
+    const historyRecord = {
+      id: `h-${Date.now()}`,
+      postId,
+      schoolId: post.schoolId,
+      collectorId: post.collectorId,
+      estimatedWeight: post.estimatedWeight,
+      date: timestamp,
+      reason: post.reason
+    };
+
+    Promise.all([
+      fetch(`${API_URL}/api/waste-posts/${postId}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Collected' })
+      }),
+      fetch(`${API_URL}/api/history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(historyRecord)
+      })
+    ]).catch(err => console.warn('Failed to sync collection confirmation to backend:', err.message));
 
     setWastePosts(prev => prev.filter(p => p.id !== postId));
     setHistory(prev => [finalizedPost, ...prev]);
@@ -449,6 +771,9 @@ export const StateProvider = ({ children }) => {
       `Thank you for helping divert ${post.estimatedWeight} kg!`,
       'success'
     );
+
+    addToast('Collection finalized!', 'success');
+    triggerConfetti();
   };
 
   // Cancel reservation
@@ -456,6 +781,12 @@ export const StateProvider = ({ children }) => {
     const post = wastePosts.find(p => p.id === postId);
     if (!post) return;
     const collector = collectors.find(c => c.id === post.collectorId);
+
+    fetch(`${API_URL}/api/waste-posts/${postId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Available', collectorId: null, reservedAt: null })
+    }).catch(err => console.warn('Failed to sync cancellation to backend:', err.message));
 
     setWastePosts(prev => prev.map(p => {
       if (p.id === postId) {
@@ -468,6 +799,8 @@ export const StateProvider = ({ children }) => {
           `Collector ${collector?.name || ''} canceled their reservation.`,
           'error'
         );
+
+        addToast('Reservation canceled.', 'error');
 
         return {
           ...p,
@@ -540,8 +873,55 @@ export const StateProvider = ({ children }) => {
     }));
   };
 
+  const uploadStateToCloud = async (passcode) => {
+    if (!passcode.trim()) return false;
+    try {
+      const payload = {
+        schools,
+        wastePosts,
+        collectors,
+        history,
+        notifications
+      };
+      const res = await fetch(`https://kvdb.io/8xV4kFf6c3L2jK5m9PqZ/state_${passcode.toLowerCase().trim()}`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return res.ok;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
+  const downloadStateFromCloud = async (passcode) => {
+    if (!passcode.trim()) return false;
+    try {
+      const res = await fetch(`https://kvdb.io/8xV4kFf6c3L2jK5m9PqZ/state_${passcode.toLowerCase().trim()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.schools && data.wastePosts) {
+          setSchools(data.schools);
+          setWastePosts(data.wastePosts);
+          setCollectors(data.collectors || collectors);
+          setHistory(data.history || history);
+          setNotifications(data.notifications || notifications);
+          return true;
+        }
+      }
+      return false;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+
   return (
     <StateContext.Provider value={{
+      language,
+      setLanguage,
+      t,
       schools,
       wastePosts,
       collectors,
@@ -555,6 +935,10 @@ export const StateProvider = ({ children }) => {
       isOfflineMode,
       setIsOfflineMode,
       offlineUploadQueue,
+      syncPasscode,
+      setSyncPasscode,
+      uploadStateToCloud,
+      downloadStateFromCloud,
       
       currentRole,
       setCurrentRole,
@@ -572,6 +956,8 @@ export const StateProvider = ({ children }) => {
       updateSchoolOnboarding,
       updateCollectorOnboarding,
       forceSimulateTimeout,
+      addToast,
+      triggerConfetti,
       
       getComparableSchools: (schoolId) => {
         const school = schools.find(s => s.id === schoolId);
@@ -607,6 +993,14 @@ export const StateProvider = ({ children }) => {
       }
     }}>
       {children}
+      <div className="toast-container">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast toast-${t.type}`}>
+            <span>{t.type === 'success' ? '🌱' : t.type === 'error' ? '❌' : 'ℹ️'}</span>
+            <span>{t.message}</span>
+          </div>
+        ))}
+      </div>
     </StateContext.Provider>
   );
 };

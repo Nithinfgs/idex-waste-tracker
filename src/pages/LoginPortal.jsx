@@ -8,7 +8,8 @@ export default function LoginPortal({ onLoginSuccess }) {
     collectors, 
     setCurrentRole, 
     setSelectedSchoolId, 
-    setSelectedCollectorId 
+    setSelectedCollectorId,
+    addToast
   } = useContext(StateContext);
 
   const [step, setStep] = useState('splash'); // 'splash' | 'role-select' | 'phone-input' | 'otp-input' | 'onboarding'
@@ -17,15 +18,16 @@ export default function LoginPortal({ onLoginSuccess }) {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState('');
+  const [generatedOtp, setGeneratedOtp] = useState('');
 
   // Onboarding wizard states
   const [onboardStep, setOnboardStep] = useState(1);
   const [schoolDetails, setSchoolDetails] = useState({
-    name: 'Government High School, Sector 4',
+    name: 'Government High School, Gandhipuram',
     strength: 420,
     capacity: 40,
     contact: '',
-    address: 'Sector 4, Near Public Park, Bengaluru'
+    address: 'Cross Cut Road, Gandhipuram, Coimbatore'
   });
   const [collectorDetails, setCollectorDetails] = useState({
     name: 'Ravi Kumar',
@@ -45,12 +47,17 @@ export default function LoginPortal({ onLoginSuccess }) {
       alert('Please enter a valid 10-digit phone number.');
       return;
     }
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    setGeneratedOtp(code);
     setStep('otp-input');
+    setTimeout(() => {
+      addToast(`[SMS Gateway] OTP sent to +91 ${phone}: ${code}`, 'success');
+    }, 800);
   };
 
   const handleVerifyOtp = (e) => {
     e.preventDefault();
-    if (otp === '1234' || otp === '0000' || otp.length === 4) {
+    if (otp === generatedOtp || otp === '1234' || otp === '0000') {
       setOtpError('');
       // Set roles and profiles
       setCurrentRole(role);
@@ -67,7 +74,7 @@ export default function LoginPortal({ onLoginSuccess }) {
         onLoginSuccess();
       }
     } else {
-      setOtpError('Invalid OTP code. Please enter 1234 to bypass.');
+      setOtpError(`Invalid OTP code. Please enter the code sent via SMS (${generatedOtp}) or 1234.`);
     }
   };
 

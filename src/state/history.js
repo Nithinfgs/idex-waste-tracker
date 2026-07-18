@@ -2,7 +2,7 @@ export const INITIAL_HISTORY = [
   {
     id: "hist-1",
     schoolId: "sch-1",
-    schoolName: "Government High School, Sector 4",
+    schoolName: "Government High School, Gandhipuram",
     collectorId: "col-1",
     collectorName: "Ravi Kumar",
     collectorType: "Farmer",

@@ -2,7 +2,7 @@ export const INITIAL_NOTIFICATIONS = [
   {
     id: "notif-1",
     role: "school",
-    targetId: "sch-1", // GHS Sector 4
+    targetId: "sch-1", // GHS Gandhipuram
     title: "Collector Arriving",
     message: "Ravi Kumar has marked the pickup in transit.",
     type: "info",

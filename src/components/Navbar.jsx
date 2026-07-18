@@ -25,7 +25,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
     selectedCollectorId,
     setSelectedCollectorId,
     notifications,
-    setIsLoggedIn
+    setIsLoggedIn,
+    t
   } = useContext(StateContext);
 
   const [showRolePanel, setShowRolePanel] = useState(false);
@@ -41,26 +42,26 @@ export default function Navbar({ activeTab, setActiveTab }) {
     switch (currentRole) {
       case 'school':
         return [
-          { id: 'home', label: 'Home', icon: Home },
-          { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-          { id: 'collections', label: 'Collections', icon: Clock },
-          { id: 'notifications', label: 'Alerts', icon: Bell, badge: unreadCount },
-          { id: 'profile', label: 'Profile', icon: User }
+          { id: 'home', label: t('dashboard'), icon: Home },
+          { id: 'collections', label: t('collections'), icon: ShoppingBag },
+          { id: 'dashboard', label: t('analytics'), icon: BarChart3 },
+          { id: 'notifications', label: t('notifications'), icon: Bell, badge: unreadCount },
+          { id: 'profile', label: t('profile'), icon: User }
         ];
       case 'collector':
         return [
-          { id: 'home', label: 'Home', icon: Home },
-          { id: 'nearby', label: 'Nearby', icon: Map },
-          { id: 'active', label: 'Active', icon: Truck },
-          { id: 'notifications', label: 'Alerts', icon: Bell, badge: unreadCount },
-          { id: 'profile', label: 'Profile', icon: User }
+          { id: 'home', label: t('dashboard'), icon: Home },
+          { id: 'nearby', label: 'Map', icon: Map },
+          { id: 'active', label: t('activePickups'), icon: Truck },
+          { id: 'notifications', label: t('notifications'), icon: Bell, badge: unreadCount },
+          { id: 'profile', label: t('profile'), icon: User }
         ];
       case 'admin':
         return [
-          { id: 'dashboard', label: 'Analytics', icon: BarChart3 },
+          { id: 'dashboard', label: t('analytics'), icon: BarChart3 },
           { id: 'schools', label: 'Schools', icon: ListOrdered },
-          { id: 'notifications', label: 'Alerts', icon: Bell },
-          { id: 'profile', label: 'Settings', icon: Shield }
+          { id: 'notifications', label: t('notifications'), icon: Bell },
+          { id: 'profile', label: t('profile'), icon: User }
         ];
       default:
         return [];

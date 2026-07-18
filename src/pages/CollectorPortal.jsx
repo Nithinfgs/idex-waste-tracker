@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { StateContext } from '../context/StateContext';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { 
@@ -19,7 +19,9 @@ import {
   HelpCircle,
   Languages,
   LogOut,
-  History
+  History,
+  ShoppingBag,
+  RefreshCw
 } from 'lucide-react';
 
 const createMarkerIcon = (weight, status) => {
@@ -44,7 +46,7 @@ const createMarkerIcon = (weight, status) => {
         border: 2px solid white; 
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
       ">
-        ${Math.round(weight)}kg
+        ${Math.round(weight)}k
       </div>
     `,
     iconSize: [32, 32],
@@ -68,7 +70,15 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
     getFilteredWastePosts,
     updateCollectorOnboarding,
     isDarkMode,
-    setIsDarkMode
+    setIsDarkMode,
+    addToast,
+    language,
+    setLanguage,
+    t,
+    syncPasscode,
+    setSyncPasscode,
+    uploadStateToCloud,
+    downloadStateFromCloud
   } = useContext(StateContext);
 
   const collector = collectors.find(c => c.id === selectedCollectorId);
@@ -79,6 +89,14 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
   const [maxDistance, setMaxDistance] = useState('');
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedPostForBottomSheet, setSelectedPostForBottomSheet] = useState(null);
+  
+  // Confirmation state for reservation
+  const [showReserveConfirmationPost, setShowReserveConfirmationPost] = useState(null);
+
+  // Simulated Loading state for Skeletons
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Sub pages for settings
   const [activeSettingsSubPage, setActiveSettingsSubPage] = useState('menu'); // 'menu' | 'settings' | 'help'
@@ -88,6 +106,37 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
 
   // Help ticket
   const [ticketMsg, setTicketMsg] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleCloudUpload = async () => {
+    if (!syncPasscode.trim()) {
+      addToast('Please enter a sync passcode first.', 'error');
+      return;
+    }
+    setIsSyncing(true);
+    const ok = await uploadStateToCloud(syncPasscode);
+    setIsSyncing(false);
+    if (ok) {
+      addToast('Data uploaded to cloud successfully!', 'success');
+    } else {
+      addToast('Upload failed. Try again.', 'error');
+    }
+  };
+
+  const handleCloudDownload = async () => {
+    if (!syncPasscode.trim()) {
+      addToast('Please enter a sync passcode first.', 'error');
+      return;
+    }
+    setIsSyncing(true);
+    const ok = await downloadStateFromCloud(syncPasscode);
+    setIsSyncing(false);
+    if (ok) {
+      addToast('Data downloaded and synchronized!', 'success');
+    } else {
+      addToast('Download failed. Passcode invalid or empty.', 'error');
+    }
+  };
 
   // Profile forms
   const [profileData, setProfileData] = useState({
@@ -96,45 +145,32 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
     vehicle: collector?.vehicle || ''
   });
 
-  // Calculate remaining timer for active reserved posts
+  // Calculate remaining timer for active reserved & transit posts
   useEffect(() => {
     const interval = setInterval(() => {
-      const activeReserved = wastePosts.filter(p => p.status === 'Reserved' && p.collectorId === selectedCollectorId);
-      const times = {};
-      
-      activeReserved.forEach(post => {
-        if (post.reservedAt) {
-          const elapsedMs = Date.now() - new Date(post.reservedAt).getTime();
-          const limitMs = 2 * 60 * 1000; // 2 minutes demo limit
-          const remainingSecs = Math.max(0, Math.floor((limitMs - elapsedMs) / 1000));
-          times[post.id] = remainingSecs;
+      const updatedTimers = {};
+      wastePosts.forEach(post => {
+        if (post.collectorId === collector?.id) {
+          if (post.status === 'Reserved' && post.reservedAt) {
+            const elapsed = Math.floor((Date.now() - new Date(post.reservedAt).getTime()) / 1000);
+            const limit = 2 * 60; // 2 minutes for easy simulation timeout
+            const remaining = Math.max(limit - elapsed, 0);
+            updatedTimers[post.id] = remaining;
+          } else if (post.status === 'In Transit' && post.transitStartedAt) {
+            const elapsed = Math.floor((Date.now() - new Date(post.transitStartedAt).getTime()) / 1000);
+            const limit = 2 * 60; // 2 minutes transit ETA timer simulation
+            const remaining = Math.max(limit - elapsed, 0);
+            updatedTimers[post.id] = remaining;
+          }
         }
       });
-      
-      setTimerSeconds(times);
+      setTimerSeconds(updatedTimers);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [wastePosts, selectedCollectorId]);
+  }, [wastePosts, collector]);
 
   if (!collector) return <div style={{ padding: '20px' }}>Collector Profile Not Found</div>;
-
-  // Apply filters and sorting: (Closest, Highest Weight, Latest)
-  const filters = { searchName, minWeight: parseFloat(minWeight) || null, maxDistance: parseFloat(maxDistance) || null };
-  const filteredPosts = getFilteredWastePosts(filters, selectedCollectorId);
-
-  // Get active pickups belonging to this collector
-  const activePickups = wastePosts.filter(p => 
-    p.collectorId === selectedCollectorId && 
-    ['Reserved', 'In Transit', 'Awaiting School Confirmation'].includes(p.status)
-  );
-
-  // Get completed history for this collector
-  const collectorHistory = history.filter(h => h.collectorId === selectedCollectorId);
-
-  // Compute collector statistics
-  const totalWeightCollected = collectorHistory.reduce((sum, h) => sum + h.estimatedWeight, 0);
-  const uniqueSchoolsVisited = new Set(collectorHistory.map(h => h.schoolId)).size;
 
   const handleProfileSave = (e) => {
     e.preventDefault();
@@ -144,13 +180,16 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
       profileData.radius,
       profileData.vehicle
     );
-    alert('Collector settings updated successfully!');
+    addToast('Profile configurations updated!', 'success');
   };
 
   const handleTicketSubmit = (e) => {
     e.preventDefault();
     if (!ticketMsg.trim()) return;
-    alert(`Issue Reported: "${ticketMsg}". Support staff will investigate.`);
+    const subject = `IDEX Collector Support Ticket - ${collector.name}`;
+    const body = `Collector Name: ${collector.name}\nCollector ID: ${collector.id}\nType: ${collector.collectorType}\nVehicle: ${collector.vehicle}\n\nIssue:\n${ticketMsg}`;
+    window.location.href = `mailto:nithinselvaraj9@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    addToast('Ticket dispatched to nithinselvaraj9@gmail.com!', 'success');
     setTicketMsg('');
   };
 
@@ -168,85 +207,114 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
     return parseFloat(dist.toFixed(1));
   };
 
+  // Pull to refresh simulation
+  const handlePullToRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      addToast('Listings refreshed!', 'success');
+    }, 1000);
+  };
+
+  // Filters logic
+  const filteredPosts = getFilteredWastePosts({ searchName, minWeight, maxDistance }, collector.id);
+
+  // Active pick-ups for current collector
+  const activePickups = wastePosts.filter(p => p.collectorId === collector.id && (p.status === 'Reserved' || p.status === 'In Transit' || p.status === 'Awaiting School Confirmation'));
+
+  // Historical calculations
+  const collectorHistory = history.filter(h => h.collectorId === collector.id);
+  const totalWeightCollected = collectorHistory.reduce((sum, h) => sum + h.estimatedWeight, 0);
+  const uniqueSchoolsVisited = new Set(collectorHistory.map(h => h.schoolId)).size;
+
+  const collectorNotifications = notifications.filter(n => n.role === 'collector' && n.targetId === collector.id);
+
   return (
     <div style={styles.container}>
-      {/* 1. DEDICATED HOME TAB */}
+      {/* 1. DEDICATED HOME TAB (SWIGGY-STYLE PICKUPS) */}
       {activeTab === 'home' && (
         <div style={styles.scrollable}>
           <div style={styles.welcomeSection}>
-            <p style={styles.subGreeting}>Hello,</p>
+            <p style={styles.subGreeting}>{t('goodMorning')},</p>
             <h2 style={styles.mainGreeting}>{collector.name}</h2>
-            <span style={styles.subtext}>{collector.collectorType} Portal</span>
+            <span style={styles.subtext}>{collector.collectorType} {t('profile')}</span>
           </div>
 
-          {/* Quick Stats Banner */}
-          <div className="card" style={{ display: 'flex', justifyContent: 'space-around', padding: '12px', marginBottom: '16px' }}>
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>TOTAL COLLECTED</span>
-              <h4 style={{ color: 'var(--color-primary)', fontSize: '1.1rem', fontWeight: 700 }}>{totalWeightCollected} kg</h4>
+          {/* Quick Stats Grid */}
+          <div style={styles.statsGrid}>
+            <div className="card">
+              <span style={styles.statsLabel}>{t('foodDiverted')}</span>
+              <h4 style={styles.statsNumber}>{totalWeightCollected} kg</h4>
             </div>
-            <div style={{ width: '1px', backgroundColor: 'var(--color-border)' }} />
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>SCHOOLS VISITED</span>
-              <h4 style={{ color: 'var(--color-primary)', fontSize: '1.1rem', fontWeight: 700 }}>{uniqueSchoolsVisited}</h4>
+            <div className="card">
+              <span style={styles.statsLabel}>SCHOOLS VISITED</span>
+              <h4 style={styles.statsNumber}>{uniqueSchoolsVisited}</h4>
             </div>
           </div>
 
-          <h3 style={{ ...styles.sectionTitle, marginBottom: '8px' }}>Available Nearby</h3>
-          <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
-            Swiggy-style listings matching your radius and filters:
-          </p>
+          {/* Swiggy-style available listings header */}
+          <div style={styles.swiggyHeaderFlex}>
+            <h3 style={styles.sectionTitle}>Available Nearby Pickups</h3>
+            <button onClick={handlePullToRefresh} style={styles.refreshBtn} disabled={isRefreshing}>
+              <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+              <span>Refresh</span>
+            </button>
+          </div>
 
-          <div style={styles.swiggyScrollContainer}>
+          {/* Pull to refresh indicator */}
+          {isRefreshing && (
+            <div style={styles.refreshIndicator}>Refreshed Coimbatore listings...</div>
+          )}
+
+          {/* Swiggy Cards */}
+          <div style={styles.swiggyList}>
             {filteredPosts.map(post => (
-              <div key={post.id} className="card" style={styles.swiggyCard}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={styles.swiggyWeight}>{post.estimatedWeight} kg</span>
-                  <span style={styles.swiggyDist}>{getDistanceToPost(post)} km</span>
+              <div key={post.id} className="card card-interactive" style={styles.swiggyCard}>
+                <div style={styles.swiggyMetaRow}>
+                  <div style={styles.swiggyLeftCol}>
+                    <h4 style={styles.swiggySchool}>{post.schoolName}</h4>
+                    <span style={styles.swiggyDetails}>
+                      📍 {getDistanceToPost(post)} km away | Weight: <strong>{post.estimatedWeight} kg</strong>
+                    </span>
+                  </div>
+                  <span className="badge badge-available">Available</span>
                 </div>
-                <h4 style={styles.swiggySchool}>{post.schoolName}</h4>
-                <p style={styles.swiggyReason}>Reason: {post.reason}</p>
-                <button 
-                  onClick={() => reserveWaste(post.id, collector.id)}
-                  className="btn-primary" 
-                  style={styles.swiggyBtn}
-                >
-                  Reserve Pickup
-                </button>
+                <div style={styles.swiggyActionRow}>
+                  <span style={styles.swiggyReason}>{t('cancellationReason')}: {post.reason}</span>
+                  <button 
+                    onClick={() => setShowReserveConfirmationPost(post)}
+                    className="btn-primary" 
+                    style={styles.swiggyBtn}
+                  >
+                    {t('reserve')}
+                  </button>
+                </div>
               </div>
             ))}
             {filteredPosts.length === 0 && (
-              <div style={styles.emptySwiggy}>
-                <span style={{ fontSize: '1.5rem' }}>📭</span>
-                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>"No waste listings nearby."</p>
+              <div style={styles.emptyContainer}>
+                <span>🌱</span>
+                <p>No Waste Listings Available Today</p>
+                <button onClick={handlePullToRefresh} className="btn-secondary" style={{ width: 'auto', minHeight: '38px', marginTop: '12px' }}>
+                  Pull to Refresh
+                </button>
               </div>
             )}
-          </div>
-
-          {/* Quick Map preview box */}
-          <div className="card" style={{ marginTop: '16px', padding: '16px' }}>
-            <h4 style={{ fontSize: '0.9rem', marginBottom: '6px' }}>Marketplace Map Finder</h4>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
-              Toggle map tab to see geolocated coordinates of all available organic food drums.
-            </p>
-            <button onClick={() => setActiveTab('nearby')} className="btn-secondary" style={{ minHeight: '38px' }}>
-              View Interactive Map
-            </button>
           </div>
         </div>
       )}
 
-      {/* 2. NEARBY / MAP TAB */}
+      {/* 2. MAP / NEARBY SEARCH TAB (70% MAP / 30% UBER BOTTOM SHEET) */}
       {activeTab === 'nearby' && (
         <div style={styles.flexLayout}>
-          {/* Search bar & filter controls */}
+          {/* Map search filters */}
           <div style={styles.searchContainer}>
             <div style={styles.searchRow}>
               <div style={styles.searchInputWrapper}>
-                <Search size={18} color="var(--color-text-secondary)" style={styles.searchIcon} />
+                <Search size={16} color="var(--color-text-secondary)" style={styles.searchIcon} />
                 <input 
                   type="text" 
-                  placeholder="Search schools by name..." 
+                  placeholder="Search schools in Coimbatore..." 
                   className="form-input" 
                   style={styles.searchInput}
                   value={searchName}
@@ -262,22 +330,21 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                   backgroundColor: showFilters ? 'rgba(46, 125, 50, 0.05)' : '#FFFFFF'
                 }}
               >
-                <SlidersHorizontal size={18} />
+                <SlidersHorizontal size={16} />
               </button>
 
               <button 
                 onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')} 
                 style={styles.iconBtn}
               >
-                {viewMode === 'list' ? <MapIcon size={18} /> : <List size={18} />}
+                {viewMode === 'list' ? <MapIcon size={16} /> : <List size={16} />}
               </button>
             </div>
 
-            {/* Filter Drawer */}
             {showFilters && (
               <div className="card" style={styles.filterDrawer}>
                 <div style={styles.grid2}>
-                  <div className="form-group" style={{ flex: 1 }}>
+                  <div className="form-group">
                     <label style={styles.filterLabel}>Min Weight (kg)</label>
                     <input 
                       type="number" 
@@ -288,8 +355,8 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                       onChange={(e) => setMinWeight(e.target.value)}
                     />
                   </div>
-                  <div className="form-group" style={{ flex: 1 }}>
-                    <label style={styles.filterLabel}>Max Distance (km)</label>
+                  <div className="form-group">
+                    <label style={styles.filterLabel}>Max Radius (km)</label>
                     <input 
                       type="number" 
                       placeholder="e.g. 10" 
@@ -300,113 +367,107 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                     />
                   </div>
                 </div>
-                <button 
-                  onClick={() => {
-                    setMinWeight('');
-                    setMaxDistance('');
-                    setSearchName('');
-                  }} 
-                  className="btn-secondary" 
-                  style={{ minHeight: '32px', fontSize: '0.75rem', padding: '4px' }}
-                >
-                  Clear Filters
-                </button>
               </div>
             )}
           </div>
 
-          {/* Map View or List View */}
           <div style={styles.contentArea}>
             {viewMode === 'map' ? (
-              <div style={styles.mapContainer}>
-                <MapContainer 
-                  center={[collector.latitude, collector.longitude]} 
-                  zoom={14} 
-                  style={{ height: '100%', width: '100%' }}
-                >
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  />
-                  {/* Collector Marker */}
-                  <Marker 
-                    position={[collector.latitude, collector.longitude]}
-                    icon={L.divIcon({
-                      className: 'collector-pin',
-                      html: `<div style="background-color: #1A237E; color: white; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
-                      iconSize: [20, 20]
-                    })}
+              <div style={styles.mapWrapperRelative}>
+                {/* Map renders 70% height if Bottom Sheet is visible */}
+                <div style={{ height: selectedPostForBottomSheet ? '68%' : '100%', width: '100%', transition: 'height 300ms ease' }}>
+                  <MapContainer 
+                    center={[collector.latitude, collector.longitude]} 
+                    zoom={13} 
+                    style={{ height: '100%', width: '100%' }}
                   >
-                    <Popup>
-                      <strong>Your Location</strong><br/>
-                      {collector.name} ({collector.vehicle})
-                    </Popup>
-                  </Marker>
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; OpenStreetMap'
+                    />
+                    
+                    {/* Collector Location marker */}
+                    <Marker 
+                      position={[collector.latitude, collector.longitude]}
+                      icon={L.divIcon({
+                        className: 'col-pin',
+                        html: `<div style="background-color: #1E3A8A; color: white; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.3);"></div>`,
+                        iconSize: [16, 16]
+                      })}
+                    />
 
-                  {/* School Pins */}
-                  {filteredPosts.map(post => {
-                    const school = schools.find(s => s.id === post.schoolId);
-                    if (!school) return null;
-                    return (
-                      <Marker 
-                        key={post.id} 
-                        position={[school.latitude, school.longitude]}
-                        icon={createMarkerIcon(post.estimatedWeight, post.status)}
+                    {/* School markers */}
+                    {filteredPosts.map(post => {
+                      const school = schools.find(s => s.id === post.schoolId);
+                      if (!school) return null;
+                      return (
+                        <Marker 
+                          key={post.id} 
+                          position={[school.latitude, school.longitude]}
+                          icon={createMarkerIcon(post.estimatedWeight, post.status)}
+                          eventHandlers={{
+                            click: () => {
+                              setSelectedPostForBottomSheet(post);
+                            }
+                          }}
+                        />
+                      );
+                    })}
+                  </MapContainer>
+                </div>
+
+                {/* Uber-style slide up bottom sheet (30% height) */}
+                {selectedPostForBottomSheet && (
+                  <div className="bottom-sheet">
+                    <div style={styles.sheetHeader}>
+                      <h4 style={styles.sheetSchool}>{selectedPostForBottomSheet.schoolName}</h4>
+                      <button onClick={() => setSelectedPostForBottomSheet(null)} style={styles.sheetCloseBtn}>×</button>
+                    </div>
+                    <div style={styles.sheetBody}>
+                      <div style={styles.sheetMeta}>
+                        <span>Weight: <strong>{selectedPostForBottomSheet.estimatedWeight} kg</strong></span>
+                        <span>Distance: <strong>{getDistanceToPost(selectedPostForBottomSheet)} km</strong></span>
+                      </div>
+                      <p style={styles.sheetReason}>Surplus Reason: {selectedPostForBottomSheet.reason}</p>
+                      <button 
+                        onClick={() => {
+                          setShowReserveConfirmationPost(selectedPostForBottomSheet);
+                          setSelectedPostForBottomSheet(null);
+                        }}
+                        className="btn-primary" 
+                        style={styles.sheetReserveBtn}
                       >
-                        <Popup>
-                          <div style={styles.popupContent}>
-                            <h4 style={styles.popupTitle}>{school.name}</h4>
-                            <p style={styles.popupText}>Waste Available: <strong>{post.estimatedWeight} kg</strong></p>
-                            <p style={styles.popupText}>Distance: {getDistanceToPost(post)} km</p>
-                            <button 
-                              onClick={() => reserveWaste(post.id, collector.id)}
-                              className="btn-primary" 
-                              style={styles.popupBtn}
-                            >
-                              Reserve Pickup
-                            </button>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    );
-                  })}
-                </MapContainer>
+                        {t('reserve')}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div style={styles.scrollArea}>
-                <div style={styles.listHeader}>
-                  <span>Nearby Listings ({filteredPosts.length})</span>
-                  <span style={styles.sortingNote}>Sorted: Closest → Heaviest</span>
-                </div>
-
                 {filteredPosts.map(post => (
-                  <div key={post.id} className="card card-interactive" style={styles.listingCard}>
-                    <div style={styles.listingHeader}>
-                      <h4 style={styles.schoolTitle}>{post.schoolName}</h4>
-                      <span className="badge badge-available">AVAILABLE</span>
+                  <div key={post.id} className="card card-interactive" style={{ marginBottom: '12px', padding: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <h4 style={{ fontSize: '0.85rem' }}>{post.schoolName}</h4>
+                      <span className="badge badge-available">Available</span>
                     </div>
-                    <div style={styles.listingBody}>
-                      <div style={styles.metaRow}>
-                        <span style={styles.metaLabel}>Weight: <strong>{post.estimatedWeight} kg</strong></span>
-                        <span style={styles.metaLabel}>Distance: {getDistanceToPost(post)} km</span>
-                      </div>
-                      <p style={styles.reasonText}>Reason: {post.reason}</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
+                      <span>Weight: <strong>{post.estimatedWeight} kg</strong></span>
+                      <span>Distance: <strong>{getDistanceToPost(post)} km</strong></span>
                     </div>
                     <button 
-                      onClick={() => reserveWaste(post.id, collector.id)}
-                      className="btn-primary"
-                      style={styles.reserveBtn}
+                      onClick={() => setShowReserveConfirmationPost(post)}
+                      className="btn-primary" 
+                      style={{ minHeight: '38px', fontSize: '0.8rem' }}
                     >
-                      Reserve Pickup
-                      <ArrowRight size={16} style={{ marginLeft: '6px' }} />
+                      {t('reserve')}
                     </button>
                   </div>
                 ))}
-
                 {filteredPosts.length === 0 && (
-                  <div style={styles.emptyView}>
+                  <div style={styles.emptyContainer}>
                     <span>📭</span>
-                    <p>"No waste listings nearby."</p>
+                    <p>No listings matched your criteria.</p>
                   </div>
                 )}
               </div>
@@ -418,38 +479,34 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
       {/* 3. ACTIVE PICKUPS TAB */}
       {activeTab === 'active' && (
         <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Active Pickups ({activePickups.length})</h3>
+          <h3 style={styles.sectionTitle}>{t('activePickups')} ({activePickups.length})</h3>
 
           {activePickups.map(post => {
             const timeRemaining = timerSeconds[post.id];
-            const isTimeoutWarning = timeRemaining !== undefined && timeRemaining <= 30;
+            const isWarning = timeRemaining !== undefined && timeRemaining <= 30;
 
             return (
               <div key={post.id} className="card" style={{ marginBottom: '16px', borderLeft: `4px solid ${post.status === 'In Transit' ? '#2196F3' : 'var(--color-accent)'}` }}>
                 <div style={styles.activeHeader}>
                   <div>
-                    <h4 style={{ fontSize: '0.95rem' }}>{post.schoolName}</h4>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                      Weight: <strong>{post.estimatedWeight} kg</strong> | Distance: {getDistanceToPost(post)} km
+                    <h4 style={{ fontSize: '0.9rem' }}>{post.schoolName}</h4>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
+                      Weight: <strong>{post.estimatedWeight} kg</strong> | Dist: {getDistanceToPost(post)} km
                     </span>
                   </div>
-                  
-                  {/* Reservation Timer UI */}
-                  {post.status === 'Reserved' && (
+
+                  {(post.status === 'Reserved' || post.status === 'In Transit') && (
                     <div style={{
-                      ...styles.timerBox,
-                      backgroundColor: isTimeoutWarning ? 'rgba(211, 47, 47, 0.1)' : 'rgba(249, 168, 37, 0.1)',
-                      color: isTimeoutWarning ? 'var(--color-error)' : '#F57F17'
+                      ...styles.timerBadge,
+                      backgroundColor: post.status === 'In Transit' ? 'rgba(33, 150, 243, 0.08)' : (isWarning ? 'rgba(211, 47, 47, 0.08)' : 'rgba(249, 168, 37, 0.08)'),
+                      color: post.status === 'In Transit' ? '#1565C0' : (isWarning ? 'var(--color-error)' : '#E65100')
                     }}>
-                      <Clock size={14} style={{ marginRight: '4px' }} />
-                      <span style={{ fontWeight: 700, fontSize: '0.75rem' }}>
-                        {formatTimer(timeRemaining)}
-                      </span>
+                      <Clock size={12} style={{ marginRight: '4px' }} />
+                      <span>{post.status === 'In Transit' ? `Arriving in ${formatTimer(timeRemaining)}` : formatTimer(timeRemaining)}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Simulation Time Travel Controls */}
                 {post.status === 'Reserved' && (
                   <div style={styles.simControls}>
                     <button 
@@ -458,56 +515,66 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                       style={styles.simBtn}
                     >
                       <AlertTriangle size={12} style={{ marginRight: '4px' }} />
-                      Simulate Reservation Expiration (Time Travel 2m)
+                      Simulate Expiration (Fast-Forward)
                     </button>
                   </div>
                 )}
 
-                {/* Step Action Trigger Panel */}
-                <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+                <div style={styles.activeActionsPanel}>
                   {post.status === 'Reserved' && (
-                    <div style={styles.actionButtonGroup}>
-                      <button 
-                        onClick={() => cancelReservation(post.id)}
-                        className="btn-secondary" 
-                        style={{ flex: 1, minHeight: '40px' }}
-                      >
-                        Cancel Reservation
+                    <div style={styles.actionRowGrid}>
+                      <button onClick={() => cancelReservation(post.id)} className="btn-secondary" style={{ minHeight: '38px', fontSize: '0.75rem' }}>
+                        {t('cancel')}
                       </button>
-                      <button 
-                        onClick={() => startTransit(post.id)}
-                        className="btn-primary" 
-                        style={{ flex: 1, minHeight: '40px' }}
-                      >
-                        <Navigation size={14} style={{ marginRight: '6px' }} />
-                        Start Transit
+                      <button onClick={() => startTransit(post.id)} className="btn-primary" style={{ minHeight: '38px', fontSize: '0.75rem' }}>
+                        <Navigation size={12} style={{ marginRight: '4px' }} />
+                        {t('transitStart')}
                       </button>
                     </div>
                   )}
 
                   {post.status === 'In Transit' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <p style={{ fontSize: '0.75rem', color: '#1565c0', fontWeight: 600, textAlign: 'center', marginBottom: '4px' }}>
+                      <p style={{ fontSize: '0.7rem', color: '#1565C0', fontWeight: 600, textAlign: 'center' }}>
                         🚛 Routing simulation active: collector heading to site.
                       </p>
-                      <button 
-                        onClick={() => completePickup(post.id)}
-                        className="btn-primary" 
-                        style={{ minHeight: '44px' }}
-                      >
-                        <CheckCircle size={14} style={{ marginRight: '6px' }} />
-                        Complete Waste Pickup
+                      
+                      {(() => {
+                        const school = schools.find(s => s.id === post.schoolId);
+                        return school ? (
+                          <a 
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${school.latitude},${school.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-secondary"
+                            style={{ 
+                              minHeight: '38px', 
+                              fontSize: '0.75rem', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center', 
+                              gap: '6px',
+                              textDecoration: 'none',
+                              backgroundColor: '#FFFFFF',
+                              border: '1px solid var(--color-border)',
+                              color: 'var(--color-text-primary)'
+                            }}
+                          >
+                            🗺️ {t('navigate')}
+                          </a>
+                        ) : null;
+                      })()}
+
+                      <button onClick={() => completePickup(post.id)} className="btn-primary" style={{ minHeight: '40px', fontSize: '0.8rem' }}>
+                        {t('completePickup')}
                       </button>
                     </div>
                   )}
 
                   {post.status === 'Awaiting School Confirmation' && (
-                    <div style={styles.awaitingBox}>
-                      <Clock size={16} color="var(--color-text-secondary)" style={{ marginRight: '6px' }} />
-                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
-                        Awaiting confirmation from school to close ticket.
-                      </span>
-                    </div>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', textAlign: 'center', fontStyle: 'italic' }}>
+                      Awaiting school verification check.
+                    </p>
                   )}
                 </div>
               </div>
@@ -516,141 +583,69 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
 
           {activePickups.length === 0 && (
             <div style={styles.emptyContainer}>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
-                You have no active waste reservations right now.
-              </p>
-              <button 
-                onClick={() => setActiveTab('nearby')}
-                className="btn-primary" 
-                style={{ width: 'auto', padding: '0 20px', minHeight: '44px' }}
-              >
-                Browse Nearby Listings
-              </button>
+              <span>📦</span>
+              <p>No active reserved pickups.</p>
             </div>
           )}
         </div>
       )}
 
-      {/* 4. DEDICATED COLLECTOR DASHBOARD TAB */}
-      {activeTab === 'marketplace' && (
+      {/* 4. NOTIFICATIONS TAB */}
+      {activeTab === 'notifications' && (
         <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Collector Dashboard</h3>
-          <p style={styles.subText}>Track your environmental metrics and collection history.</p>
-
-          <div style={styles.grid2}>
-            <div className="card" style={{ flex: 1, padding: '12px' }}>
-              <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>LANDFILL DIVERTED</span>
-              <h4 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '4px 0' }}>{totalWeightCollected} kg</h4>
-              <span style={{ fontSize: '0.6rem', color: 'var(--color-primary)', fontWeight: 600 }}>Verified organic mass</span>
-            </div>
-            
-            <div className="card" style={{ flex: 1, padding: '12px' }}>
-              <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>PICKUPS COMPLETE</span>
-              <h4 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '4px 0' }}>{collectorHistory.length} times</h4>
-              <span style={{ fontSize: '0.6rem', color: 'var(--color-primary)', fontWeight: 600 }}>100% success rate</span>
-            </div>
-          </div>
-
-          {/* SVG Bar Chart representing monthly collections */}
-          <div className="card" style={{ marginTop: '12px', padding: '16px' }}>
-            <h4 style={{ fontSize: '0.85rem', marginBottom: '16px' }}>Monthly Diversion Volume (kg)</h4>
-            <div style={styles.barChartContainer}>
-              <div style={styles.barItem}><div style={{ ...styles.bar, height: '40px' }}></div><span style={styles.barLabel}>May</span></div>
-              <div style={styles.barItem}><div style={{ ...styles.bar, height: '70px' }}></div><span style={styles.barLabel}>Jun</span></div>
-              <div style={styles.barItem}><div style={{ ...styles.bar, height: `${Math.min(100, 30 + totalWeightCollected * 1.5)}px`, backgroundColor: 'var(--color-primary)' }}></div><span style={styles.barLabel}>Jul</span></div>
-            </div>
-          </div>
-
-          <div className="card" style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Award size={24} color="var(--color-accent)" />
-            <div>
-              <h5 style={{ fontSize: '0.8rem', fontWeight: 600 }}>Environmental Impact badge</h5>
-              <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', lineHeight: '1.2' }}>
-                Your collections reduced carbon emissions equivalent to planting **{Math.round(totalWeightCollected * 0.4)} trees**!
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 5. HISTORY TAB */}
-      {activeTab === 'history' && (
-        <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Completed Pickups History</h3>
-          <p style={styles.subText}>List of organic feedstock loads you collected successfully.</p>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
-            {collectorHistory.map(hist => (
-              <div key={hist.id} className="card" style={{ padding: '12px' }}>
+          <h3 style={styles.sectionTitle}>{t('alerts')}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {collectorNotifications.map(notif => (
+              <div key={notif.id} className="card" style={{ borderLeft: '4px solid var(--color-primary)', padding: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{hist.schoolName}</span>
-                  <strong style={{ fontSize: '0.85rem', color: 'var(--color-primary)' }}>{hist.estimatedWeight} kg</strong>
+                  <strong style={{ fontSize: '0.8rem' }}>{notif.title}</strong>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>
+                    {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
-                  <span>Reason: {hist.reason}</span>
-                  <span>{new Date(hist.date).toLocaleDateString()}</span>
-                </div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{notif.message}</p>
               </div>
             ))}
-            {collectorHistory.length === 0 && (
-              <p style={{ textAlign: 'center', fontSize: '0.80rem', color: 'var(--color-text-secondary)', padding: '24px' }}>
-                No completed pickup logs found.
-              </p>
+            {collectorNotifications.length === 0 && (
+              <div style={styles.emptyContainer}>
+                <span>🔔</span>
+                <p>No new notifications.</p>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* 6. NOTIFICATIONS TAB */}
-      {activeTab === 'notifications' && (
-        <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Alert Center</h3>
-          {notifications.filter(n => n.role === 'collector' && n.targetId === collector.id).map(notif => (
-            <div key={notif.id} className="card" style={{ ...styles.notifCard, borderLeft: `4px solid ${notif.type === 'error' ? 'var(--color-error)' : notif.type === 'warning' ? 'var(--color-accent)' : 'var(--color-primary)'}` }}>
-              <span style={styles.notifTitle}>{notif.title}</span>
-              <p style={styles.notifMsg}>{notif.message}</p>
-              <span style={styles.notifTime}>{new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-          ))}
-          {notifications.filter(n => n.role === 'collector' && n.targetId === collector.id).length === 0 && (
-            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-text-secondary)', padding: '24px' }}>
-              No notifications for you yet.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* 7. PROFILE TAB */}
+      {/* 5. PROFILE & SETTINGS TAB */}
       {activeTab === 'profile' && (
         <div style={styles.scrollable}>
-          <div style={styles.subPageNav}>
-            <button 
-              onClick={() => setActiveSettingsSubPage('menu')}
-              style={{ ...styles.subPageNavBtn, borderBottom: activeSettingsSubPage === 'menu' ? '2px solid var(--color-primary)' : 'none' }}
-            >
-              Configure
-            </button>
-            <button 
-              onClick={() => setActiveSettingsSubPage('settings')}
-              style={{ ...styles.subPageNavBtn, borderBottom: activeSettingsSubPage === 'settings' ? '2px solid var(--color-primary)' : 'none' }}
-            >
-              Settings
-            </button>
-            <button 
-              onClick={() => setActiveSettingsSubPage('help')}
-              style={{ ...styles.subPageNavBtn, borderBottom: activeSettingsSubPage === 'help' ? '2px solid var(--color-primary)' : 'none' }}
-            >
-              Help Page
-            </button>
+          <div style={styles.subSettingsHeader}>
+            {[
+              { id: 'menu', label: 'Collector Details' },
+              { id: 'settings', label: t('profile') },
+              { id: 'help', label: 'Support FAQs' }
+            ].map(sub => (
+              <button
+                key={sub.id}
+                onClick={() => setActiveSettingsSubPage(sub.id)}
+                style={{
+                  ...styles.subSettingsBtn,
+                  borderBottom: activeSettingsSubPage === sub.id ? '2px solid var(--color-primary)' : 'none',
+                  color: activeSettingsSubPage === sub.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  fontWeight: activeSettingsSubPage === sub.id ? '700' : '500'
+                }}
+              >
+                {sub.label}
+              </button>
+            ))}
           </div>
 
           {activeSettingsSubPage === 'menu' && (
             <form onSubmit={handleProfileSave} className="card" style={{ marginTop: '12px' }}>
               <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input type="text" className="form-input" value={collector.name} disabled style={{ backgroundColor: 'var(--color-background)' }} />
+                <label className="form-label">Collector Name</label>
+                <input type="text" className="form-input" value={collector.name} disabled />
               </div>
-
               <div className="form-group">
                 <label className="form-label">Collector Category</label>
                 <select 
@@ -658,15 +653,14 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                   value={profileData.collectorType}
                   onChange={(e) => setProfileData(p => ({ ...p, collectorType: e.target.value }))}
                 >
-                  <option value="Farmer">Farmer (Livestock Feed)</option>
-                  <option value="Compost Company">Compost Producer</option>
-                  <option value="Vermicompost Producer">Vermicompost Scraps</option>
-                  <option value="Organic Buyer">Organic Waste Buyer</option>
+                  <option value="Farmer">Farmer / Livestock Owner</option>
+                  <option value="Compost Company">Compost Company</option>
+                  <option value="Vermicompost Site">Vermicompost Facility</option>
+                  <option value="Organic Buyer">Organic Resource Buyer</option>
                 </select>
               </div>
-
               <div className="form-group">
-                <label className="form-label">Operating Radius (km)</label>
+                <label className="form-label">Operating Travel Radius (km)</label>
                 <input 
                   type="number" 
                   className="form-input" 
@@ -674,9 +668,8 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                   onChange={(e) => setProfileData(p => ({ ...p, radius: e.target.value }))}
                 />
               </div>
-
               <div className="form-group">
-                <label className="form-label">Transport Vehicle Details</label>
+                <label className="form-label">Vehicle Type</label>
                 <input 
                   type="text" 
                   className="form-input" 
@@ -684,43 +677,86 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                   onChange={(e) => setProfileData(p => ({ ...p, vehicle: e.target.value }))}
                 />
               </div>
-
-              <button type="submit" className="btn-primary" style={{ marginTop: '12px' }}>
-                Save Changes
+              <button type="submit" className="btn-primary" style={{ marginTop: '8px' }}>
+                {t('comConfigurations')}
               </button>
             </form>
           )}
 
           {activeSettingsSubPage === 'settings' && (
-            <div className="card" style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h4 style={{ fontSize: '0.9rem' }}>App Settings</h4>
-              
-              <div className="form-group">
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Languages size={14} /> Language
-                </label>
-                <select className="form-input" defaultValue="en">
-                  <option value="en">English</option>
-                  <option value="kn">ಕನ್ನಡ (Kannada)</option>
-                  <option value="hi">हिन्दी (Hindi)</option>
-                </select>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '12px' }}>
+              <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{t('darkTheme')}</span>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>Toggle dark interface layout colors.</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    style={{
+                      ...styles.toggleThemeBtn,
+                      backgroundColor: isDarkMode ? 'var(--color-primary)' : 'var(--color-border)',
+                      color: isDarkMode ? '#FFFFFF' : 'var(--color-text-secondary)'
+                    }}
+                  >
+                    {isDarkMode ? 'ACTIVE' : 'INACTIVE'}
+                  </button>
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{t('language')}</span>
+                  <select 
+                    className="form-input" 
+                    style={{ marginTop: '8px', minHeight: '38px' }}
+                    value={language}
+                    onChange={(e) => {
+                      setLanguage(e.target.value);
+                      addToast(`Language updated successfully!`, 'success');
+                    }}
+                  >
+                    <option value="en">English</option>
+                    <option value="ta">Tamil (தமிழ்)</option>
+                    <option value="kn">Kannada (ಕನ್ನಡ)</option>
+                    <option value="hi">Hindi (हिन्दी)</option>
+                  </select>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
-                <div>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Dark Theme Mode</span>
-                  <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>Toggle dark interface layout colors.</p>
+              {/* Cross-Device Sync Card */}
+              <div className="card">
+                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>☁️ Cross-Device Cloud Sync</span>
+                <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '4px', marginBottom: '12px' }}>
+                  Sync your data revisions across different devices using a shared passcode.
+                </p>
+                <div className="form-group" style={{ marginBottom: '12px' }}>
+                  <label className="form-label">Sync Passcode</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. coimbatore-collector" 
+                    className="form-input" 
+                    style={{ minHeight: '38px', fontSize: '0.8rem' }}
+                    value={syncPasscode}
+                    onChange={(e) => setSyncPasscode(e.target.value)}
+                  />
                 </div>
-                <button 
-                  onClick={() => setIsDarkMode(!isDarkMode)}
-                  style={{
-                    ...styles.toggleThemeBtn,
-                    backgroundColor: isDarkMode ? 'var(--color-primary)' : 'var(--color-border)',
-                    color: isDarkMode ? '#FFFFFF' : 'var(--color-text-secondary)'
-                  }}
-                >
-                  {isDarkMode ? 'ACTIVE' : 'INACTIVE'}
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    onClick={handleCloudUpload}
+                    className="btn-primary" 
+                    style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem' }}
+                    disabled={isSyncing}
+                  >
+                    {isSyncing ? 'Uploading...' : 'Upload to Cloud'}
+                  </button>
+                  <button 
+                    onClick={handleCloudDownload}
+                    className="btn-secondary" 
+                    style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem' }}
+                    disabled={isSyncing}
+                  >
+                    {isSyncing ? 'Downloading...' : 'Download from Cloud'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -728,28 +764,31 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
           {activeSettingsSubPage === 'help' && (
             <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="card">
-                <h4 style={{ fontSize: '0.9rem', marginBottom: '12px' }}>Help & FAQs</h4>
+                <h4 style={{ fontSize: '0.9rem', marginBottom: '12px' }}>{t('faq')}</h4>
                 <div style={styles.faqList}>
                   <div style={styles.faqItem}>
-                    <span style={styles.faqQuestion}>Q: How do I reserve waste postings?</span>
+                    <span style={styles.faqQuestion}>Q: Why can't I reserve more than one pickup?</span>
                     <p style={styles.faqAnswer}>
-                      Go to the Map or List view, search/find the school listing matching your capacity, and tap "Reserve". You have a 30-minute window to pick it up.
+                      To prevent slot hoarding and ensure fresh feed/compost material, collectors are restricted to one active reservation route at a time.
                     </p>
                   </div>
                   <div style={{ ...styles.faqItem, marginTop: '10px' }}>
-                    <span style={styles.faqQuestion}>Q: What should I do upon arriving at the school?</span>
+                    <span style={styles.faqQuestion}>Q: What is the 30-minute collector timeout?</span>
                     <p style={styles.faqAnswer}>
-                      Collect the waste from the standard organic drum, tap "Complete Waste Pickup" in the Active tab, and ask the school supervisor to confirm the collection on their portal.
+                      Once a collector reserves a school listing, they must start transit and pickup within 30 minutes, or the listing is automatically unlocked for others.
                     </p>
                   </div>
                 </div>
               </div>
 
               <form onSubmit={handleTicketSubmit} className="card">
-                <h4 style={{ fontSize: '0.9rem', marginBottom: '8px' }}>Report Issue / Support</h4>
+                <h4 style={{ fontSize: '0.9rem', marginBottom: '8px' }}>{t('support')}</h4>
+                <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
+                  Encountered gate closed, weight mismatch, or school locked? File a quick report.
+                </p>
                 <div className="form-group">
                   <textarea 
-                    placeholder="Describe transport conflicts or issue..." 
+                    placeholder="Describe your issue..." 
                     className="form-input" 
                     style={{ minHeight: '80px', resize: 'none' }}
                     value={ticketMsg}
@@ -757,12 +796,59 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                     required
                   />
                 </div>
-                <button type="submit" className="btn-primary" style={{ minHeight: '38px' }}>
-                  Send Issue Report
+                <button type="submit" className="btn-primary" style={{ minHeight: '38px', marginTop: '4px' }}>
+                  {t('submit')}
                 </button>
               </form>
             </div>
           )}
+        </div>
+      )}
+
+      {/* 6. RESERVATION CONFIRMATION MODAL */}
+      {showReserveConfirmationPost && (
+        <div style={styles.modalOverlay}>
+          <div className="card animate-scale" style={styles.confirmModal}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '8px', color: 'var(--color-text-primary)' }}>
+              {t('confirmReserve')}
+            </h3>
+            <p style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginBottom: '14px', lineHeight: '1.4' }}>
+              {t('confirmMsg')}
+            </p>
+            <div style={{ border: '1px dashed var(--color-border)', borderRadius: '8px', padding: '10px', marginBottom: '16px', backgroundColor: 'var(--color-background)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginBottom: '4px' }}>
+                <span style={{ color: 'var(--color-text-secondary)' }}>School:</span>
+                <strong style={{ color: 'var(--color-text-primary)' }}>{showReserveConfirmationPost.schoolName}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginBottom: '4px' }}>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Waste Load:</span>
+                <strong style={{ color: 'var(--color-primary)' }}>{showReserveConfirmationPost.estimatedWeight} kg</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Distance:</span>
+                <strong style={{ color: 'var(--color-text-primary)' }}>{getDistanceToPost(showReserveConfirmationPost)} km</strong>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                onClick={() => setShowReserveConfirmationPost(null)} 
+                className="btn-secondary" 
+                style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem', padding: '0 4px' }}
+              >
+                {t('cancel')}
+              </button>
+              <button 
+                onClick={() => {
+                  reserveWaste(showReserveConfirmationPost.id, collector.id);
+                  setShowReserveConfirmationPost(null);
+                }} 
+                className="btn-primary" 
+                style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem', padding: '0 4px' }}
+              >
+                {t('confirmReserve')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -775,20 +861,15 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    overflowY: 'hidden'
+    overflowY: 'hidden',
+    position: 'relative'
   },
   scrollable: {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
     overflowY: 'auto',
-    paddingBottom: 'var(--spacing-lg)'
-  },
-  flexLayout: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-    overflow: 'hidden'
+    paddingBottom: '32px'
   },
   welcomeSection: {
     marginBottom: 'var(--spacing-md)'
@@ -800,316 +881,290 @@ const styles = {
   },
   mainGreeting: {
     fontSize: '1.2rem',
-    lineHeight: '1.2'
+    fontWeight: 700
   },
   subtext: {
-    fontSize: '0.7rem',
+    fontSize: '0.65rem',
     color: 'var(--color-text-secondary)',
     fontWeight: 600,
     textTransform: 'uppercase'
   },
-  swiggyScrollContainer: {
-    display: 'flex',
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '12px',
-    overflowX: 'auto',
-    padding: '4px 0 var(--spacing-md) 0',
-    scrollSnapType: 'x mandatory'
+    marginBottom: '16px'
   },
-  swiggyCard: {
-    minWidth: '220px',
-    maxWidth: '240px',
-    flexShrink: 0,
-    scrollSnapAlign: 'start',
-    padding: '14px',
-    border: '1px solid var(--color-border)',
-    boxShadow: 'var(--shadow-subtle)',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between'
+  statsLabel: {
+    fontSize: '0.65rem',
+    color: 'var(--color-text-secondary)',
+    fontWeight: 600
   },
-  swiggyWeight: {
-    fontSize: '0.85rem',
+  statsNumber: {
+    fontSize: '1.15rem',
     fontWeight: 700,
     color: 'var(--color-primary)',
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    padding: '2px 8px',
-    borderRadius: '8px'
+    marginTop: '2px'
   },
-  swiggyDist: {
-    fontSize: '0.75rem',
-    color: 'var(--color-text-secondary)',
-    fontWeight: 500
-  },
-  swiggySchool: {
-    fontSize: '0.85rem',
-    margin: '12px 0 4px 0',
-    lineHeight: '1.3'
-  },
-  swiggyReason: {
-    fontSize: '0.7rem',
-    color: 'var(--color-text-secondary)',
-    marginBottom: '14px'
-  },
-  swiggyBtn: {
-    width: '100%',
-    minHeight: '36px',
-    fontSize: '0.75rem',
-    padding: '6px'
-  },
-  emptySwiggy: {
-    width: '100%',
-    textAlign: 'center',
-    padding: '32px 0',
-    backgroundColor: 'var(--color-background)',
-    borderRadius: '16px',
-    border: '1px dashed var(--color-border)'
-  },
-  searchContainer: {
-    marginBottom: 'var(--spacing-md)'
-  },
-  searchRow: {
-    display: 'flex',
-    gap: 'var(--spacing-sm)'
-  },
-  searchInputWrapper: {
-    flex: 1,
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center'
-  },
-  searchIcon: {
-    position: 'absolute',
-    left: '12px'
-  },
-  searchInput: {
-    paddingLeft: '38px',
-    height: '42px',
-    minHeight: 'auto'
-  },
-  iconBtn: {
-    border: '1px solid var(--color-border)',
-    borderRadius: '12px',
-    width: '42px',
-    height: '42px',
-    minHeight: 'auto',
-    minWidth: 'auto',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF'
-  },
-  filterDrawer: {
-    marginTop: '8px',
-    padding: '12px',
-    border: '1px solid var(--color-border)'
-  },
-  filterLabel: {
-    fontSize: '0.65rem',
-    fontWeight: 600,
-    color: 'var(--color-text-secondary)',
-    textTransform: 'uppercase'
-  },
-  filterInput: {
-    minHeight: '36px',
-    padding: '4px 8px',
-    fontSize: '0.75rem'
-  },
-  contentArea: {
-    flex: 1,
-    overflow: 'hidden',
-    position: 'relative'
-  },
-  mapContainer: {
-    height: '100%',
-    width: '100%',
-    borderRadius: '16px',
-    overflow: 'hidden'
-  },
-  scrollArea: {
-    height: '100%',
-    overflowY: 'auto',
-    paddingBottom: 'var(--spacing-lg)'
-  },
-  listHeader: {
+  swiggyHeaderFlex: {
     display: 'flex',
     justifyContent: 'space-between',
-    fontSize: '0.75rem',
+    alignItems: 'center',
+    marginBottom: '12px'
+  },
+  sectionTitle: {
+    fontSize: '0.9rem',
+    fontWeight: 700
+  },
+  refreshBtn: {
+    minHeight: '30px',
+    minWidth: '70px',
+    border: '1px solid var(--color-border)',
+    borderRadius: '16px',
+    fontSize: '0.7rem',
     fontWeight: 600,
-    color: 'var(--color-text-secondary)',
-    marginBottom: '10px'
+    display: 'flex',
+    gap: '4px',
+    alignItems: 'center',
+    padding: '0 8px',
+    backgroundColor: 'var(--color-card)',
+    color: 'var(--color-text-secondary)'
   },
-  sortingNote: {
-    color: 'var(--color-primary)'
+  refreshIndicator: {
+    fontSize: '0.65rem',
+    color: 'var(--color-primary)',
+    textAlign: 'center',
+    marginBottom: '8px',
+    fontWeight: 600
   },
-  listingCard: {
-    marginBottom: '12px',
-    padding: '16px',
+  swiggyList: {
     display: 'flex',
     flexDirection: 'column',
     gap: '12px'
   },
-  listingHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start'
-  },
-  schoolTitle: {
-    fontSize: '0.9rem',
-    lineHeight: '1.2',
-    flex: 1
-  },
-  listingBody: {
-    borderBottom: '1px dashed var(--color-border)',
-    paddingBottom: '10px'
-  },
-  metaRow: {
-    display: 'flex',
-    gap: '16px',
-    fontSize: '0.75rem'
-  },
-  metaLabel: {
-    color: 'var(--color-text-secondary)'
-  },
-  reasonText: {
-    fontSize: '0.75rem',
-    color: 'var(--color-text-secondary)',
-    marginTop: '4px'
-  },
-  reserveBtn: {
-    width: '100%',
-    minHeight: '40px'
-  },
-  emptyView: {
+  swiggyCard: {
+    padding: '12px',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 'var(--spacing-xl)',
-    textAlign: 'center',
-    gap: '12px',
-    color: 'var(--color-text-secondary)',
-    fontSize: '0.85rem'
+    gap: '8px',
+    border: '1px solid rgba(0,0,0,0.03)'
   },
-  sectionTitle: {
-    fontSize: '1.05rem',
-    marginBottom: 'var(--spacing-sm)'
-  },
-  subText: {
-    fontSize: '0.75rem',
-    color: 'var(--color-text-secondary)',
-    marginBottom: '12px'
-  },
-  activeHeader: {
+  swiggyMetaRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start'
   },
-  timerBox: {
+  swiggyLeftCol: {
+    flex: 1
+  },
+  swiggySchool: {
+    fontSize: '0.85rem',
+    fontWeight: 700
+  },
+  swiggyDetails: {
+    fontSize: '0.7rem',
+    color: 'var(--color-text-secondary)',
+    display: 'block',
+    marginTop: '2px'
+  },
+  swiggyActionRow: {
     display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '4px 8px',
+    marginTop: '4px'
+  },
+  swiggyReason: {
+    fontSize: '0.7rem',
+    color: 'var(--color-text-secondary)'
+  },
+  swiggyBtn: {
+    minHeight: '34px',
+    minWidth: '100px',
+    padding: '0 12px',
+    fontSize: '0.75rem',
+    fontWeight: 700,
     borderRadius: '8px',
-    fontWeight: 600
-  },
-  simControls: {
-    marginTop: '10px',
-    backgroundColor: 'var(--color-background)',
-    padding: '8px',
-    borderRadius: '8px',
-    border: '1px solid var(--color-border)'
-  },
-  simBtn: {
-    width: '100%',
-    minHeight: '32px',
-    fontSize: '0.65rem',
-    color: 'var(--color-primary)',
-    backgroundColor: 'transparent',
-    padding: 0
-  },
-  actionButtonGroup: {
-    display: 'flex',
-    gap: '10px'
-  },
-  awaitingBox: {
-    display: 'flex',
-    alignItems: 'center',
-    backgroundColor: 'var(--color-background)',
-    padding: '10px',
-    borderRadius: '8px'
+    width: 'auto'
   },
   emptyContainer: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 'var(--spacing-xl)',
+    padding: '36px 16px',
     textAlign: 'center',
-    flex: 1
+    fontSize: '0.8rem',
+    color: 'var(--color-text-secondary)'
   },
-  notifCard: {
-    marginBottom: '8px',
-    padding: '12px',
+  flexLayout: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '4px'
+    flex: 1,
+    overflow: 'hidden'
   },
-  notifTitle: {
+  searchContainer: {
+    marginBottom: '12px'
+  },
+  searchRow: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center'
+  },
+  searchInputWrapper: {
+    flex: 1,
+    position: 'relative'
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: '12px',
+    top: '14px',
+    marginTop: '2px'
+  },
+  searchInput: {
+    paddingLeft: '36px',
     fontSize: '0.8rem',
-    fontWeight: 600
+    minHeight: '44px'
   },
-  notifMsg: {
+  iconBtn: {
+    width: '44px',
+    height: '44px',
+    minWidth: 'auto',
+    minHeight: 'auto',
+    borderRadius: '10px',
+    border: '1px solid var(--color-border)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'var(--color-text-secondary)',
+    backgroundColor: '#FFFFFF'
+  },
+  filterDrawer: {
+    marginTop: '8px',
+    padding: '12px'
+  },
+  filterLabel: {
+    fontSize: '0.65rem',
+    fontWeight: 600,
+    color: 'var(--color-text-secondary)',
+    marginBottom: '4px'
+  },
+  filterInput: {
+    minHeight: '34px',
+    fontSize: '0.75rem',
+    padding: '4px 8px'
+  },
+  contentArea: {
+    flex: 1,
+    position: 'relative',
+    overflow: 'hidden'
+  },
+  mapWrapperRelative: {
+    position: 'relative',
+    height: '100%',
+    width: '100%'
+  },
+  sheetHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottom: '1px solid var(--color-border)',
+    paddingBottom: '8px',
+    marginBottom: '8px'
+  },
+  sheetSchool: {
+    fontSize: '0.9rem',
+    fontWeight: 700
+  },
+  sheetCloseBtn: {
+    fontSize: '1.5rem',
+    color: 'var(--color-text-secondary)',
+    minHeight: '24px',
+    minWidth: '24px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  sheetBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  sheetMeta: {
+    display: 'flex',
+    justifyContent: 'space-between',
     fontSize: '0.75rem',
     color: 'var(--color-text-secondary)'
   },
-  notifTime: {
-    fontSize: '0.6rem',
+  sheetReason: {
+    fontSize: '0.75rem',
     color: 'var(--color-text-secondary)',
-    textAlign: 'right'
+    margin: '4px 0'
   },
-  popupContent: {
+  sheetReserveBtn: {
+    minHeight: '40px',
+    marginTop: '4px'
+  },
+  scrollArea: {
+    height: '100%',
+    overflowY: 'auto',
+    paddingBottom: '24px'
+  },
+  activeHeader: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-    minWidth: '150px'
+    justifyContent: 'space-between',
+    alignItems: 'flex-start'
   },
-  popupTitle: {
-    fontSize: '0.85rem',
-    margin: 0
-  },
-  popupText: {
-    fontSize: '0.75rem',
-    margin: 0
-  },
-  popupBtn: {
-    minHeight: '32px',
-    fontSize: '0.75rem',
-    padding: '4px'
-  },
-  grid2: {
+  timerBadge: {
     display: 'flex',
+    alignItems: 'center',
+    padding: '4px 8px',
+    borderRadius: '12px',
+    fontWeight: 700,
+    fontSize: '0.75rem'
+  },
+  simControls: {
+    marginTop: '10px'
+  },
+  simBtn: {
+    minHeight: '28px',
+    fontSize: '0.65rem',
+    padding: '2px 8px',
+    borderColor: '#FFE082',
+    backgroundColor: '#FFFDE7',
+    color: '#F57F17',
+    display: 'inline-flex',
+    borderRadius: '6px',
+    fontWeight: 600
+  },
+  activeActionsPanel: {
+    marginTop: '12px',
+    borderTop: '1px solid var(--color-border)',
+    paddingTop: '10px'
+  },
+  actionRowGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '10px'
   },
-  subPageNav: {
+  subSettingsHeader: {
     display: 'flex',
     borderBottom: '1px solid var(--color-border)',
     marginBottom: '8px'
   },
-  subPageNavBtn: {
+  subSettingsBtn: {
     flex: 1,
-    minHeight: '40px',
-    fontSize: '0.8rem',
-    fontWeight: 600,
-    color: 'var(--color-text-secondary)',
-    cursor: 'pointer',
-    borderRadius: 0
+    fontSize: '0.75rem',
+    padding: '10px 0',
+    textAlign: 'center',
+    cursor: 'pointer'
   },
   toggleThemeBtn: {
     minHeight: '32px',
-    padding: '0 var(--spacing-md)',
+    minWidth: '70px',
     fontSize: '0.7rem',
     fontWeight: 700,
-    borderRadius: '8px',
-    minWidth: 'auto'
+    borderRadius: '16px',
+    display: 'inline-flex'
   },
   faqList: {
     display: 'flex',
@@ -1117,45 +1172,36 @@ const styles = {
     gap: '8px'
   },
   faqItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px'
+    fontSize: '0.75rem'
   },
   faqQuestion: {
-    fontSize: '0.8rem',
     fontWeight: 600,
-    color: 'var(--color-primary)'
+    color: 'var(--color-text-primary)'
   },
   faqAnswer: {
-    fontSize: '0.75rem',
-    lineHeight: '1.3',
-    color: 'var(--color-text-secondary)'
-  },
-  barChartContainer: {
-    display: 'flex',
-    alignItems: 'flex-end',
-    justifyContent: 'space-around',
-    height: '120px',
-    paddingTop: '20px',
-    borderBottom: '1px solid var(--color-border)',
-    paddingBottom: '4px'
-  },
-  barItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    width: '40px'
-  },
-  bar: {
-    width: '24px',
-    backgroundColor: 'var(--color-secondary)',
-    borderRadius: '4px 4px 0 0',
-    transition: 'height 0.3s ease'
-  },
-  barLabel: {
-    fontSize: '0.65rem',
     color: 'var(--color-text-secondary)',
-    marginTop: '6px',
-    fontWeight: 600
+    marginTop: '2px',
+    lineHeight: '1.3'
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2000,
+    padding: '20px'
+  },
+  confirmModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '16px',
+    padding: '20px',
+    width: '100%',
+    maxWidth: '340px',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.18)'
   }
 };

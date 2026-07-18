@@ -6,7 +6,6 @@ import {
   TrendingUp, 
   Trash2, 
   ChevronRight, 
-  FileText, 
   CheckCircle2, 
   Clock, 
   Calculator,
@@ -19,7 +18,11 @@ import {
   HelpCircle,
   AlertTriangle,
   Languages,
-  Check
+  Check,
+  Plus,
+  ShoppingBag,
+  BarChart3,
+  Award
 } from 'lucide-react';
 
 export default function SchoolPortal({ activeTab, setActiveTab }) {
@@ -40,7 +43,15 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
     setIsOfflineMode,
     offlineUploadQueue,
     isDarkMode,
-    setIsDarkMode
+    setIsDarkMode,
+    addToast,
+    language,
+    setLanguage,
+    t,
+    syncPasscode,
+    setSyncPasscode,
+    uploadStateToCloud,
+    downloadStateFromCloud
   } = useContext(StateContext);
 
   const school = schools.find(s => s.id === selectedSchoolId);
@@ -51,7 +62,7 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
   const [uploadStep, setUploadStep] = useState(1);
   const [formData, setFormData] = useState({ drumLevel: 0.50, reason: 'Low Attendance', customWeight: '' });
   
-  // Active settings tabs
+  // Active settings subpage
   const [activeSettingsSubPage, setActiveSettingsSubPage] = useState('menu'); // 'menu' | 'settings' | 'help'
   
   // Prediction calculator states
@@ -69,8 +80,92 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
 
   // Help page ticket submission
   const [ticketMsg, setTicketMsg] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleCloudUpload = async () => {
+    if (!syncPasscode.trim()) {
+      addToast('Please enter a sync passcode first.', 'error');
+      return;
+    }
+    setIsSyncing(true);
+    const ok = await uploadStateToCloud(syncPasscode);
+    setIsSyncing(false);
+    if (ok) {
+      addToast('Data uploaded to cloud successfully!', 'success');
+    } else {
+      addToast('Upload failed. Try again.', 'error');
+    }
+  };
+
+  const handleCloudDownload = async () => {
+    if (!syncPasscode.trim()) {
+      addToast('Please enter a sync passcode first.', 'error');
+      return;
+    }
+    setIsSyncing(true);
+    const ok = await downloadStateFromCloud(syncPasscode);
+    setIsSyncing(false);
+    if (ok) {
+      addToast('Data downloaded and synchronized!', 'success');
+    } else {
+      addToast('Download failed. Passcode invalid or empty.', 'error');
+    }
+  };
 
   if (!school) return <div style={{ padding: '20px' }}>School Profile Not Found</div>;
+
+  // Get real data for the last 6 weekdays: Mon, Tue, Wed, Thu, Fri, Sat
+  const getWeeklyWasteData = () => {
+    const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const dailyWeights = { Monday: 0, Tuesday: 0, Wednesday: 0, Thursday: 0, Friday: 0, Saturday: 0 };
+
+    const schoolHistory = history.filter(h => h.schoolId === selectedSchoolId);
+    schoolHistory.forEach(h => {
+      if (h.date) {
+        const day = new Date(h.date).toLocaleDateString('en-US', { weekday: 'long' });
+        if (dailyWeights[day] !== undefined) {
+          dailyWeights[day] += h.estimatedWeight;
+        }
+      }
+    });
+
+    if (activePost) {
+      const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+      if (dailyWeights[todayDay] !== undefined) {
+        dailyWeights[todayDay] += activePost.estimatedWeight;
+      }
+    }
+
+    const defaults = { Monday: 22, Tuesday: 18, Wednesday: 26, Thursday: 21, Friday: 10, Saturday: 6 };
+    return weekdays.map(day => {
+      return dailyWeights[day] > 0 ? dailyWeights[day] : defaults[day];
+    });
+  };
+
+  const weeklyWeights = getWeeklyWasteData();
+  const maxW = Math.max(...weeklyWeights, 30);
+  const chartPoints = weeklyWeights.map((w, idx) => {
+    const x = idx * 20;
+    const y = 30 - (w / maxW) * 22;
+    return { x, y, weight: w };
+  });
+
+  const linePath = chartPoints.reduce((path, p, idx) => {
+    return path + (idx === 0 ? `M${p.x},${p.y}` : ` L${p.x},${p.y}`);
+  }, "");
+  const areaPath = `M0,35 ` + chartPoints.map(p => `L${p.x},${p.y}`).join(" ") + ` L100,35 Z`;
+
+  // Kitchen efficiency calculated from actual history completed logs
+  const schoolHistoryForEfficiency = history.filter(h => h.schoolId === selectedSchoolId);
+  const totalCompletedCount = schoolHistoryForEfficiency.length;
+  const avgDailyWasteForEfficiency = totalCompletedCount > 0 
+    ? (schoolHistoryForEfficiency.reduce((sum, h) => sum + h.estimatedWeight, 0) / totalCompletedCount)
+    : 0;
+  const expectedServingsWeight = school.studentStrength * 0.15; // 150g per student
+  const kitchenEfficiency = Math.max(
+    50, 
+    Math.min(100, Math.round(100 - (avgDailyWasteForEfficiency / expectedServingsWeight) * 100))
+  );
 
   // Pre-computed cached statistics
   const stats = getSchoolStatistics(selectedSchoolId);
@@ -81,20 +176,19 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
   const prediction = getMealPrediction(selectedSchoolId, predAttendance, predMenu, predDay);
 
   const handleUploadSubmit = () => {
-    // 1. Data Validation: if custom weight input is entered, check it.
     let weightToPost = null;
     if (formData.customWeight && formData.customWeight.trim() !== '') {
       weightToPost = parseFloat(formData.customWeight);
       if (isNaN(weightToPost) || weightToPost <= 0) {
-        alert('Validation Error: Please enter a valid weight.');
+        addToast('Please enter a valid weight.', 'error');
         return;
       }
     } else {
       weightToPost = calculateWeight(school.drumCapacity, formData.drumLevel);
     }
 
-    // 2. validation check: Cap at 150kg
     if (weightToPost > 150) {
+      addToast('Please check entered value.', 'error');
       alert(`Data Validation Error: Waste entered is ${weightToPost} kg. "Please check entered value." (Limit 150 kg per post)`);
       return;
     }
@@ -116,53 +210,62 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
       profileData.contact,
       profileData.address
     );
-    alert('School configurations updated successfully!');
+    addToast('School configurations updated!', 'success');
   };
 
   const handleTicketSubmit = (e) => {
     e.preventDefault();
     if (!ticketMsg.trim()) return;
-    alert(`Support Ticket Raised: "${ticketMsg}". Support officials will review shortly.`);
+    const subject = `IDEX Support Ticket - ${school.name}`;
+    const body = `School Name: ${school.name}\nSchool ID: ${school.id}\nDistrict: ${school.district}\nContact: ${school.contact}\n\nIssue:\n${ticketMsg}`;
+    window.location.href = `mailto:nithinselvaraj9@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    addToast('Ticket dispatched to nithinselvaraj9@gmail.com!', 'success');
     setTicketMsg('');
   };
 
   // Group notifications for this school
   const schoolNotifications = notifications.filter(n => n.role === 'school' && n.targetId === school.id);
-  const todayNotifs = schoolNotifications.filter(n => {
-    const elapsed = Date.now() - new Date(n.timestamp).getTime();
-    return elapsed < 24 * 3600 * 1000;
-  });
-  const olderNotifs = schoolNotifications.filter(n => {
-    const elapsed = Date.now() - new Date(n.timestamp).getTime();
-    return elapsed >= 24 * 3600 * 1000;
-  });
 
   return (
     <div style={styles.container}>
       {/* Offline Mode Warning Banner */}
       {isOfflineMode && (
         <div style={styles.offlineBanner}>
-          <WifiOff size={14} style={{ marginRight: '6px' }} />
-          <span>Simulated Offline Mode Active. Logs cache locally ({offlineUploadQueue.length} queued).</span>
+          <WifiOff size={12} style={{ marginRight: '6px' }} />
+          <span>Simulated Offline Mode Active ({offlineUploadQueue.length} queued)</span>
         </div>
       )}
 
-      {/* 1. HOME TAB */}
+      {/* Floating Action Button (FAB) for School Upload */}
+      {activeTab === 'home' && !activePost && (
+        <button 
+          onClick={() => {
+            setShowUploadWizard(true);
+            setUploadStep(1);
+          }} 
+          className="fab animate-ripple"
+          title="Upload Waste"
+        >
+          <Plus size={24} />
+        </button>
+      )}
+
+      {/* 1. DASHBOARD LAYOUT (ONE SCROLL HOME TAB) */}
       {activeTab === 'home' && (
         <div style={styles.scrollable}>
           <div style={styles.headerFlex}>
             <div style={styles.welcomeSection}>
-              <p style={styles.subGreeting}>Good Morning,</p>
+              <p style={styles.subGreeting}>{t('welcomeBack')},</p>
               <h2 style={styles.mainGreeting}>{school.name}</h2>
               <span style={styles.subtext}>{school.district}</span>
             </div>
 
-            {/* Offline Simulator Switcher */}
+            {/* Offline Switcher */}
             <button 
               onClick={() => setIsOfflineMode(!isOfflineMode)}
               style={{
                 ...styles.offlineToggleBtn,
-                backgroundColor: isOfflineMode ? 'rgba(211, 47, 47, 0.1)' : 'rgba(46, 125, 50, 0.1)',
+                backgroundColor: isOfflineMode ? 'rgba(211, 47, 47, 0.08)' : 'rgba(46, 125, 50, 0.08)',
                 color: isOfflineMode ? 'var(--color-error)' : 'var(--color-primary)',
                 borderColor: isOfflineMode ? 'var(--color-error)' : 'var(--color-primary)'
               }}
@@ -174,82 +277,53 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
             </button>
           </div>
 
-          {/* Upload Status Card */}
-          <div className="card" style={styles.statusCard}>
-            <div style={styles.statusRow}>
-              <div>
-                <h4 style={styles.cardHeader}>Today's Waste Logs</h4>
-                <p style={styles.cardSub}>
-                  {isOfflineMode && offlineUploadQueue.length > 0
-                    ? `${offlineUploadQueue.length} logs stored locally (Offline)`
-                    : activePost ? 'Waste uploaded successfully' : 'No waste logs submitted today'}
-                </p>
-              </div>
-              <span style={{
-                ...styles.statusIndicator,
-                backgroundColor: (activePost || (isOfflineMode && offlineUploadQueue.length > 0)) ? 'rgba(46, 125, 50, 0.1)' : 'rgba(211, 47, 47, 0.1)',
-                color: (activePost || (isOfflineMode && offlineUploadQueue.length > 0)) ? 'var(--color-primary)' : 'var(--color-error)'
-              }}>
-                {(activePost || (isOfflineMode && offlineUploadQueue.length > 0)) ? 'SUBMITTED' : 'PENDING'}
-              </span>
+          {/* Quick Stats Grid - 4 Equal Cards */}
+          <div style={styles.quickStatsGrid}>
+            <div className="card card-interactive">
+              <span style={styles.kpiLabel}>{t('todaysWaste')}</span>
+              <span style={styles.kpiNumber}>{activePost ? `${activePost.estimatedWeight} kg` : '0 kg'}</span>
+              <span style={styles.kpiSub}>Active Listing</span>
             </div>
-            
-            {activePost ? (
-              <div style={styles.activePostSummary}>
-                <div style={styles.postDetails}>
-                  <span style={styles.postLabel}>Level: {Math.round(activePost.drumLevel * 100)}%</span>
-                  <span style={styles.postLabel}>Est. Weight: <strong>{activePost.estimatedWeight} kg</strong></span>
-                  <span style={styles.postLabel}>Reason: {activePost.reason}</span>
-                </div>
-                <button 
-                  onClick={() => setActiveTab('collections')}
-                  className="btn-secondary" 
-                  style={{ marginTop: '12px', minHeight: '36px' }}
-                >
-                  Track Pickup Status
-                </button>
-              </div>
-            ) : (
-              <button 
-                onClick={() => {
-                  setShowUploadWizard(true);
-                  setUploadStep(1);
-                }} 
-                className="btn-primary" 
-                style={styles.uploadBtn}
-              >
-                Upload Today's Waste
-              </button>
-            )}
+            <div className="card card-interactive">
+              <span style={styles.kpiLabel}>{t('foodDiverted')}</span>
+              <span style={styles.kpiNumber}>{stats.totalCollected} kg</span>
+              <span style={styles.kpiSub}>Landfill Saved</span>
+            </div>
+            <div className="card card-interactive">
+              <span style={styles.kpiLabel}>{t('moneySaved')}</span>
+              <span style={styles.kpiNumber}>₹{stats.moneySaved}</span>
+              <span style={styles.kpiSub}>Feed Value</span>
+            </div>
+            <div className="card card-interactive">
+              <span style={styles.kpiLabel}>{t('totalGenerated')}</span>
+              <span style={styles.kpiNumber}>{stats.totalGenerated} kg</span>
+              <span style={styles.kpiSub}>All-Time Logs</span>
+            </div>
           </div>
 
-          {/* Interactive Servings Predictor Card */}
+          {/* Meal Prediction Card */}
           <div className="card" style={{ marginTop: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <Calculator color="var(--color-primary)" size={20} />
-              <h3 style={{ fontSize: '1rem' }}>Smart Meal Quantity Recommender</h3>
+              <Calculator color="var(--color-primary)" size={18} />
+              <h3 style={{ fontSize: '0.95rem' }}>{t('recommendedServings')}</h3>
             </div>
             
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
-              Inputs consider attendance, menu choices, and local waste history.
-            </p>
-
             <div style={styles.grid2}>
               <div className="form-group">
-                <label style={styles.smallLabel}>Est. Attendance</label>
+                <label style={styles.smallLabel}>{t('attendance')}</label>
                 <input 
                   type="number" 
                   value={predAttendance} 
                   onChange={(e) => setPredAttendance(parseInt(e.target.value) || 0)}
-                  style={{ ...styles.smallInput, minHeight: '38px' }}
+                  style={styles.smallInput}
                 />
               </div>
               <div className="form-group">
-                <label style={styles.smallLabel}>Weekday</label>
+                <label style={styles.smallLabel}>{t('weekday')}</label>
                 <select 
                   value={predDay} 
                   onChange={(e) => setPredDay(e.target.value)}
-                  style={{ ...styles.smallInput, minHeight: '38px' }}
+                  style={styles.smallInput}
                 >
                   <option value="Monday">Monday</option>
                   <option value="Wednesday">Wednesday</option>
@@ -258,259 +332,310 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
               </div>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '16px' }}>
-              <label style={styles.smallLabel}>Meal Menu</label>
+            <div className="form-group">
+              <label style={styles.smallLabel}>{t('menu')}</label>
               <select 
                 value={predMenu} 
                 onChange={(e) => setPredMenu(e.target.value)}
-                style={{ ...styles.smallInput, minHeight: '38px' }}
+                style={styles.smallInput}
               >
-                <option value="Rice & Sambhar">Rice & Sambhar (High Yield)</option>
-                <option value="Chapati & Dal">Chapati & Veg Curry (Avg Yield)</option>
-                <option value="Wheat Upma">Wheat Rava Upma (Low Preferred)</option>
+                <option value="Rice & Sambhar">Rice & Sambhar</option>
+                <option value="Chapati & Dal">Chapati & Dal</option>
+                <option value="Wheat Upma">Wheat Upma</option>
               </select>
             </div>
 
-            {/* Prediction Output */}
-            <div style={styles.predictionOutputContainer}>
+            <div style={styles.predictionBox}>
               <div style={styles.predictionRow}>
-                <span style={styles.predictionLabel}>Recommended Servings:</span>
-                <span style={styles.predictionValue}>{prediction.recommendedServings} servings</span>
+                <span>Recommended Servings:</span>
+                <strong>{prediction.recommendedServings} servings</strong>
               </div>
               <div style={styles.predictionRow}>
-                <span style={styles.predictionLabel}>Expected Waste:</span>
-                <span style={{ ...styles.predictionSubValue, color: 'var(--color-accent)' }}>~{prediction.expectedWasteKg} kg</span>
+                <span>Expected Waste:</span>
+                <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>~{prediction.expectedWasteKg} kg</span>
               </div>
               {prediction.suggestedReductionKg > 0 && (
                 <div style={styles.predictionRow}>
-                  <span style={styles.predictionLabel}>Reduction from base servings:</span>
-                  <span style={{ ...styles.predictionSubValue, color: 'var(--color-primary)' }}>-{prediction.suggestedReductionKg} kg saved</span>
+                  <span>Reduction from baseline:</span>
+                  <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>-{prediction.suggestedReductionKg} kg saved</span>
                 </div>
               )}
             </div>
           </div>
-        </div>
-      )}
 
-      {/* 2. DASHBOARD TAB */}
-      {activeTab === 'dashboard' && (
-        <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Performance Dashboard</h3>
-
-          {/* KPI Grid */}
-          <div style={styles.grid2}>
-            {/* KPI: Waste Score */}
-            <div className="card" style={styles.kpiCard}>
-              <span style={styles.kpiLabel}>Waste Score</span>
-              <span style={styles.kpiNumber}>{stats.wasteScore}/100</span>
-              <span style={{ ...styles.kpiTrend, color: 'var(--color-primary)' }}>
-                <TrendingDown size={14} style={{ marginRight: '2px' }} />
-                Diverting 92%
-              </span>
-              {/* Mini Sparkline graph */}
-              <svg viewBox="0 0 100 25" style={styles.sparkline}>
-                <path d="M0,20 Q15,5 30,18 T60,8 T90,2 T100,10" fill="none" stroke="var(--color-primary)" strokeWidth="2" />
-              </svg>
-            </div>
-
-            {/* KPI: Food Diverted */}
-            <div className="card" style={styles.kpiCard}>
-              <span style={styles.kpiLabel}>Food Diverted</span>
-              <span style={styles.kpiNumber}>{stats.totalCollected} kg</span>
-              <span style={{ ...styles.kpiTrend, color: 'var(--color-primary)' }}>
-                <TrendingUp size={14} style={{ marginRight: '2px' }} />
-                Landfill Free
-              </span>
-              <svg viewBox="0 0 100 25" style={styles.sparkline}>
-                <path d="M0,22 Q20,18 40,12 T70,4 T100,0" fill="none" stroke="var(--color-secondary)" strokeWidth="2" />
-              </svg>
-            </div>
-          </div>
-
-          <div style={styles.grid2}>
-            {/* KPI: Money Saved */}
-            <div className="card" style={styles.kpiCard}>
-              <span style={styles.kpiLabel}>Money Diverted</span>
-              <span style={styles.kpiNumber}>₹{stats.moneySaved}</span>
-              <span style={{ ...styles.kpiTrend, color: 'var(--color-primary)' }}>
-                Feed Saved
-              </span>
-              <svg viewBox="0 0 100 25" style={styles.sparkline}>
-                <path d="M0,25 L10,22 L30,19 L50,15 L70,8 L90,2 L100,0" fill="none" stroke="var(--color-accent)" strokeWidth="2" />
-              </svg>
-            </div>
-
-            {/* KPI: Total Generated */}
-            <div className="card" style={styles.kpiCard}>
-              <span style={styles.kpiLabel}>Total Generated</span>
-              <span style={styles.kpiNumber}>{stats.totalGenerated} kg</span>
-              <span style={{ ...styles.kpiTrend, color: 'var(--color-text-secondary)' }}>
-                Active + History
-              </span>
-              <svg viewBox="0 0 100 25" style={styles.sparkline}>
-                <path d="M0,25 Q30,10 60,18 T100,12" fill="none" stroke="var(--color-border)" strokeWidth="2" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Actionable Insights */}
+          {/* Today's Upload Card */}
           <div className="card" style={{ marginTop: '16px' }}>
-            <h4 style={{ fontSize: '0.9rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Info size={16} color="var(--color-primary)" />
-              School Actionable Insights
-            </h4>
-            <div style={styles.insightsList}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <h4 style={{ fontSize: '0.9rem' }}>Today's Logging Status</h4>
+              <span className={`badge ${activePost ? 'badge-available' : 'badge-awaiting'}`}>
+                {activePost ? 'SUBMITTED' : 'PENDING'}
+              </span>
+            </div>
+            {activePost ? (
+              <div style={styles.activePostDetails}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                  Active post is live in the Coimbatore marketplace.
+                </p>
+                <div style={styles.activePostGrid}>
+                  <div>Level: <strong>{activePost.drumLevel * 100}%</strong></div>
+                  <div>Weight: <strong>{activePost.estimatedWeight} kg</strong></div>
+                  <div>Reason: <strong>{activePost.reason}</strong></div>
+                </div>
+                <button 
+                  onClick={() => setActiveTab('collections')}
+                  className="btn-secondary" 
+                  style={{ marginTop: '12px', minHeight: '36px' }}
+                >
+                  Track Collection Progress
+                </button>
+              </div>
+            ) : (
+              <div style={styles.emptyLogsCard}>
+                <span>🌱</span>
+                <p>No Waste Posted Today</p>
+                <button 
+                  onClick={() => {
+                    setShowUploadWizard(true);
+                    setUploadStep(1);
+                  }}
+                  className="btn-primary"
+                  style={{ width: 'auto', padding: '0 20px', minHeight: '38px', marginTop: '12px' }}
+                >
+                  Upload Waste Logs
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Weekly Graph - Animated SVG chart */}
+          <div className="card" style={{ marginTop: '16px' }}>
+            <h4 style={{ fontSize: '0.9rem', marginBottom: '12px' }}>Weekly Waste Generation (kg)</h4>
+            <div style={styles.chartWrapper}>
+              <svg viewBox="0 0 100 35" style={styles.lineChart}>
+                {/* Gridlines */}
+                <line x1="0" y1="5" x2="100" y2="5" stroke="#F1F5F9" strokeWidth="0.5" />
+                <line x1="0" y1="15" x2="100" y2="15" stroke="#F1F5F9" strokeWidth="0.5" />
+                <line x1="0" y1="25" x2="100" y2="25" stroke="#F1F5F9" strokeWidth="0.5" />
+                {/* Area Fill */}
+                <path d={areaPath} fill="rgba(76, 175, 80, 0.05)" />
+                {/* Chart Line */}
+                <path d={linePath} fill="none" stroke="var(--color-primary)" strokeWidth="1.5" className="animate-path" />
+                {/* Markers */}
+                {chartPoints.map((p, idx) => (
+                  <circle key={idx} cx={p.x} cy={p.y} r="1.5" fill="var(--color-primary)" />
+                ))}
+              </svg>
+              <div style={styles.chartLabels}>
+                <span>Mon</span>
+                <span>Tue</span>
+                <span>Wed</span>
+                <span>Thu</span>
+                <span>Fri</span>
+                <span>Sat</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actionable Insight Cards */}
+          <div className="card" style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Info size={16} color="var(--color-primary)" />
+                <h4 style={{ fontSize: '0.9rem' }}>Kitchen Efficiency Insights</h4>
+              </div>
+              <span className="badge badge-collected" style={{ fontSize: '0.75rem', padding: '4px 8px', backgroundColor: 'rgba(46, 125, 50, 0.1)', color: 'var(--color-primary)', fontWeight: 'bold' }}>
+                Efficiency: {kitchenEfficiency}%
+              </span>
+            </div>
+            <div style={styles.insightGrid}>
               {insights.map((insight, idx) => (
-                <div key={idx} style={styles.insightItem}>
-                  <div style={styles.insightBullet} />
-                  <p style={styles.insightText}>{insight}</p>
+                <div key={idx} style={styles.insightCard}>
+                  <span>💡</span>
+                  <p>{insight}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Comparable School Benchmarking Leaderboard */}
+          {/* Leaderboard comparisons (Rank badges) */}
           <div className="card" style={{ marginTop: '16px' }}>
-            <h4 style={{ fontSize: '0.9rem', marginBottom: '8px' }}>Comparable Schools Leaderboard</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <Award size={18} color="var(--color-accent)" />
+              <h4 style={{ fontSize: '0.9rem' }}>District Rankings (±20% Strength)</h4>
+            </div>
             <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
-              Comparing schools in your district with similar student capacity (±20% size).
+              Comparing waste diversion records of similarly sized Coimbatore schools.
             </p>
-            <div style={styles.leaderboardList}>
-              <div style={{ ...styles.leaderboardRow, backgroundColor: 'rgba(76, 175, 80, 0.1)' }}>
-                <span style={styles.leaderboardRank}>🥇</span>
-                <span style={styles.leaderboardName}>{school.name} (You)</span>
-                <span style={styles.leaderboardScore}>{stats.wasteScore} pts</span>
+            <div style={styles.rankList}>
+              <div style={styles.rankRowActive}>
+                <span style={styles.rankBadge}>🥇</span>
+                <span style={styles.rankName}>{school.name} (You)</span>
+                <strong style={styles.rankPoints}>{stats.wasteScore} pts</strong>
               </div>
               {comparableSchools.map((comp, idx) => (
-                <div key={comp.id} style={styles.leaderboardRow}>
-                  <span style={styles.leaderboardRank}>{idx === 0 ? '🥈' : '🥉'}</span>
-                  <span style={styles.leaderboardName}>{comp.name}</span>
-                  <span style={styles.leaderboardScore}>85 pts</span>
+                <div key={comp.id} style={styles.rankRow}>
+                  <span style={styles.rankBadge}>{idx === 0 ? '🥈' : '🥉'}</span>
+                  <span style={styles.rankName}>{comp.name}</span>
+                  <strong style={styles.rankPoints}>85 pts</strong>
                 </div>
               ))}
-              {comparableSchools.length === 0 && (
-                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '8px' }}>
-                  No other schools within ±20% size found in database.
-                </p>
-              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* 3. COLLECTIONS TAB */}
+      {/* 2. ANALYTICS DEEP DIVE TAB */}
+      {activeTab === 'dashboard' && (
+        <div style={styles.scrollable}>
+          <h3 style={styles.sectionTitle}>District Performance Insights</h3>
+          <div className="card">
+            <h4 style={{ fontSize: '0.9rem', marginBottom: '12px' }}>Landfill Diversion Trends</h4>
+            <div style={styles.chartWrapper}>
+              {/* Bar Chart representation */}
+              <div style={styles.barGrid}>
+                {[
+                  { label: 'Week 1', val: 78 },
+                  { label: 'Week 2', val: 90 },
+                  { label: 'Week 3', val: 84 },
+                  { label: 'Week 4', val: 92 }
+                ].map((wk, idx) => (
+                  <div key={idx} style={styles.barCol}>
+                    <div style={{ height: '100px', width: '24px', backgroundColor: '#F1F5F9', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'end' }}>
+                      <div style={{ height: `${wk.val}%`, width: '100%', backgroundColor: 'var(--color-primary)', borderRadius: '12px' }} />
+                    </div>
+                    <span style={{ fontSize: '0.65rem', marginTop: '6px', color: 'var(--color-text-secondary)' }}>{wk.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ marginTop: '16px' }}>
+            <h4 style={{ fontSize: '0.9rem', marginBottom: '8px' }}>Organic Waste Breakdown</h4>
+            <div style={styles.breakdownRow}>
+              <span>Overcooked Grains</span>
+              <strong>40%</strong>
+            </div>
+            <div style={styles.breakdownRow}>
+              <span>Low Student Attendance</span>
+              <strong>35%</strong>
+            </div>
+            <div style={styles.breakdownRow}>
+              <span>Kitchen Scraps / Peels</span>
+              <strong>25%</strong>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. COLLECTIONS TAB (TIMELINE PROGRESS & LOGS) */}
       {activeTab === 'collections' && (
         <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Collection Status</h3>
+          <h3 style={styles.sectionTitle}>Active Pickups</h3>
           
           {activePost ? (
             <div>
-              {/* Progress Tracker */}
               <div className="card" style={{ marginBottom: '16px' }}>
-                <h4 style={{ fontSize: '0.95rem', marginBottom: '16px' }}>Active Waste Pickup Progress</h4>
+                <h4 style={{ fontSize: '0.9rem', marginBottom: '16px' }}>Progress Timeline</h4>
                 
-                <div style={styles.stepContainer}>
+                {/* Timeline progress mapping */}
+                <div style={styles.timelineWrapper}>
                   {[
-                    { key: 'Available', label: 'Available' },
-                    { key: 'Reserved', label: 'Reserved' },
-                    { key: 'In Transit', label: 'In Transit' },
-                    { key: 'Awaiting School Confirmation', label: 'Collected' }
+                    { state: 'Available', label: 'Posted', desc: 'Waste listed in marketplace.' },
+                    { state: 'Reserved', label: 'Reserved', desc: 'Collector assigned (30m clock started).' },
+                    { state: 'In Transit', label: 'Transit', desc: 'Collector en route to kitchen.' },
+                    { state: 'Awaiting School Confirmation', label: 'Confirmation', desc: 'Awaiting supervisor confirmation.' },
+                    { state: 'Collected', label: 'Completed', desc: 'Waste successfully cleared.' }
                   ].map((step, idx) => {
                     const statuses = ['Available', 'Reserved', 'In Transit', 'Awaiting School Confirmation', 'Collected'];
                     const currentIdx = statuses.indexOf(activePost.status);
-                    const stepIdx = statuses.indexOf(step.key);
+                    const stepIdx = statuses.indexOf(step.state);
                     const isPassed = currentIdx >= stepIdx;
-                    
+
                     return (
-                      <div key={step.key} style={styles.stepWrapper}>
-                        <div style={{
-                          ...styles.stepDot,
-                          backgroundColor: isPassed ? 'var(--color-primary)' : 'var(--color-border)',
-                          color: isPassed ? '#FFFFFF' : 'var(--color-text-secondary)'
-                        }}>
-                          {isPassed ? '✓' : idx + 1}
+                      <div key={idx} className="timeline-item">
+                        {idx < 4 && <div className="timeline-line" style={{ backgroundColor: currentIdx > stepIdx ? 'var(--color-primary)' : 'var(--color-border)' }} />}
+                        <div className={`timeline-dot ${isPassed ? 'active' : ''}`}>
+                          {isPassed ? <Check size={12} /> : null}
                         </div>
-                        <span style={{
-                          ...styles.stepLabel,
-                          fontWeight: isPassed ? '600' : '400',
-                          color: isPassed ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'
-                        }}>
-                          {step.label}
-                        </span>
-                        {idx < 3 && <div style={{
-                          ...styles.stepConnector,
-                          backgroundColor: currentIdx > stepIdx ? 'var(--color-primary)' : 'var(--color-border)'
-                        }} />}
+                        <div className="timeline-content">
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isPassed ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+                            {step.label}
+                          </span>
+                          <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{step.desc}</p>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
 
                 {activePost.status === 'Awaiting School Confirmation' && (
-                  <div style={{ marginTop: '20px' }}>
-                    <div style={styles.confirmationAlert}>
-                      <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#e65100', marginBottom: '8px' }}>
-                        Collector completed pickup. Please verify waste has been removed from site.
-                      </p>
-                      <button 
-                        onClick={() => confirmCollection(activePost.id)}
-                        className="btn-primary" 
-                        style={{ minHeight: '44px' }}
-                      >
-                        Confirm Collection
-                      </button>
-                    </div>
+                  <div style={styles.confirmationPanel}>
+                    <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e65100', marginBottom: '10px' }}>
+                      Collector arrived. Verify waste removal and finalize transaction:
+                    </p>
+                    <button 
+                      onClick={() => confirmCollection(activePost.id)}
+                      className="btn-primary" 
+                      style={{ minHeight: '44px' }}
+                    >
+                      Confirm Collection Complete
+                    </button>
                   </div>
                 )}
               </div>
 
               {/* Activity Log */}
               <div className="card">
-                <h4 style={{ fontSize: '0.9rem', marginBottom: '12px' }}>Activity Log</h4>
-                <div style={styles.logList}>
+                <h4 style={{ fontSize: '0.9rem', marginBottom: '12px' }}>Audit Log</h4>
+                <div style={styles.activityLogContainer}>
                   {activePost.history.map((log, index) => (
                     <div key={index} style={styles.logRow}>
                       <span style={styles.logTime}>
                         {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      <span style={styles.logMessage}>{log.message || log.note}</span>
+                      <span>{log.message}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
           ) : (
-            <div style={styles.emptyContainer}>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
-                No active waste logs posted currently.
-              </p>
+            <div style={styles.emptyLogsCard}>
+              <span>🌱</span>
+              <p>No active waste listing found.</p>
               <button 
-                onClick={() => setActiveTab('home')}
-                className="btn-primary" 
-                style={{ width: 'auto', padding: '0 20px', minHeight: '44px' }}
+                onClick={() => {
+                  setShowUploadWizard(true);
+                  setUploadStep(1);
+                }}
+                className="btn-primary"
+                style={{ width: 'auto', padding: '0 20px', minHeight: '38px', marginTop: '12px' }}
               >
-                Upload Waste Now
+                Upload Waste Logs
               </button>
             </div>
           )}
 
-          {/* Collection History */}
+          {/* Historical Logs */}
           <h3 style={{ ...styles.sectionTitle, marginTop: '24px' }}>Historical Collections</h3>
           <div style={styles.historyList}>
             {history.filter(h => h.schoolId === school.id).map(hist => (
-              <div key={hist.id} className="card" style={{ marginBottom: '10px' }}>
+              <div key={hist.id} className="card" style={{ marginBottom: '12px', padding: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{hist.collectorName} ({hist.collectorType})</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-primary)' }}>{hist.estimatedWeight} kg</span>
+                  <strong style={{ fontSize: '0.85rem' }}>{hist.collectorName}</strong>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
+                    {new Date(hist.date).toLocaleDateString()}
+                  </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                  <span>Weight: <strong>{hist.estimatedWeight} kg</strong></span>
                   <span>Reason: {hist.reason}</span>
-                  <span>{new Date(hist.date).toLocaleDateString()}</span>
                 </div>
               </div>
             ))}
             {history.filter(h => h.schoolId === school.id).length === 0 && (
-              <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-secondary)', padding: '16px' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '16px' }}>
                 No completed history records found.
               </p>
             )}
@@ -521,72 +646,61 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
       {/* 4. NOTIFICATIONS TAB */}
       {activeTab === 'notifications' && (
         <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Alert Center</h3>
-          
-          <h4 style={styles.dateHeader}>Today</h4>
-          {todayNotifs.map(notif => (
-            <div key={notif.id} className="card" style={{ ...styles.notifCard, borderLeft: `4px solid ${notif.type === 'warning' ? 'var(--color-accent)' : 'var(--color-primary)'}` }}>
-              <div style={styles.notifContent}>
-                <span style={styles.notifTitle}>{notif.title}</span>
-                <p style={styles.notifMsg}>{notif.message}</p>
-                <span style={styles.notifTime}>{new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          <h3 style={styles.sectionTitle}>System Alerts</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {schoolNotifications.map(notif => (
+              <div key={notif.id} className="card" style={{ borderLeft: '4px solid var(--color-primary)', padding: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <strong style={{ fontSize: '0.85rem' }}>{notif.title}</strong>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>
+                    {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{notif.message}</p>
               </div>
-            </div>
-          ))}
-          {todayNotifs.length === 0 && (
-            <p style={styles.emptyNotifs}>No notifications for today.</p>
-          )}
-
-          <h4 style={{ ...styles.dateHeader, marginTop: '16px' }}>Older</h4>
-          {olderNotifs.map(notif => (
-            <div key={notif.id} className="card" style={{ ...styles.notifCard, opacity: 0.8 }}>
-              <div style={styles.notifContent}>
-                <span style={styles.notifTitle}>{notif.title}</span>
-                <p style={styles.notifMsg}>{notif.message}</p>
-                <span style={styles.notifTime}>{new Date(notif.timestamp).toLocaleDateString()}</span>
+            ))}
+            {schoolNotifications.length === 0 && (
+              <div style={styles.emptyLogsCard}>
+                <span>🔔</span>
+                <p>All caught up! No new notifications.</p>
               </div>
-            </div>
-          ))}
-          {olderNotifs.length === 0 && (
-            <p style={styles.emptyNotifs}>No older notifications.</p>
-          )}
+            )}
+          </div>
         </div>
       )}
 
-      {/* 5. PROFILE TAB */}
+      {/* 5. PROFILE & SETTINGS TAB */}
       {activeTab === 'profile' && (
         <div style={styles.scrollable}>
-          {/* Sub Navigation headers inside profile */}
-          <div style={styles.subPageNav}>
-            <button 
-              onClick={() => setActiveSettingsSubPage('menu')}
-              style={{ ...styles.subPageNavBtn, borderBottom: activeSettingsSubPage === 'menu' ? '2px solid var(--color-primary)' : 'none' }}
-            >
-              Configure
-            </button>
-            <button 
-              onClick={() => setActiveSettingsSubPage('settings')}
-              style={{ ...styles.subPageNavBtn, borderBottom: activeSettingsSubPage === 'settings' ? '2px solid var(--color-primary)' : 'none' }}
-            >
-              Settings
-            </button>
-            <button 
-              onClick={() => setActiveSettingsSubPage('help')}
-              style={{ ...styles.subPageNavBtn, borderBottom: activeSettingsSubPage === 'help' ? '2px solid var(--color-primary)' : 'none' }}
-            >
-              Help Page
-            </button>
+          <div style={styles.subSettingsHeader}>
+            {[
+              { id: 'menu', label: 'School Details' },
+              { id: 'settings', label: 'Theme & Preferences' },
+              { id: 'help', label: 'Support FAQs' }
+            ].map(sub => (
+              <button
+                key={sub.id}
+                onClick={() => setActiveSettingsSubPage(sub.id)}
+                style={{
+                  ...styles.subSettingsBtn,
+                  borderBottom: activeSettingsSubPage === sub.id ? '2px solid var(--color-primary)' : 'none',
+                  color: activeSettingsSubPage === sub.id ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  fontWeight: activeSettingsSubPage === sub.id ? '700' : '500'
+                }}
+              >
+                {sub.label}
+              </button>
+            ))}
           </div>
 
           {activeSettingsSubPage === 'menu' && (
             <form onSubmit={handleProfileSave} className="card" style={{ marginTop: '12px' }}>
               <div className="form-group">
-                <label className="form-label">School Name</label>
-                <input type="text" className="form-input" value={school.name} disabled style={{ backgroundColor: 'var(--color-background)' }} />
+                <label className="form-label">School Kitchen Name</label>
+                <input type="text" className="form-input" value={school.name} disabled />
               </div>
-
               <div className="form-group">
-                <label className="form-label">Student Strength</label>
+                <label className="form-label">Student Enrollment Strength</label>
                 <input 
                   type="number" 
                   className="form-input" 
@@ -594,9 +708,8 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                   onChange={(e) => setProfileData(p => ({ ...p, studentStrength: e.target.value }))}
                 />
               </div>
-
               <div className="form-group">
-                <label className="form-label">Drum Capacity (kg)</label>
+                <label className="form-label">Kitchen Drum Container Capacity (kg)</label>
                 <input 
                   type="number" 
                   className="form-input" 
@@ -604,9 +717,8 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                   onChange={(e) => setProfileData(p => ({ ...p, drumCapacity: e.target.value }))}
                 />
               </div>
-
               <div className="form-group">
-                <label className="form-label">Contact Number</label>
+                <label className="form-label">Emergency Phone</label>
                 <input 
                   type="text" 
                   className="form-input" 
@@ -614,64 +726,95 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                   onChange={(e) => setProfileData(p => ({ ...p, contact: e.target.value }))}
                 />
               </div>
-
               <div className="form-group">
-                <label className="form-label">School Address</label>
+                <label className="form-label">Address Location</label>
                 <textarea 
                   className="form-input" 
-                  style={{ minHeight: '80px', resize: 'none' }}
+                  style={{ minHeight: '60px' }}
                   value={profileData.address}
                   onChange={(e) => setProfileData(p => ({ ...p, address: e.target.value }))}
                 />
               </div>
-
-              <button type="submit" className="btn-primary" style={{ marginTop: '12px' }}>
+              <button type="submit" className="btn-primary" style={{ marginTop: '8px' }}>
                 Save Configurations
               </button>
             </form>
           )}
 
           {activeSettingsSubPage === 'settings' && (
-            <div className="card" style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h4 style={{ fontSize: '0.9rem' }}>General Settings</h4>
-              
-              {/* Language selection */}
-              <div className="form-group">
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Languages size={14} /> Language
-                </label>
-                <select className="form-input" defaultValue="en">
-                  <option value="en">English</option>
-                  <option value="kn">ಕನ್ನಡ (Kannada)</option>
-                  <option value="hi">हिन्दी (Hindi)</option>
-                  <option value="ta">தமிழ் (Tamil)</option>
-                </select>
-              </div>
-
-              {/* Dark mode switcher */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
-                <div>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Dark Theme Mode</span>
-                  <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>Toggle dark interface layout colors.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '12px' }}>
+              <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Dark Theme Mode</span>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>Toggle dark interface layout colors.</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    style={{
+                      ...styles.toggleThemeBtn,
+                      backgroundColor: isDarkMode ? 'var(--color-primary)' : 'var(--color-border)',
+                      color: isDarkMode ? '#FFFFFF' : 'var(--color-text-secondary)'
+                    }}
+                  >
+                    {isDarkMode ? 'ACTIVE' : 'INACTIVE'}
+                  </button>
                 </div>
-                <button 
-                  onClick={() => setIsDarkMode(!isDarkMode)}
-                  style={{
-                    ...styles.toggleThemeBtn,
-                    backgroundColor: isDarkMode ? 'var(--color-primary)' : 'var(--color-border)',
-                    color: isDarkMode ? '#FFFFFF' : 'var(--color-text-secondary)'
-                  }}
-                >
-                  {isDarkMode ? 'ACTIVE' : 'INACTIVE'}
-                </button>
+
+                <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{t('language')}</span>
+                  <select 
+                    className="form-input" 
+                    style={{ marginTop: '8px', minHeight: '38px' }}
+                    value={language}
+                    onChange={(e) => {
+                      setLanguage(e.target.value);
+                      addToast(`Language updated successfully!`, 'success');
+                    }}
+                  >
+                    <option value="en">English</option>
+                    <option value="ta">Tamil (தமிழ்)</option>
+                    <option value="kn">Kannada (ಕನ್ನಡ)</option>
+                    <option value="hi">Hindi (हिन्दी)</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Privacy block */}
-              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Privacy & Terms</span>
-                <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '4px', lineHeight: '1.3' }}>
-                  IDEX platform operates municipal mid-day meal logs in accordance with state sanitation bylaws. All records audit logs are publicly accessible for municipal authorities.
+              {/* Cross-Device Sync Card */}
+              <div className="card">
+                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>☁️ Cross-Device Cloud Sync</span>
+                <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '4px', marginBottom: '12px' }}>
+                  Sync your data revisions across different devices using a shared passcode.
                 </p>
+                <div className="form-group" style={{ marginBottom: '12px' }}>
+                  <label className="form-label">Sync Passcode</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. coimbatore-school" 
+                    className="form-input" 
+                    style={{ minHeight: '38px', fontSize: '0.8rem' }}
+                    value={syncPasscode}
+                    onChange={(e) => setSyncPasscode(e.target.value)}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    onClick={handleCloudUpload}
+                    className="btn-primary" 
+                    style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem' }}
+                    disabled={isSyncing}
+                  >
+                    {isSyncing ? 'Uploading...' : 'Upload to Cloud'}
+                  </button>
+                  <button 
+                    onClick={handleCloudDownload}
+                    className="btn-secondary" 
+                    style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem' }}
+                    disabled={isSyncing}
+                  >
+                    {isSyncing ? 'Downloading...' : 'Download from Cloud'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -684,7 +827,7 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                   <div style={styles.faqItem}>
                     <span style={styles.faqQuestion}>Q: How does meal quantity predictor work?</span>
                     <p style={styles.faqAnswer}>
-                      It parses your school attendance registers, current menu items, and your last 4 weeks of logged waste to output recommended cook quantities using running averages.
+                      It parses your school attendance, current menu items, and your last 4 weeks of logged waste to output recommended cook quantities using running averages.
                     </p>
                   </div>
                   <div style={{ ...styles.faqItem, marginTop: '10px' }}>
@@ -699,7 +842,7 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
               <form onSubmit={handleTicketSubmit} className="card">
                 <h4 style={{ fontSize: '0.9rem', marginBottom: '8px' }}>Raise Support Ticket</h4>
                 <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
-                  Encountered app bugs or transport conflicts? Submit a ticket to municipal sanitation desk.
+                  Encountered app bugs or transport conflicts? Submit a ticket to Coimbatore municipal sanitation desk.
                 </p>
                 <div className="form-group">
                   <textarea 
@@ -720,106 +863,120 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
         </div>
       )}
 
-      {/* MULTI-STEP UPLOAD WASTE WIZARD */}
+      {/* ONE-QUESTION-PER-SCREEN UPLOAD WIZARD */}
       {showUploadWizard && (
         <div style={styles.wizardOverlay}>
           <div style={styles.wizardPanel}>
             <div style={styles.wizardHeader}>
-              <h3>Upload Waste</h3>
-              <span>Step {uploadStep} of 3</span>
+              <h3 style={{ fontSize: '1rem' }}>Upload Waste Log</h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Step {uploadStep} of 3</span>
             </div>
 
-            {uploadStep === 1 && (
-              <div>
-                <p style={styles.wizardQuestion}>1. Select organic waste level OR enter custom weight:</p>
-                <div style={styles.levelButtons}>
-                  {[
-                    { value: 0.25, label: '25% (Low)' },
-                    { value: 0.50, label: '50% (Half)' },
-                    { value: 0.75, label: '75% (High)' },
-                    { value: 1.00, label: '100% (Full)' }
-                  ].map(lvl => (
-                    <button
-                      key={lvl.value}
-                      onClick={() => {
-                        setFormData(f => ({ ...f, drumLevel: lvl.value }));
-                      }}
-                      style={{
-                        ...styles.lvlBtn,
-                        border: formData.drumLevel === lvl.value && !formData.customWeight ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
-                        backgroundColor: formData.drumLevel === lvl.value && !formData.customWeight ? 'rgba(46, 125, 50, 0.05)' : '#FFFFFF',
-                        color: 'var(--color-text-primary)'
-                      }}
-                    >
-                      {lvl.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="form-group" style={{ marginTop: '16px' }}>
-                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Or input custom weight (kg)</label>
-                  <input 
-                    type="number" 
-                    placeholder="Enter precise weight in kg (Max 150kg)" 
-                    className="form-input" 
-                    style={{ minHeight: '40px' }}
-                    value={formData.customWeight}
-                    onChange={(e) => setFormData(f => ({ ...f, customWeight: e.target.value }))}
-                  />
-                </div>
-
-                <div style={styles.weightCalculatorNote}>
-                  Calculated weight: <strong>{formData.customWeight ? formData.customWeight : calculateWeight(school.drumCapacity, formData.drumLevel)} kg</strong>
-                </div>
-              </div>
-            )}
-
-            {uploadStep === 2 && (
-              <div>
-                <p style={styles.wizardQuestion}>2. Choose the primary reason for this waste surplus:</p>
-                <div className="form-group">
-                  <select 
-                    className="form-input"
-                    value={formData.reason}
-                    onChange={(e) => setFormData(f => ({ ...f, reason: e.target.value }))}
-                  >
-                    <option value="Low Attendance">Low Attendance</option>
-                    <option value="Overcooked">Overcooked / Kitchen surplus</option>
-                    <option value="Students disliked menu">Students disliked menu</option>
-                    <option value="Preparation waste">Preparation waste (peels/scraps)</option>
-                    <option value="Spoilage">Spoilage / Infestation</option>
-                    <option value="Holiday/Event">Holiday / Shortened schedule</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {uploadStep === 3 && (
-              <div>
-                <p style={styles.wizardQuestion}>3. Review waste post details before submitting:</p>
-                <div style={styles.reviewCard}>
-                  <div style={styles.reviewRow}>
-                    <span>School Name:</span>
-                    <strong>{school.name}</strong>
+            <div style={styles.wizardBody}>
+              {uploadStep === 1 && (
+                <div>
+                  <p style={styles.wizardQuestion}>1. Select organic waste drum fill level:</p>
+                  <div style={styles.levelCirclesContainer}>
+                    {[
+                      { value: 0.25, label: '25%' },
+                      { value: 0.50, label: '50%' },
+                      { value: 0.75, label: '75%' },
+                      { value: 1.00, label: '100%' }
+                    ].map(lvl => (
+                      <button
+                        key={lvl.value}
+                        onClick={() => {
+                          setFormData(f => ({ ...f, drumLevel: lvl.value, customWeight: '' }));
+                          setUploadStep(2); // Auto advance
+                        }}
+                        style={{
+                          ...styles.lvlCircle,
+                          borderColor: formData.drumLevel === lvl.value && !formData.customWeight ? 'var(--color-primary)' : 'var(--color-border)',
+                          backgroundColor: formData.drumLevel === lvl.value && !formData.customWeight ? 'var(--color-primary)' : '#FFFFFF',
+                          color: formData.drumLevel === lvl.value && !formData.customWeight ? '#FFFFFF' : 'var(--color-text-primary)'
+                        }}
+                      >
+                        {lvl.label}
+                      </button>
+                    ))}
                   </div>
-                  <div style={styles.reviewRow}>
-                    <span>Weight Method:</span>
-                    <strong>{formData.customWeight ? 'Custom Weight' : `Drum Level (${formData.drumLevel * 100}%)`}</strong>
+
+                  <div style={{ textAlign: 'center', margin: '16px 0', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>— OR —</div>
+
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Input exact custom weight (kg)</label>
+                    <input 
+                      type="number" 
+                      placeholder="Enter weight in kg (Max 150kg)" 
+                      className="form-input" 
+                      value={formData.customWeight}
+                      onChange={(e) => setFormData(f => ({ ...f, customWeight: e.target.value }))}
+                    />
                   </div>
-                  <div style={styles.reviewRow}>
-                    <span>Diverting Weight:</span>
-                    <strong style={{ color: 'var(--color-primary)' }}>
-                      {formData.customWeight ? formData.customWeight : calculateWeight(school.drumCapacity, formData.drumLevel)} kg
-                    </strong>
-                  </div>
-                  <div style={styles.reviewRow}>
-                    <span>Primary Reason:</span>
-                    <strong>{formData.reason}</strong>
+
+                  <div style={styles.wizardCalculatedNote}>
+                    Calculated weight: <strong>{formData.customWeight ? formData.customWeight : calculateWeight(school.drumCapacity, formData.drumLevel)} kg</strong>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {uploadStep === 2 && (
+                <div>
+                  <p style={styles.wizardQuestion}>2. Select the main reason for waste surplus:</p>
+                  <div style={styles.reasonOptionList}>
+                    {[
+                      'Low Attendance',
+                      'Overcooked',
+                      'Disliked Menu',
+                      'Scraps / Peels',
+                      'Spoilage',
+                      'Other'
+                    ].map(reason => (
+                      <button
+                        key={reason}
+                        onClick={() => {
+                          setFormData(f => ({ ...f, reason }));
+                          setUploadStep(3); // Auto advance
+                        }}
+                        style={{
+                          ...styles.reasonSelectBtn,
+                          border: formData.reason === reason ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                          backgroundColor: formData.reason === reason ? 'rgba(46, 125, 50, 0.05)' : '#FFFFFF'
+                        }}
+                      >
+                        {reason}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {uploadStep === 3 && (
+                <div>
+                  <p style={styles.wizardQuestion}>3. Confirm details before publishing:</p>
+                  <div style={styles.reviewCard}>
+                    <div style={styles.reviewRow}>
+                      <span>School Kitchen:</span>
+                      <strong>{school.name}</strong>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span>Measurement:</span>
+                      <strong>{formData.customWeight ? 'Custom Weight' : `Drum Level (${formData.drumLevel * 100}%)`}</strong>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span>Est. Weight:</span>
+                      <strong style={{ color: 'var(--color-primary)', fontSize: '1.05rem' }}>
+                        {formData.customWeight ? formData.customWeight : calculateWeight(school.drumCapacity, formData.drumLevel)} kg
+                      </strong>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span>Surplus Reason:</span>
+                      <strong>{formData.reason}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div style={styles.wizardFooter}>
               {uploadStep > 1 ? (
@@ -838,7 +995,7 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                 </button>
               ) : (
                 <button onClick={handleUploadSubmit} className="btn-primary" style={styles.wizardNavBtn}>
-                  Submit Logs
+                  Publish Post
                 </button>
               )}
             </div>
@@ -859,28 +1016,23 @@ const styles = {
     position: 'relative'
   },
   offlineBanner: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff9c4',
-    borderBottom: '1px solid #fff59d',
-    color: '#f57f17',
+    backgroundColor: 'rgba(249, 168, 37, 0.12)',
+    borderBottom: '1px solid rgba(249, 168, 37, 0.2)',
+    color: '#D38A00',
     fontSize: '0.65rem',
-    fontWeight: 600,
-    padding: '4px var(--spacing-md)',
+    fontWeight: 700,
+    padding: '6px var(--spacing-md)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 100
+    margin: '-16px -16px 12px -16px'
   },
   scrollable: {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
     overflowY: 'auto',
-    paddingBottom: 'var(--spacing-lg)',
-    marginTop: '6px'
+    paddingBottom: '32px'
   },
   headerFlex: {
     display: 'flex',
@@ -897,295 +1049,239 @@ const styles = {
     fontWeight: 500
   },
   mainGreeting: {
-    fontSize: '1.2rem',
+    fontSize: '1.15rem',
+    fontWeight: 700,
     lineHeight: '1.2'
   },
   subtext: {
-    fontSize: '0.7rem',
+    fontSize: '0.65rem',
     color: 'var(--color-text-secondary)',
-    fontWeight: 600,
-    textTransform: 'uppercase'
+    fontWeight: 500
   },
   offlineToggleBtn: {
+    minHeight: '32px',
+    minWidth: '76px',
+    padding: '0 8px',
+    borderRadius: '16px',
     border: '1px solid',
-    borderRadius: '10px',
-    padding: '4px 8px',
-    display: 'inline-flex',
+    display: 'flex',
     alignItems: 'center',
-    minHeight: '28px',
-    minWidth: 'auto',
-    backgroundColor: '#FFFFFF',
-    cursor: 'pointer'
+    justifyContent: 'center'
   },
-  statusCard: {
-    backgroundColor: 'var(--color-white)',
-    border: '1px solid var(--color-border)',
-    boxShadow: 'var(--shadow-subtle)'
-  },
-  statusRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 'var(--spacing-md)'
-  },
-  cardHeader: {
-    fontSize: '0.95rem'
-  },
-  cardSub: {
-    fontSize: '0.75rem',
-    color: 'var(--color-text-secondary)'
-  },
-  statusIndicator: {
-    fontSize: '0.65rem',
-    fontWeight: 700,
-    padding: '4px 8px',
-    borderRadius: '12px',
-    letterSpacing: '0.05em'
-  },
-  uploadBtn: {
-    marginTop: 'var(--spacing-xs)'
-  },
-  activePostSummary: {
-    borderTop: '1px dashed var(--color-border)',
-    paddingTop: '12px'
-  },
-  postDetails: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: 'var(--spacing-sm)'
-  },
-  postLabel: {
-    fontSize: '0.75rem',
-    backgroundColor: 'var(--color-background)',
-    padding: '4px 8px',
-    borderRadius: '6px',
-    color: 'var(--color-text-primary)'
-  },
-  sectionTitle: {
-    fontSize: '1.05rem',
-    marginBottom: 'var(--spacing-md)'
-  },
-  grid2: {
-    display: 'flex',
-    gap: 'var(--spacing-md)',
-    marginBottom: '12px'
-  },
-  kpiCard: {
-    flex: 1,
-    padding: 'var(--spacing-md)',
-    display: 'flex',
-    flexDirection: 'column',
-    position: 'relative',
-    overflow: 'hidden'
+  quickStatsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '12px',
+    marginTop: '4px'
   },
   kpiLabel: {
-    fontSize: '0.7rem',
+    fontSize: '0.65rem',
     color: 'var(--color-text-secondary)',
     fontWeight: 600,
-    textTransform: 'uppercase'
+    textTransform: 'uppercase',
+    letterSpacing: '0.02em'
   },
   kpiNumber: {
-    fontFamily: 'var(--font-display)',
-    fontSize: '1.4rem',
+    fontSize: '1.2rem',
     fontWeight: 700,
-    margin: '4px 0 2px 0'
+    margin: '4px 0',
+    fontFamily: 'var(--font-primary)'
   },
-  kpiTrend: {
+  kpiSub: {
     fontSize: '0.65rem',
+    color: 'var(--color-text-secondary)'
+  },
+  smallLabel: {
+    fontSize: '0.7rem',
     fontWeight: 600,
-    display: 'inline-flex',
-    alignItems: 'center'
+    color: 'var(--color-text-secondary)',
+    marginBottom: '4px'
   },
-  sparkline: {
-    width: '100%',
-    height: '25px',
-    marginTop: '8px'
+  smallInput: {
+    minHeight: '36px',
+    padding: '6px 10px',
+    borderRadius: '8px',
+    border: '1px solid var(--color-border)',
+    fontSize: '0.8rem',
+    backgroundColor: 'var(--color-background)',
+    color: 'var(--color-text-primary)',
+    width: '100%'
   },
-  insightsList: {
+  grid2: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '12px'
+  },
+  predictionBox: {
+    backgroundColor: '#F8FAF9',
+    borderRadius: '10px',
+    padding: '12px',
+    marginTop: '12px',
+    border: '1px solid rgba(46, 125, 50, 0.04)',
     display: 'flex',
     flexDirection: 'column',
     gap: '8px'
   },
-  insightItem: {
+  predictionRow: {
     display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: '0.75rem'
+  },
+  activePostDetails: {
+    marginTop: '8px'
+  },
+  activePostGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
     gap: '8px',
-    alignItems: 'flex-start'
+    backgroundColor: 'rgba(33, 150, 243, 0.05)',
+    borderRadius: '8px',
+    padding: '10px',
+    marginTop: '10px',
+    fontSize: '0.7rem'
   },
-  insightBullet: {
-    width: '6px',
-    height: '6px',
-    borderRadius: '50%',
-    backgroundColor: 'var(--color-primary)',
-    marginTop: '6px',
-    flexShrink: 0
-  },
-  insightText: {
-    fontSize: '0.75rem',
-    lineHeight: '1.3',
-    color: 'var(--color-text-primary)'
-  },
-  leaderboardList: {
+  emptyLogsCard: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px'
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px 16px',
+    textAlign: 'center'
   },
-  leaderboardRow: {
+  chartWrapper: {
+    marginTop: '8px'
+  },
+  lineChart: {
+    width: '100%',
+    height: 'auto'
+  },
+  chartLabels: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: '0.6rem',
+    color: 'var(--color-text-secondary)',
+    padding: '0 4px',
+    marginTop: '4px'
+  },
+  insightGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '10px'
+  },
+  insightCard: {
+    border: '1px solid var(--color-border)',
+    borderRadius: '10px',
+    padding: '10px',
+    display: 'flex',
+    gap: '6px',
+    alignItems: 'flex-start',
+    fontSize: '0.7rem',
+    lineHeight: '1.3'
+  },
+  rankList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  rankRowActive: {
     display: 'flex',
     alignItems: 'center',
     padding: '8px 12px',
-    borderRadius: '8px',
+    borderRadius: '10px',
+    backgroundColor: 'rgba(76, 175, 80, 0.08)',
+    fontSize: '0.75rem'
+  },
+  rankRow: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '8px 12px',
+    borderRadius: '10px',
     border: '1px solid var(--color-border)',
     fontSize: '0.75rem'
   },
-  leaderboardRank: {
+  rankBadge: {
     marginRight: '8px',
     fontSize: '0.9rem'
   },
-  leaderboardName: {
+  rankName: {
     flex: 1,
     fontWeight: 500
   },
-  leaderboardScore: {
-    fontWeight: 600,
-    color: 'var(--color-primary)'
+  rankPoints: {
+    color: 'var(--color-text-primary)'
   },
-  stepContainer: {
+  sectionTitle: {
+    fontSize: '0.95rem',
+    marginBottom: '12px'
+  },
+  barGrid: {
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'end',
+    paddingTop: '16px'
+  },
+  barCol: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
+  },
+  breakdownRow: {
     display: 'flex',
     justifyContent: 'space-between',
-    position: 'relative',
-    marginTop: '8px'
+    fontSize: '0.8rem',
+    padding: '8px 0',
+    borderBottom: '1px solid var(--color-border)'
   },
-  stepWrapper: {
+  timelineWrapper: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    flex: 1,
-    position: 'relative',
-    zIndex: 1
+    marginTop: '8px',
+    paddingLeft: '8px'
   },
-  stepDot: {
-    width: '28px',
-    height: '28px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '0.75rem',
-    fontWeight: 600,
-    border: '2px solid #FFFFFF'
+  confirmationPanel: {
+    marginTop: '16px',
+    padding: '12px',
+    borderRadius: '10px',
+    backgroundColor: 'rgba(249, 168, 37, 0.05)',
+    border: '1px solid rgba(249, 168, 37, 0.1)'
   },
-  stepLabel: {
-    fontSize: '0.6rem',
-    textAlign: 'center',
-    marginTop: '6px',
-    whiteSpace: 'nowrap'
-  },
-  stepConnector: {
-    position: 'absolute',
-    height: '2px',
-    width: '100%',
-    top: '14px',
-    left: '50%',
-    zIndex: -1
-  },
-  confirmationAlert: {
-    backgroundColor: '#fff3e0',
-    border: '1px solid #ffe0b2',
-    padding: 'var(--spacing-md)',
-    borderRadius: '12px',
-    textAlign: 'center'
-  },
-  logList: {
+  activityLogContainer: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px'
+    gap: '8px',
+    maxHeight: '150px',
+    overflowY: 'auto',
+    fontSize: '0.75rem'
   },
   logRow: {
     display: 'flex',
-    fontSize: '0.75rem',
-    borderBottom: '1px dashed var(--color-border)',
+    gap: '12px',
+    borderBottom: '1px dotted var(--color-border)',
     paddingBottom: '4px'
   },
   logTime: {
-    width: '60px',
     color: 'var(--color-text-secondary)',
-    fontWeight: 500
-  },
-  logMessage: {
-    flex: 1
-  },
-  emptyContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 'var(--spacing-xl)',
-    textAlign: 'center',
-    flex: 1
-  },
-  historyList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px'
-  },
-  dateHeader: {
-    fontSize: '0.75rem',
-    textTransform: 'uppercase',
-    color: 'var(--color-text-secondary)',
-    letterSpacing: '0.05em',
-    marginBottom: '8px',
-    fontWeight: 700
-  },
-  notifCard: {
-    marginBottom: '8px',
-    padding: '12px'
-  },
-  notifContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px'
-  },
-  notifTitle: {
-    fontSize: '0.8rem',
     fontWeight: 600
   },
-  notifMsg: {
-    fontSize: '0.75rem',
-    color: 'var(--color-text-secondary)'
-  },
-  notifTime: {
-    fontSize: '0.6rem',
-    color: 'var(--color-text-secondary)',
-    marginTop: '4px',
-    textAlign: 'right'
-  },
-  emptyNotifs: {
-    fontSize: '0.75rem',
-    color: 'var(--color-text-secondary)',
-    textAlign: 'center',
-    padding: '12px'
-  },
-  subPageNav: {
+  subSettingsHeader: {
     display: 'flex',
     borderBottom: '1px solid var(--color-border)',
     marginBottom: '8px'
   },
-  subPageNavBtn: {
+  subSettingsBtn: {
     flex: 1,
-    minHeight: '40px',
-    fontSize: '0.8rem',
-    fontWeight: 600,
-    color: 'var(--color-text-secondary)',
-    cursor: 'pointer',
-    borderRadius: 0
+    fontSize: '0.75rem',
+    padding: '10px 0',
+    textAlign: 'center',
+    cursor: 'pointer'
   },
   toggleThemeBtn: {
     minHeight: '32px',
-    padding: '0 var(--spacing-md)',
+    minWidth: '70px',
     fontSize: '0.7rem',
     fontWeight: 700,
-    borderRadius: '8px',
-    minWidth: 'auto'
+    borderRadius: '16px',
+    display: 'inline-flex'
   },
   faqList: {
     display: 'flex',
@@ -1193,82 +1289,103 @@ const styles = {
     gap: '8px'
   },
   faqItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px'
+    fontSize: '0.75rem'
   },
   faqQuestion: {
-    fontSize: '0.8rem',
     fontWeight: 600,
-    color: 'var(--color-primary)'
+    color: 'var(--color-text-primary)'
   },
   faqAnswer: {
-    fontSize: '0.75rem',
-    lineHeight: '1.3',
-    color: 'var(--color-text-secondary)'
+    color: 'var(--color-text-secondary)',
+    marginTop: '2px',
+    lineHeight: '1.3'
   },
   wizardOverlay: {
-    position: 'fixed',
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    zIndex: 100,
+    zIndex: 9999,
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 'var(--spacing-md)'
+    alignItems: 'end',
+    justifyContent: 'center'
   },
   wizardPanel: {
-    backgroundColor: 'var(--color-white)',
-    borderRadius: '16px',
+    backgroundColor: 'var(--color-card)',
     width: '100%',
-    maxWidth: '400px',
-    padding: 'var(--spacing-lg)',
+    borderRadius: '16px 16px 0 0',
+    padding: 'var(--spacing-md)',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+    boxShadow: '0 -4px 16px rgba(0,0,0,0.1)',
+    animation: 'slideUp 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards'
   },
   wizardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottom: '1px solid var(--color-border)',
-    paddingBottom: '8px',
-    marginBottom: '16px'
+    paddingBottom: '10px',
+    marginBottom: '12px'
   },
-  wizardQuestion: {
-    fontSize: '0.85rem',
-    fontWeight: 600,
-    marginBottom: '12px',
-    color: 'var(--color-text-primary)'
-  },
-  levelButtons: {
+  wizardBody: {
+    minHeight: '180px',
     display: 'flex',
     flexDirection: 'column',
+    justifyContent: 'center'
+  },
+  wizardQuestion: {
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    marginBottom: '16px',
+    color: 'var(--color-text-primary)'
+  },
+  levelCirclesContainer: {
+    display: 'flex',
+    justifyContent: 'space-around',
     gap: '8px'
   },
-  lvlBtn: {
-    width: '100%',
-    minHeight: '44px',
-    borderRadius: '8px',
-    textAlign: 'left',
-    padding: '0 var(--spacing-md)',
-    justifyContent: 'flex-start',
+  lvlCircle: {
+    width: '64px',
+    height: '64px',
+    borderRadius: '32px',
+    border: '1.5px solid',
     fontSize: '0.85rem',
-    fontWeight: 500
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: 'var(--shadow-subtle)'
   },
-  weightCalculatorNote: {
+  reasonOptionList: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '10px'
+  },
+  reasonSelectBtn: {
+    minHeight: '44px',
+    borderRadius: '10px',
+    fontSize: '0.8rem',
+    fontWeight: 600,
+    color: 'var(--color-text-primary)',
+    boxShadow: 'var(--shadow-subtle)'
+  },
+  wizardCalculatedNote: {
+    backgroundColor: '#F8FAF9',
+    padding: '8px',
+    borderRadius: '6px',
+    textAlign: 'center',
     fontSize: '0.75rem',
     color: 'var(--color-text-secondary)',
-    marginTop: '12px',
-    textAlign: 'center'
+    marginTop: '10px'
   },
   reviewCard: {
-    backgroundColor: 'var(--color-background)',
-    padding: 'var(--spacing-md)',
+    backgroundColor: 'rgba(46, 125, 50, 0.02)',
+    border: '1px solid rgba(46, 125, 50, 0.05)',
     borderRadius: '10px',
+    padding: '12px',
     display: 'flex',
     flexDirection: 'column',
     gap: '8px'
@@ -1276,59 +1393,16 @@ const styles = {
   reviewRow: {
     display: 'flex',
     justifyContent: 'space-between',
-    fontSize: '0.8rem',
-    borderBottom: '1px solid #E2E8F0',
-    paddingBottom: '4px'
+    fontSize: '0.75rem'
   },
   wizardFooter: {
     display: 'flex',
-    gap: 'var(--spacing-md)',
-    marginTop: '20px'
+    gap: '12px',
+    marginTop: '16px',
+    borderTop: '1px solid var(--color-border)',
+    paddingTop: '12px'
   },
   wizardNavBtn: {
     flex: 1
-  },
-  smallLabel: {
-    fontSize: '0.7rem',
-    fontWeight: 600,
-    color: 'var(--color-text-secondary)',
-    textTransform: 'uppercase',
-    marginBottom: '2px'
-  },
-  smallInput: {
-    padding: '4px 8px',
-    fontSize: '0.8rem',
-    border: '1px solid var(--color-border)',
-    borderRadius: '6px',
-    backgroundColor: 'var(--color-background)',
-    width: '100%'
-  },
-  predictionOutputContainer: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    borderRadius: '10px',
-    padding: '12px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-    border: '1px solid rgba(76, 175, 80, 0.2)'
-  },
-  predictionRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    fontSize: '0.75rem'
-  },
-  predictionLabel: {
-    fontWeight: 500,
-    color: 'var(--color-primary)'
-  },
-  predictionValue: {
-    fontWeight: 700,
-    color: 'var(--color-primary)',
-    fontSize: '0.85rem'
-  },
-  predictionSubValue: {
-    fontWeight: 600,
-    fontSize: '0.8rem'
   }
 };

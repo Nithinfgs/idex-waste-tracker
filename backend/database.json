@@ -1,0 +1,140 @@
+{
+  "schools": [
+    {
+      "id": "sch-1",
+      "name": "Corporation Middle School, RS Puram",
+      "district": "Coimbatore",
+      "latitude": 11.0084,
+      "longitude": 76.9458,
+      "student_strength": 380,
+      "drum_capacity": 40,
+      "contact": "+91 98765 43210",
+      "address": "West RS Puram, Coimbatore, Tamil Nadu 641002"
+    },
+    {
+      "id": "sch-2",
+      "name": "Government Girls High School, Gandhipuram",
+      "district": "Coimbatore",
+      "latitude": 11.0182,
+      "longitude": 76.9631,
+      "student_strength": 510,
+      "drum_capacity": 60,
+      "contact": "+91 98765 43211",
+      "address": "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+    },
+    {
+      "id": "sch-3",
+      "name": "Municipal Higher Secondary School, Peelamedu",
+      "district": "Coimbatore",
+      "latitude": 11.0268,
+      "longitude": 76.9958,
+      "student_strength": 420,
+      "drum_capacity": 40,
+      "contact": "+91 98765 43212",
+      "address": "Peelamedu Main Road, Coimbatore, Tamil Nadu 641004"
+    },
+    {
+      "id": "sch-4",
+      "name": "Corporation School, Town Hall",
+      "district": "Coimbatore",
+      "latitude": 10.9958,
+      "longitude": 76.9592,
+      "student_strength": 290,
+      "drum_capacity": 30,
+      "contact": "+91 98765 43213",
+      "address": "Near Big Bazaar Street, Town Hall, Coimbatore, Tamil Nadu 641001"
+    }
+  ],
+  "collectors": [
+    {
+      "id": "col-1",
+      "name": "Kavin Kumar (Organic Pig Farm)",
+      "collector_type": "Farmer",
+      "vehicle": "Mahindra Bolero Pickup",
+      "radius": 15,
+      "latitude": 11.0458,
+      "longitude": 76.9158
+    },
+    {
+      "id": "col-2",
+      "name": "Deepak Raj (Coimbatore BioCompost)",
+      "collector_type": "Compost Company",
+      "vehicle": "Tata Ace Mini Truck",
+      "radius": 20,
+      "latitude": 10.9858,
+      "longitude": 76.9858
+    }
+  ],
+  "waste_posts": [
+    {
+      "id": "test-post-1784382299037",
+      "schoolId": "sch-1",
+      "status": "Reserved",
+      "drumLevel": 0.75,
+      "estimatedWeight": 30,
+      "reason": "Excess Lunch Rice",
+      "createdAt": "2026-07-18T13:44:59.037Z",
+      "collectorId": "col-1",
+      "reservedAt": "2026-07-18T13:44:59.042Z",
+      "history": [
+        {
+          "status": "Available",
+          "timestamp": "2026-07-18T13:44:59.041Z",
+          "message": "Waste logged online"
+        },
+        {
+          "status": "Reserved",
+          "timestamp": "2026-07-18T13:44:59.043Z",
+          "message": "Status updated: Reserved"
+        }
+      ]
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-1784382731876-zj72o6t22",
+      "targetId": "col-1",
+      "role": "collector",
+      "title": "Reservation Timeout",
+      "message": "Your reservation for undefined expired.",
+      "type": "error",
+      "read": false,
+      "createdAt": "2026-07-18T13:52:11.876Z",
+      "timestamp": "2026-07-18T13:52:11.876Z"
+    },
+    {
+      "id": "notif-1784382731875-boa7bkfdk",
+      "targetId": "sch-1",
+      "role": "school",
+      "title": "Reservation Expired",
+      "message": "Collector failed to pick up your waste in time. Reverted to Available.",
+      "type": "warning",
+      "read": false,
+      "createdAt": "2026-07-18T13:52:11.875Z",
+      "timestamp": "2026-07-18T13:52:11.875Z"
+    },
+    {
+      "id": "notif-1784382715875-ds65hm0a4",
+      "targetId": "col-1",
+      "role": "collector",
+      "title": "Reservation Timeout",
+      "message": "Your reservation for undefined expired.",
+      "type": "error",
+      "read": false,
+      "createdAt": "2026-07-18T13:51:55.875Z",
+      "timestamp": "2026-07-18T13:51:55.875Z"
+    },
+    {
+      "id": "notif-1784382715875-5cq08ipgp",
+      "targetId": "sch-1",
+      "role": "school",
+      "title": "Reservation Expired",
+      "message": "Collector failed to pick up your waste in time. Reverted to Available.",
+      "type": "warning",
+      "read": false,
+      "createdAt": "2026-07-18T13:51:55.875Z",
+      "timestamp": "2026-07-18T13:51:55.875Z"
+    }
+  ],
+  "history": []
+}

@@ -2,58 +2,58 @@
 export const INITIAL_SCHOOLS = [
   {
     id: "sch-1",
-    name: "Government High School, Sector 4",
-    district: "North District",
-    latitude: 12.9716,
-    longitude: 77.5946,
+    name: "Government High School, Gandhipuram",
+    district: "Coimbatore District",
+    latitude: 11.0180,
+    longitude: 76.9680,
     studentStrength: 420,
     drumCapacity: 40, // kg
     contact: "+91 98765 43210",
-    address: "Sector 4, Near Public Park, Bengaluru"
+    address: "Cross Cut Road, Gandhipuram, Coimbatore"
   },
   {
     id: "sch-2",
     name: "Vidya Mandir School",
-    district: "North District",
-    latitude: 12.9760,
-    longitude: 77.5990,
+    district: "Coimbatore District",
+    latitude: 11.0232,
+    longitude: 76.9507,
     studentStrength: 450, // Within ±20% of 420 (Range: 336 to 504)
     drumCapacity: 45, // kg
     contact: "+91 98765 43211",
-    address: "M.G. Road, Bengaluru"
+    address: "DB Road, RS Puram, Coimbatore"
   },
   {
     id: "sch-3",
     name: "St. Mary's School",
-    district: "North District",
-    latitude: 12.9680,
-    longitude: 77.5910,
+    district: "Coimbatore District",
+    latitude: 11.0090,
+    longitude: 76.9520,
     studentStrength: 500, // Within ±20% of 420
     drumCapacity: 50, // kg
     contact: "+91 98765 43212",
-    address: "Richmond Town, Bengaluru"
+    address: "Town Hall, Coimbatore"
   },
   {
     id: "sch-4",
     name: "National Primary School",
-    district: "North District",
-    latitude: 12.9820,
-    longitude: 77.6030,
+    district: "Coimbatore District",
+    latitude: 11.0310,
+    longitude: 76.9710,
     studentStrength: 200, // OUTSIDE ±20% of 420 (Too small)
     drumCapacity: 20, // kg
     contact: "+91 98765 43213",
-    address: "Malleshwaram, Bengaluru"
+    address: "Peelamedu, Coimbatore"
   },
   {
     id: "sch-5",
     name: "Central Public School",
-    district: "North District",
-    latitude: 12.9560,
-    longitude: 77.5820,
+    district: "Coimbatore District",
+    latitude: 10.9980,
+    longitude: 76.9400,
     studentStrength: 1100, // OUTSIDE ±20% of 420 (Too large)
     drumCapacity: 100, // kg
     contact: "+91 98765 43214",
-    address: "Jayanagar, Bengaluru"
+    address: "Kuniamuthur, Coimbatore"
   }
 ];
 
