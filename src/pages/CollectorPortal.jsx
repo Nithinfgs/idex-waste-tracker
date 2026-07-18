@@ -58,6 +58,7 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
   const {
     schools,
     wastePosts,
+    producePosts,
     history,
     notifications,
     selectedCollectorId,
@@ -78,7 +79,8 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
     syncPasscode,
     setSyncPasscode,
     uploadStateToCloud,
-    downloadStateFromCloud
+    downloadStateFromCloud,
+    uploadProducePost
   } = useContext(StateContext);
 
   const collector = collectors.find(c => c.id === selectedCollectorId);
@@ -107,6 +109,17 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
   // Help ticket
   const [ticketMsg, setTicketMsg] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Produce Listings states
+  const [showProduceModal, setShowProduceModal] = useState(false);
+  const [produceForm, setProduceForm] = useState({
+    title: 'Tomatoes',
+    quantity: '10',
+    price: '0',
+    deliveryEstimate: 'Tomorrow Morning',
+    description: '',
+    imageUrl: ''
+  });
 
   const handleCloudUpload = async () => {
     if (!syncPasscode.trim()) {
@@ -229,6 +242,23 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
 
   const collectorNotifications = notifications.filter(n => n.role === 'collector' && n.targetId === collector.id);
 
+  const myProducePosts = (producePosts || []).filter(p => p.collectorId === collector.id);
+
+  const getProduceIcon = (title) => {
+    const t = (title || '').toLowerCase();
+    if (t.includes('tomato')) return '🍅';
+    if (t.includes('spinach') || t.includes('keerai') || t.includes('leaf') || t.includes('green')) return '🥬';
+    if (t.includes('banana')) return '🍌';
+    if (t.includes('pumpkin')) return '🎃';
+    if (t.includes('potato')) return '🥔';
+    if (t.includes('onion')) return '🧅';
+    if (t.includes('carrot')) return '🥕';
+    if (t.includes('cabbage')) return ' Keerai 🥬';
+    if (t.includes('milk')) return '🥛';
+    if (t.includes('egg')) return '🥚';
+    return '🍎';
+  };
+
   return (
     <div style={styles.container}>
       {/* 1. DEDICATED HOME TAB (SWIGGY-STYLE PICKUPS) */}
@@ -300,6 +330,62 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Farmer Excess Produce Section */}
+          <div style={{ marginTop: '30px', borderTop: '1px solid var(--color-border)', paddingTop: '24px', paddingBottom: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={styles.sectionTitle}>👨‍🌾 My Excess Produce Listings</h3>
+              <button 
+                onClick={() => setShowProduceModal(true)} 
+                className="btn-primary animate-ripple" 
+                style={{ width: 'auto', minHeight: '36px', padding: '0 14px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <span>+ List Produce</span>
+              </button>
+            </div>
+
+            {/* List of active produce listings */}
+            <div style={styles.swiggyList}>
+              {myProducePosts.map(p => (
+                <div key={p.id} className="card card-interactive" style={{ ...styles.swiggyCard, borderLeft: p.status === 'Claimed' ? '4px solid var(--color-primary)' : '4px solid #FFA726' }}>
+                  <div style={styles.swiggyMetaRow}>
+                    <div style={styles.swiggyLeftCol}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '1.25rem' }}>{getProduceIcon(p.title)}</span>
+                        <h4 style={styles.swiggySchool}>{p.title} ({p.quantity} kg)</h4>
+                      </div>
+                      <span style={styles.swiggyDetails}>
+                        Price: <strong>{parseFloat(p.price) > 0 ? `₹${p.price}/kg` : 'Free'}</strong> | Delivery: <strong>{p.deliveryEstimate}</strong>
+                      </span>
+                      {p.description && (
+                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '6px', fontStyle: 'italic' }}>
+                          "{p.description}"
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      {p.status === 'Claimed' ? (
+                        <span className="badge" style={{ backgroundColor: 'rgba(46, 125, 50, 0.08)', color: 'var(--color-primary)' }}>
+                          Claimed by {schools.find(s => s.id === p.claimedBySchoolId)?.name.split(',')[0] || 'Claimed'}
+                        </span>
+                      ) : (
+                        <span className="badge" style={{ backgroundColor: 'rgba(255, 167, 38, 0.08)', color: '#F57C00' }}>
+                          Available
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {myProducePosts.length === 0 && (
+                <div style={{ ...styles.emptyContainer, padding: '24px 0' }}>
+                  <span>🍎</span>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>You haven't listed any excess produce yet.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -848,6 +934,164 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                 {t('confirmReserve')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. FARMER PRODUCE LISTING MODAL */}
+      {showProduceModal && (
+        <div style={styles.modalOverlay}>
+          <div className="card animate-scale" style={{ ...styles.confirmModal, maxWidth: '420px', padding: '16px' }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '4px', color: 'var(--color-text-primary)' }}>
+              👨‍🌾 List Excess Produce
+            </h3>
+            <p style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
+              Create a listing of surplus food ingredients. Nearby school kitchens will be notified immediately to claim it.
+            </p>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const finalTitle = produceForm.title === 'Custom' ? (produceForm.customTitle || 'Produce') : produceForm.title;
+              const finalDelivery = produceForm.deliveryEstimate === 'Custom' ? (produceForm.customDelivery || 'Immediate') : produceForm.deliveryEstimate;
+              
+              uploadProducePost(
+                collector.id,
+                finalTitle,
+                produceForm.quantity,
+                produceForm.price,
+                finalDelivery,
+                '', // image_url
+                produceForm.description
+              );
+              setShowProduceModal(false);
+              setProduceForm({
+                title: 'Tomatoes',
+                quantity: '10',
+                price: '0',
+                deliveryEstimate: 'Tomorrow Morning',
+                description: '',
+                imageUrl: ''
+              });
+            }}>
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>Produce Item</label>
+                <select 
+                  className="form-input" 
+                  style={{ minHeight: '38px', fontSize: '0.75rem' }}
+                  value={produceForm.title}
+                  onChange={(e) => setProduceForm(p => ({ ...p, title: e.target.value }))}
+                >
+                  <option value="Tomatoes">🍅 Tomatoes</option>
+                  <option value="Spinach">Keerai / Spinach 🥬</option>
+                  <option value="Bananas">🍌 Bananas</option>
+                  <option value="Pumpkins">🎃 Pumpkins</option>
+                  <option value="Potatoes">🥔 Potatoes</option>
+                  <option value="Custom">Custom Item...</option>
+                </select>
+              </div>
+
+              {produceForm.title === 'Custom' && (
+                <div className="form-group" style={{ marginBottom: '10px' }}>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>Custom Item Name</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    style={{ minHeight: '38px', fontSize: '0.75rem' }}
+                    placeholder="e.g. Fresh Carrots"
+                    value={produceForm.customTitle || ''}
+                    onChange={(e) => setProduceForm(p => ({ ...p, customTitle: e.target.value }))}
+                    required
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>Quantity (kg)</label>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    className="form-input" 
+                    style={{ minHeight: '38px', fontSize: '0.75rem' }}
+                    value={produceForm.quantity}
+                    onChange={(e) => setProduceForm(p => ({ ...p, quantity: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>Price per kg (₹)</label>
+                  <input 
+                    type="number" 
+                    min="0" 
+                    className="form-input" 
+                    style={{ minHeight: '38px', fontSize: '0.75rem' }}
+                    placeholder="0 for Free"
+                    value={produceForm.price}
+                    onChange={(e) => setProduceForm(p => ({ ...p, price: e.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>Delivery Estimate</label>
+                <select 
+                  className="form-input" 
+                  style={{ minHeight: '38px', fontSize: '0.75rem' }}
+                  value={produceForm.deliveryEstimate}
+                  onChange={(e) => setProduceForm(p => ({ ...p, deliveryEstimate: e.target.value }))}
+                >
+                  <option value="Immediate (Within 2 Hours)">Immediate (Within 2 Hours)</option>
+                  <option value="Today Evening">Today Evening</option>
+                  <option value="Tomorrow Morning">Tomorrow Morning</option>
+                  <option value="Custom">Custom Time...</option>
+                </select>
+              </div>
+
+              {produceForm.deliveryEstimate === 'Custom' && (
+                <div className="form-group" style={{ marginBottom: '10px' }}>
+                  <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>Custom Delivery Time</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    style={{ minHeight: '38px', fontSize: '0.75rem' }}
+                    placeholder="e.g. Sunday Morning, 9 AM"
+                    value={produceForm.customDelivery || ''}
+                    onChange={(e) => setProduceForm(p => ({ ...p, customDelivery: e.target.value }))}
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="form-group" style={{ marginBottom: '14px' }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px' }}>Description / Notes</label>
+                <textarea 
+                  className="form-input" 
+                  style={{ minHeight: '50px', fontSize: '0.75rem' }}
+                  placeholder="e.g. Harvested from our organic patch today. Very fresh."
+                  value={produceForm.description}
+                  onChange={(e) => setProduceForm(p => ({ ...p, description: e.target.value }))}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  type="button"
+                  onClick={() => setShowProduceModal(false)} 
+                  className="btn-secondary" 
+                  style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-primary" 
+                  style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem' }}
+                >
+                  Post Listing
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

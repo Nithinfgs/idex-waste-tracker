@@ -48,6 +48,7 @@ let db = {
     { id: 'col-2', name: 'Deepak Raj (Coimbatore BioCompost)', collector_type: 'Compost Company', vehicle: 'Tata Ace Mini Truck', radius: 20.0, latitude: 10.9858, longitude: 76.9858 }
   ],
   waste_posts: [],
+  produce_posts: [],
   notifications: [],
   history: [
     { id: 'h-1', post_id: 'p-old-1', school_id: 'sch-1', collector_id: 'col-1', estimated_weight: 18.5, date: '2026-07-13T10:00:00Z', reason: 'Rice & Sambhar Excess' },
@@ -246,6 +247,66 @@ app.post('/api/history', async (req, res) => {
       db.history.unshift(newH);
       saveDatabaseToFile();
       return [newH];
+    }
+  );
+  res.json({ success: true });
+});
+
+// 6. Produce Posts
+app.get('/api/produce-posts', async (req, res) => {
+  const data = await executeQuery('SELECT * FROM produce_posts ORDER BY created_at DESC', [], () => db.produce_posts || []);
+  res.json(data);
+});
+
+app.post('/api/produce-posts', async (req, res) => {
+  const post = req.body;
+  await executeQuery(
+    'INSERT INTO produce_posts (id, collector_id, title, quantity, price, delivery_estimate, image_url, description, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+    [post.id, post.collectorId, post.title, post.quantity, post.price, post.deliveryEstimate, post.imageUrl, post.description, 'Available', post.createdAt],
+    () => {
+      const newPost = {
+        id: post.id,
+        collectorId: post.collectorId,
+        title: post.title,
+        quantity: parseFloat(post.quantity || 0),
+        price: parseFloat(post.price || 0),
+        deliveryEstimate: post.deliveryEstimate,
+        imageUrl: post.imageUrl,
+        description: post.description,
+        status: 'Available',
+        claimedBySchoolId: null,
+        createdAt: post.createdAt || new Date().toISOString()
+      };
+      if (!db.produce_posts) db.produce_posts = [];
+      db.produce_posts.unshift(newPost);
+      saveDatabaseToFile();
+      return [newPost];
+    }
+  );
+  res.json({ success: true });
+});
+
+app.post('/api/produce-posts/:id/claim', async (req, res) => {
+  const { id } = req.params;
+  const { schoolId } = req.body;
+  await executeQuery(
+    'UPDATE produce_posts SET status = $1, claimed_by_school_id = $2 WHERE id = $3',
+    ['Claimed', schoolId, id],
+    () => {
+      if (db.produce_posts) {
+        db.produce_posts = db.produce_posts.map(post => {
+          if (post.id === id) {
+            return {
+              ...post,
+              status: 'Claimed',
+              claimedBySchoolId: schoolId
+            };
+          }
+          return post;
+        });
+      }
+      saveDatabaseToFile();
+      return [];
     }
   );
   res.json({ success: true });

@@ -51,7 +51,10 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
     syncPasscode,
     setSyncPasscode,
     uploadStateToCloud,
-    downloadStateFromCloud
+    downloadStateFromCloud,
+    collectors,
+    producePosts,
+    claimProducePost
   } = useContext(StateContext);
 
   const school = schools.find(s => s.id === selectedSchoolId);
@@ -103,6 +106,42 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
       setPredMenu(menuOptions[0]);
     }
   }, [predDay, selectedSchoolId, menuOptions.join(',')]);
+
+  const [collectionsSubTab, setCollectionsSubTab] = useState('waste'); // 'waste' | 'marketplace'
+
+  const getDistanceToCollector = (col) => {
+    if (!school || !col) return '0.0';
+    const lat1 = school.latitude;
+    const lon1 = school.longitude;
+    const lat2 = col.latitude;
+    const lon2 = col.longitude;
+
+    // Haversine formula
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return (R * c).toFixed(1);
+  };
+
+  const getProduceIcon = (title) => {
+    const t = (title || '').toLowerCase();
+    if (t.includes('tomato')) return '🍅';
+    if (t.includes('spinach') || t.includes('keerai') || t.includes('leaf') || t.includes('green')) return 'Keerai 🥬';
+    if (t.includes('banana')) return '🍌';
+    if (t.includes('pumpkin')) return '🎃';
+    if (t.includes('potato')) return '🥔';
+    if (t.includes('onion')) return '🧅';
+    if (t.includes('carrot')) return '🥕';
+    if (t.includes('cabbage')) return '🥬';
+    if (t.includes('milk')) return '🥛';
+    if (t.includes('egg')) return '🥚';
+    return '🍎';
+  };
 
   // Profile forms
   const [profileData, setProfileData] = useState({
@@ -564,118 +603,221 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
         </div>
       )}
 
-      {/* 3. COLLECTIONS TAB (TIMELINE PROGRESS & LOGS) */}
+      {/* 3. COLLECTIONS TAB (TIMELINE PROGRESS & LOGS & MARKETPLACE) */}
       {activeTab === 'collections' && (
         <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Active Pickups</h3>
-          
-          {activePost ? (
-            <div>
-              <div className="card" style={{ marginBottom: '16px' }}>
-                <h4 style={{ fontSize: '0.9rem', marginBottom: '16px' }}>Progress Timeline</h4>
-                
-                {/* Timeline progress mapping */}
-                <div style={styles.timelineWrapper}>
-                  {[
-                    { state: 'Available', label: 'Posted', desc: 'Waste listed in marketplace.' },
-                    { state: 'Reserved', label: 'Reserved', desc: 'Collector assigned (30m clock started).' },
-                    { state: 'In Transit', label: 'Transit', desc: 'Collector en route to kitchen.' },
-                    { state: 'Awaiting School Confirmation', label: 'Confirmation', desc: 'Awaiting supervisor confirmation.' },
-                    { state: 'Collected', label: 'Completed', desc: 'Waste successfully cleared.' }
-                  ].map((step, idx) => {
-                    const statuses = ['Available', 'Reserved', 'In Transit', 'Awaiting School Confirmation', 'Collected'];
-                    const currentIdx = statuses.indexOf(activePost.status);
-                    const stepIdx = statuses.indexOf(step.state);
-                    const isPassed = currentIdx >= stepIdx;
+          {/* Segmented Switcher for Waste vs Produce Marketplace */}
+          <div style={{ display: 'flex', backgroundColor: 'var(--color-border)', borderRadius: '10px', padding: '3px', marginBottom: '20px' }}>
+            <button 
+              onClick={() => setCollectionsSubTab('waste')}
+              style={{
+                flex: 1,
+                minHeight: '34px',
+                padding: '0 8px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: collectionsSubTab === 'waste' ? '#FFFFFF' : 'transparent',
+                color: collectionsSubTab === 'waste' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                boxShadow: collectionsSubTab === 'waste' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
+                cursor: 'pointer'
+              }}
+            >
+              🔄 My Waste Pickups
+            </button>
+            <button 
+              onClick={() => setCollectionsSubTab('marketplace')}
+              style={{
+                flex: 1,
+                minHeight: '34px',
+                padding: '0 8px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: collectionsSubTab === 'marketplace' ? '#FFFFFF' : 'transparent',
+                color: collectionsSubTab === 'marketplace' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                boxShadow: collectionsSubTab === 'marketplace' ? '0 2px 4px rgba(0,0,0,0.06)' : 'none',
+                cursor: 'pointer'
+              }}
+            >
+              🍎 Farmer Produce Marketplace
+            </button>
+          </div>
 
-                    return (
-                      <div key={idx} className="timeline-item">
-                        {idx < 4 && <div className="timeline-line" style={{ backgroundColor: currentIdx > stepIdx ? 'var(--color-primary)' : 'var(--color-border)' }} />}
-                        <div className={`timeline-dot ${isPassed ? 'active' : ''}`}>
-                          {isPassed ? <Check size={12} /> : null}
-                        </div>
-                        <div className="timeline-content">
-                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isPassed ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
-                            {step.label}
-                          </span>
-                          <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{step.desc}</p>
-                        </div>
+          {collectionsSubTab === 'waste' ? (
+            <>
+              <h3 style={styles.sectionTitle}>Active Pickups</h3>
+              
+              {activePost ? (
+                <div>
+                  <div className="card" style={{ marginBottom: '16px' }}>
+                    <h4 style={{ fontSize: '0.9rem', marginBottom: '16px' }}>Progress Timeline</h4>
+                    
+                    {/* Timeline progress mapping */}
+                    <div style={styles.timelineWrapper}>
+                      {[
+                        { state: 'Available', label: 'Posted', desc: 'Waste listed in marketplace.' },
+                        { state: 'Reserved', label: 'Reserved', desc: 'Collector assigned (30m clock started).' },
+                        { state: 'In Transit', label: 'Transit', desc: 'Collector en route to kitchen.' },
+                        { state: 'Awaiting School Confirmation', label: 'Confirmation', desc: 'Awaiting supervisor confirmation.' },
+                        { state: 'Collected', label: 'Completed', desc: 'Waste successfully cleared.' }
+                      ].map((step, idx) => {
+                        const statuses = ['Available', 'Reserved', 'In Transit', 'Awaiting School Confirmation', 'Collected'];
+                        const currentIdx = statuses.indexOf(activePost.status);
+                        const stepIdx = statuses.indexOf(step.state);
+                        const isPassed = currentIdx >= stepIdx;
+
+                        return (
+                          <div key={idx} className="timeline-item">
+                            {idx < 4 && <div className="timeline-line" style={{ backgroundColor: currentIdx > stepIdx ? 'var(--color-primary)' : 'var(--color-border)' }} />}
+                            <div className={`timeline-dot ${isPassed ? 'active' : ''}`}>
+                              {isPassed ? <Check size={12} /> : null}
+                            </div>
+                            <div className="timeline-content">
+                              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isPassed ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+                                {step.label}
+                              </span>
+                              <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{step.desc}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {activePost.status === 'Awaiting School Confirmation' && (
+                      <div style={styles.confirmationPanel}>
+                        <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e65100', marginBottom: '10px' }}>
+                          Collector arrived. Verify waste removal and finalize transaction:
+                        </p>
+                        <button 
+                          onClick={() => confirmCollection(activePost.id)}
+                          className="btn-primary" 
+                          style={{ minHeight: '44px' }}
+                        >
+                          Confirm Collection Complete
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
+                    )}
+                  </div>
 
-                {activePost.status === 'Awaiting School Confirmation' && (
-                  <div style={styles.confirmationPanel}>
-                    <p style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e65100', marginBottom: '10px' }}>
-                      Collector arrived. Verify waste removal and finalize transaction:
-                    </p>
-                    <button 
-                      onClick={() => confirmCollection(activePost.id)}
-                      className="btn-primary" 
-                      style={{ minHeight: '44px' }}
-                    >
-                      Confirm Collection Complete
-                    </button>
+                  {/* Activity Log */}
+                  <div className="card">
+                    <h4 style={{ fontSize: '0.9rem', marginBottom: '12px' }}>Audit Log</h4>
+                    <div style={styles.activityLogContainer}>
+                      {activePost.history.map((log, index) => (
+                        <div key={index} style={styles.logRow}>
+                          <span style={styles.logTime}>
+                            {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <span>{log.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={styles.emptyLogsCard}>
+                  <span>🌱</span>
+                  <p>No active waste listing found.</p>
+                  <button 
+                    onClick={() => {
+                      setShowUploadWizard(true);
+                      setUploadStep(1);
+                    }}
+                    className="btn-primary"
+                    style={{ width: 'auto', padding: '0 20px', minHeight: '38px', marginTop: '12px' }}
+                  >
+                    Upload Waste Logs
+                  </button>
+                </div>
+              )}
+
+              {/* Historical Logs */}
+              <h3 style={{ ...styles.sectionTitle, marginTop: '24px' }}>Historical Collections</h3>
+              <div style={styles.historyList}>
+                {history.filter(h => h.schoolId === school.id).map(hist => (
+                  <div key={hist.id} className="card" style={{ marginBottom: '12px', padding: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <strong style={{ fontSize: '0.85rem' }}>{hist.collectorName}</strong>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
+                        {new Date(hist.date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                      <span>Weight: <strong>{hist.estimatedWeight} kg</strong></span>
+                      <span>Reason: {hist.reason}</span>
+                    </div>
+                  </div>
+                ))}
+                {history.filter(h => h.schoolId === school.id).length === 0 && (
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '16px' }}>
+                    No completed history records found.
+                  </p>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Marketplace listings grid */}
+              <h3 style={styles.sectionTitle}>Available Farmer Surplus Produce</h3>
+              <p style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginBottom: '16px' }}>
+                Claim excess raw food ingredients listed by nearby farmers directly.
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '40px' }}>
+                {(producePosts || []).filter(p => p.status === 'Available').map(p => {
+                  const farmer = collectors.find(c => c.id === p.collectorId);
+                  return (
+                    <div key={p.id} className="card card-interactive animate-scale" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '1.75rem' }}>{getProduceIcon(p.title)}</span>
+                          <div>
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>{p.title}</h4>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)' }}>
+                              🚜 Offered by {farmer?.name || 'Farmer'}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="badge" style={{ backgroundColor: 'rgba(76, 175, 80, 0.08)', color: 'var(--color-primary)', fontWeight: 700, fontSize: '0.8rem', padding: '4px 8px' }}>
+                          {p.quantity} kg
+                        </span>
+                      </div>
+
+                      <div style={{ borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)', padding: '8px 0', display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
+                        <span>Est. Delivery: <strong>{p.deliveryEstimate}</strong></span>
+                        <span>Price: <strong style={{ color: parseFloat(p.price) > 0 ? '#E65100' : 'var(--color-primary)' }}>{parseFloat(p.price) > 0 ? `₹${p.price}/kg` : 'Free'}</strong></span>
+                        <span>Distance: <strong>{farmer ? `${getDistanceToCollector(farmer)} km` : '0.0 km'}</strong></span>
+                      </div>
+
+                      {p.description && (
+                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontStyle: 'italic', margin: '0' }}>
+                          "{p.description}"
+                        </p>
+                      )}
+
+                      <button 
+                        onClick={() => claimProducePost(p.id, school.id)}
+                        className="btn-primary animate-ripple"
+                        style={{ minHeight: '38px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                      >
+                        Claim Produce
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {(producePosts || []).filter(p => p.status === 'Available').length === 0 && (
+                  <div style={{ ...styles.emptyLogsCard, padding: '30px' }}>
+                    <span>🥬</span>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>No fresh surplus produce listed by farmers right now.</p>
                   </div>
                 )}
               </div>
-
-              {/* Activity Log */}
-              <div className="card">
-                <h4 style={{ fontSize: '0.9rem', marginBottom: '12px' }}>Audit Log</h4>
-                <div style={styles.activityLogContainer}>
-                  {activePost.history.map((log, index) => (
-                    <div key={index} style={styles.logRow}>
-                      <span style={styles.logTime}>
-                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      <span>{log.message}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div style={styles.emptyLogsCard}>
-              <span>🌱</span>
-              <p>No active waste listing found.</p>
-              <button 
-                onClick={() => {
-                  setShowUploadWizard(true);
-                  setUploadStep(1);
-                }}
-                className="btn-primary"
-                style={{ width: 'auto', padding: '0 20px', minHeight: '38px', marginTop: '12px' }}
-              >
-                Upload Waste Logs
-              </button>
-            </div>
+            </>
           )}
-
-          {/* Historical Logs */}
-          <h3 style={{ ...styles.sectionTitle, marginTop: '24px' }}>Historical Collections</h3>
-          <div style={styles.historyList}>
-            {history.filter(h => h.schoolId === school.id).map(hist => (
-              <div key={hist.id} className="card" style={{ marginBottom: '12px', padding: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <strong style={{ fontSize: '0.85rem' }}>{hist.collectorName}</strong>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
-                    {new Date(hist.date).toLocaleDateString()}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                  <span>Weight: <strong>{hist.estimatedWeight} kg</strong></span>
-                  <span>Reason: {hist.reason}</span>
-                </div>
-              </div>
-            ))}
-            {history.filter(h => h.schoolId === school.id).length === 0 && (
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '16px' }}>
-                No completed history records found.
-              </p>
-            )}
-          </div>
         </div>
       )}
 

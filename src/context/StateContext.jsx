@@ -118,6 +118,11 @@ export const StateProvider = ({ children }) => {
     return posts ? JSON.parse(posts) : INITIAL_WASTE_POSTS;
   });
 
+  const [producePosts, setProducePosts] = useState(() => {
+    const local = localStorage.getItem('idex_produce_posts');
+    return local ? JSON.parse(local) : [];
+  });
+
   const [collectors, setCollectors] = useState(() => {
     const local = localStorage.getItem('idex_schools');
     if (local && (local.includes('Bengaluru') || local.includes('Bangalore'))) {
@@ -182,12 +187,13 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     const loadServerData = async () => {
       try {
-        const [resSch, resCol, resPosts, resHist, resNotif] = await Promise.all([
+        const [resSch, resCol, resPosts, resHist, resNotif, resProduce] = await Promise.all([
           fetch(`${API_URL}/api/schools`),
           fetch(`${API_URL}/api/collectors`),
           fetch(`${API_URL}/api/waste-posts`),
           fetch(`${API_URL}/api/history`),
-          fetch(`${API_URL}/api/notifications`)
+          fetch(`${API_URL}/api/notifications`),
+          fetch(`${API_URL}/api/produce-posts`)
         ]);
 
         if (resSch.ok) {
@@ -275,6 +281,23 @@ export const StateProvider = ({ children }) => {
           }));
           setNotifications(mappedNotif);
         }
+        if (resProduce && resProduce.ok) {
+          const rawProduce = await resProduce.json();
+          const mappedProduce = rawProduce.map(p => ({
+            id: p.id,
+            collectorId: p.collector_id || p.collectorId,
+            title: p.title,
+            quantity: parseFloat(p.quantity || 0),
+            price: parseFloat(p.price || 0),
+            deliveryEstimate: p.delivery_estimate || p.deliveryEstimate,
+            imageUrl: p.image_url || p.imageUrl,
+            description: p.description,
+            status: p.status,
+            claimedBySchoolId: p.claimed_by_school_id || p.claimedBySchoolId,
+            createdAt: p.created_at || p.createdAt
+          }));
+          setProducePosts(mappedProduce);
+        }
         console.log('Synchronized database data successfully from Express server!');
       } catch (err) {
         console.warn('API server offline. Using local storage fallback:', err.message);
@@ -305,6 +328,10 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('idex_notifications', JSON.stringify(notifications));
   }, [notifications]);
+
+  useEffect(() => {
+    localStorage.setItem('idex_produce_posts', JSON.stringify(producePosts));
+  }, [producePosts]);
 
   // Automatic background upload sync when state changes
   useEffect(() => {
@@ -850,6 +877,89 @@ export const StateProvider = ({ children }) => {
     }));
   };
 
+  // Farmer lists excess produce
+  const uploadProducePost = (collectorId, title, quantity, price, deliveryEstimate, imageUrl, description) => {
+    const collector = collectors.find(c => c.id === collectorId);
+    if (!collector) return false;
+
+    const timestamp = new Date().toISOString();
+    const newPost = {
+      id: `prod-${Date.now()}`,
+      collectorId,
+      title,
+      quantity: parseFloat(quantity),
+      price: parseFloat(price),
+      deliveryEstimate,
+      imageUrl,
+      description,
+      status: 'Available',
+      claimedBySchoolId: null,
+      createdAt: timestamp
+    };
+
+    // Save to server
+    fetch(`${API_URL}/api/produce-posts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newPost)
+    }).catch(err => console.warn('Failed to sync produce post to backend:', err.message));
+
+    // Update local state
+    setProducePosts(prev => [newPost, ...prev]);
+
+    // Send notifications to ALL schools!
+    schools.forEach(sch => {
+      addSystemNotification(
+        'school',
+        sch.id,
+        'Excess Produce Available',
+        `Farmer ${collector.name} listed excess produce: ${quantity} kg of ${title} (Price: ₹${price}, Estimate: ${deliveryEstimate})!`,
+        'success'
+      );
+    });
+
+    addToast('Produce post uploaded successfully!', 'success');
+    return true;
+  };
+
+  // School claims farmer's excess produce
+  const claimProducePost = (postId, schoolId) => {
+    const school = schools.find(s => s.id === schoolId);
+    if (!school) return false;
+
+    // Save to server
+    fetch(`${API_URL}/api/produce-posts/${postId}/claim`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ schoolId })
+    }).catch(err => console.warn('Failed to claim produce post on backend:', err.message));
+
+    // Update local state
+    setProducePosts(prev => prev.map(post => {
+      if (post.id === postId) {
+        // Send notification to the listing collector!
+        addSystemNotification(
+          'collector',
+          post.collectorId,
+          'Produce Claimed!',
+          `${school.name} has claimed your excess ${post.title}!`,
+          'success'
+        );
+
+        return {
+          ...post,
+          status: 'Claimed',
+          claimedBySchoolId: schoolId
+        };
+      }
+      return post;
+    }));
+
+    addToast('Produce claimed successfully!', 'success');
+    triggerConfetti();
+    return true;
+  };
+
   const forceSimulateTimeout = (postId) => {
     setWastePosts(prev => prev.map(post => {
       if (post.id === postId && post.status === 'Reserved') {
@@ -929,6 +1039,7 @@ export const StateProvider = ({ children }) => {
       t,
       schools,
       wastePosts,
+      producePosts,
       collectors,
       history,
       notifications,
@@ -960,6 +1071,8 @@ export const StateProvider = ({ children }) => {
       cancelReservation,
       updateSchoolOnboarding,
       updateCollectorOnboarding,
+      uploadProducePost,
+      claimProducePost,
       forceSimulateTimeout,
       addToast,
       triggerConfetti,

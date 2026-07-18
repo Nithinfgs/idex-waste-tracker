@@ -58,3 +58,17 @@ ALTER TABLE schools ADD COLUMN IF NOT EXISTS menu_tue TEXT;
 ALTER TABLE schools ADD COLUMN IF NOT EXISTS menu_wed TEXT;
 ALTER TABLE schools ADD COLUMN IF NOT EXISTS menu_thu TEXT;
 ALTER TABLE schools ADD COLUMN IF NOT EXISTS menu_fri TEXT;
+
+CREATE TABLE IF NOT EXISTS produce_posts (
+  id VARCHAR(50) PRIMARY KEY,
+  collector_id VARCHAR(50) REFERENCES collectors(id),
+  title VARCHAR(100) NOT NULL,
+  quantity DOUBLE PRECISION NOT NULL,
+  price DOUBLE PRECISION NOT NULL,
+  delivery_estimate VARCHAR(100) NOT NULL,
+  image_url TEXT,
+  description TEXT,
+  status VARCHAR(50) DEFAULT 'Available',
+  claimed_by_school_id VARCHAR(50),
+  created_at VARCHAR(100) NOT NULL
+);
