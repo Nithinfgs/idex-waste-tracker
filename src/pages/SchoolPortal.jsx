@@ -22,7 +22,11 @@ import {
   Plus,
   ShoppingBag,
   BarChart3,
-  Award
+  Award,
+  Star,
+  Sun,
+  CloudRain,
+  FileText
 } from 'lucide-react';
 
 export default function SchoolPortal({ activeTab, setActiveTab }) {
@@ -54,7 +58,10 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
     downloadStateFromCloud,
     collectors,
     producePosts,
-    claimProducePost
+    claimProducePost,
+    getFoodAuditReport,
+    getMenuPerformance,
+    getAttendanceWasteCorrelation
   } = useContext(StateContext);
 
   const school = schools.find(s => s.id === selectedSchoolId);
@@ -67,6 +74,11 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
   
   // Active settings subpage
   const [activeSettingsSubPage, setActiveSettingsSubPage] = useState('menu'); // 'menu' | 'settings' | 'help'
+  
+  const [showPrintReportModal, setShowPrintReportModal] = useState(false);
+  const auditReport = getFoodAuditReport(selectedSchoolId);
+  const menuPerformance = getMenuPerformance(selectedSchoolId);
+  const correlationData = getAttendanceWasteCorrelation(selectedSchoolId);
   
   // Prediction calculator states
   const [predAttendance, setPredAttendance] = useState(school ? school.studentStrength - 30 : 390);
@@ -350,6 +362,28 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
             </button>
           </div>
 
+          {/* Smart Alert Banner (Today's waste vs historical daily average) */}
+          {activePost && activePost.estimatedWeight > 18.0 && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              backgroundColor: 'rgba(211, 47, 47, 0.08)',
+              border: '1.5px solid var(--color-error)',
+              borderRadius: '12px',
+              padding: '12px',
+              marginBottom: '16px'
+            }} className="animate-scale">
+              <AlertTriangle size={18} color="var(--color-error)" />
+              <div style={{ flex: 1 }}>
+                <strong style={{ fontSize: '0.78rem', color: '#B71C1C', display: 'block' }}>Smart Alert: High Leftovers Warning</strong>
+                <span style={{ fontSize: '0.7rem', color: '#C62828' }}>
+                  Today's logged surplus of <strong>{activePost.estimatedWeight} kg</strong> is <strong>{Math.round(((activePost.estimatedWeight - 12) / 12) * 100)}% higher</strong> than your kitchen's running target average!
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Quick Stats Grid - 4 Equal Cards */}
           <div style={styles.quickStatsGrid}>
             <div className="card card-interactive">
@@ -559,49 +593,296 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
         </div>
       )}
 
-      {/* 2. ANALYTICS DEEP DIVE TAB */}
-      {activeTab === 'dashboard' && (
-        <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>District Performance Insights</h3>
-          <div className="card">
-            <h4 style={{ fontSize: '0.9rem', marginBottom: '12px' }}>Landfill Diversion Trends</h4>
-            <div style={styles.chartWrapper}>
-              {/* Bar Chart representation */}
-              <div style={styles.barGrid}>
-                {[
-                  { label: 'Week 1', val: 78 },
-                  { label: 'Week 2', val: 90 },
-                  { label: 'Week 3', val: 84 },
-                  { label: 'Week 4', val: 92 }
-                ].map((wk, idx) => (
-                  <div key={idx} style={styles.barCol}>
-                    <div style={{ height: '100px', width: '24px', backgroundColor: '#F1F5F9', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'end' }}>
-                      <div style={{ height: `${wk.val}%`, width: '100%', backgroundColor: 'var(--color-primary)', borderRadius: '12px' }} />
+      {/* 2. FOOD AUDIT REPORT & ANALYTICS TAB */}
+      {activeTab === 'dashboard' && (() => {
+        // Calculate dynamic SVG coordinates for the correlation line chart
+        const chartPoints = correlationData.map((d, idx) => {
+          const x = 10 + idx * 20;
+          // Map attendance (range 150 to 350) to y range (28 to 10)
+          const attY = 32 - ((Math.max(d.attendance, 150) - 150) / 200) * 22;
+          // Map cooked (flat at studentStrength) to y range (28 to 10)
+          const cookY = 32 - ((Math.max(d.cooked, 150) - 150) / 200) * 22;
+          // Map waste (range 0 to 35kg) to y range (35 to 8)
+          const wasteY = 35 - (Math.min(d.waste, 35) / 35) * 27;
+          return { day: d.day, x, attY, cookY, wasteY, att: d.attendance, cook: d.cooked, wst: d.waste };
+        });
+
+        const attPath = `M ${chartPoints.map(p => `${p.x} ${p.attY}`).join(' L ')}`;
+        const cookPath = `M ${chartPoints.map(p => `${p.x} ${p.cookY}`).join(' L ')}`;
+        const wstPath = `M ${chartPoints.map(p => `${p.x} ${p.wasteY}`).join(' L ')}`;
+
+        // Calculate progress bar values
+        const currentDailyAvg = parseFloat((auditReport.totalWaste / Math.max(history.filter(h => h.schoolId === school.id).length, 5)).toFixed(1)) || 14.5;
+        const targetGoal = 12.0;
+        const goalPercent = Math.min(Math.round((targetGoal / currentDailyAvg) * 100), 100);
+
+        return (
+          <div style={styles.scrollable}>
+            {/* 1. School Waste Score Badge Banner */}
+            <div className="card" style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '16px', 
+              padding: '16px', 
+              background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, rgba(30, 136, 229, 0.04) 100%)',
+              borderLeft: '4px solid var(--color-primary)',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                width: '54px',
+                height: '54px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--color-primary)',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.6rem',
+                fontWeight: 800,
+                boxShadow: '0 4px 10px rgba(76, 175, 80, 0.3)'
+              }}>
+                {auditReport.wasteScore}
+              </div>
+              <div>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700, margin: '0 0 2px 0', color: 'var(--color-text-primary)' }}>
+                  School Waste Audit Grade
+                </h4>
+                <p style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', margin: 0 }}>
+                  Average Leftovers: <strong>{currentDailyAvg} kg/day</strong>. Your kitchen ranks in the top 15% for waste diversion!
+                </p>
+              </div>
+            </div>
+
+            {/* 2. Monthly Summary Audit Report Card */}
+            <div className="card" style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FileText size={18} color="var(--color-primary)" />
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Monthly Food Waste Audit</h4>
+                </div>
+                <button 
+                  onClick={() => setShowPrintReportModal(true)}
+                  className="btn-secondary" 
+                  style={{ width: 'auto', minHeight: '32px', fontSize: '0.7rem', padding: '0 10px' }}
+                >
+                  Generate Report
+                </button>
+              </div>
+
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(2, 1fr)', 
+                gap: '10px', 
+                marginBottom: '12px' 
+              }}>
+                <div style={{ backgroundColor: 'var(--color-background)', padding: '10px', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Total Meals Served</span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--color-text-primary)' }}>{auditReport.totalMealsServed}</strong>
+                </div>
+                <div style={{ backgroundColor: 'var(--color-background)', padding: '10px', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Total Leftovers Logged</span>
+                  <strong style={{ fontSize: '0.95rem', color: 'var(--color-error)' }}>{auditReport.totalWaste} kg</strong>
+                </div>
+                <div style={{ backgroundColor: 'var(--color-background)', padding: '10px', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Most Wasteful Day</span>
+                  <strong style={{ fontSize: '0.85rem', color: '#E65100' }}>{auditReport.mostWastefulDay}</strong>
+                </div>
+                <div style={{ backgroundColor: 'var(--color-background)', padding: '10px', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Most Efficient Day</span>
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--color-primary)' }}>{auditReport.mostEfficientDay}</strong>
+                </div>
+                <div style={{ backgroundColor: 'var(--color-background)', padding: '10px', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Waste Saved vs Baseline</span>
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--color-primary)' }}>-{auditReport.wasteReduction}%</strong>
+                </div>
+                <div style={{ backgroundColor: 'var(--color-background)', padding: '10px', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Collector Success Rate</span>
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--color-primary)' }}>{auditReport.collectorSuccessRate}%</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Waste Reduction Goal Progress Card */}
+            <div className="card" style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '8px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--color-text-secondary)' }}>Waste Reduction Target Goal</span>
+                <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>{goalPercent}% Achieved</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', fontSize: '0.75rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Current Avg</span>
+                  <strong>{currentDailyAvg} kg/day</strong>
+                </div>
+                
+                {/* Progress bar */}
+                <div style={{ flex: 1, height: '12px', backgroundColor: 'var(--color-border)', borderRadius: '6px', overflow: 'hidden', position: 'relative' }}>
+                  <div style={{ 
+                    height: '100%', 
+                    width: `${goalPercent}%`, 
+                    backgroundColor: goalPercent > 80 ? 'var(--color-primary)' : '#FFA726',
+                    borderRadius: '6px'
+                  }} />
+                </div>
+
+                <div>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Target Goal</span>
+                  <strong>{targetGoal} kg/day</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. "Why Waste?" Analysis Cause Distribution */}
+            <div className="card" style={{ marginBottom: '16px' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '12px' }}>"Why Waste?" Audit Analysis</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                {auditReport.topReasons.map(r => (
+                  <div key={r.reason} style={{ fontSize: '0.72rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                      <span style={{ fontWeight: 500 }}>{r.reason}</span>
+                      <strong>{r.percentage}% ({r.weight} kg)</strong>
                     </div>
-                    <span style={{ fontSize: '0.65rem', marginTop: '6px', color: 'var(--color-text-secondary)' }}>{wk.label}</span>
+                    <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ 
+                        height: '100%', 
+                        width: `${r.percentage}%`, 
+                        backgroundColor: r.reason === 'Low Attendance' ? 'var(--color-accent)' : 
+                                         r.reason === 'Disliked Menu' ? '#EF5350' : 
+                                         r.reason === 'Cooking Error' ? '#FFA726' : '#95A5A6',
+                        borderRadius: '3px'
+                      }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ 
+                backgroundColor: 'rgba(30, 136, 229, 0.06)', 
+                borderLeft: '3px solid var(--color-accent)', 
+                padding: '8px 10px', 
+                borderRadius: '4px',
+                fontSize: '0.72rem',
+                color: '#1565C0',
+                lineHeight: '1.3'
+              }}>
+                <strong>Audit Insight:</strong> Most food leftovers in this kitchen are caused by <strong>{auditReport.topReasons[0]?.reason}</strong>. Adjusting prep quantities by tracking student attendance will yield the fastest savings.
+              </div>
+            </div>
+
+            {/* 5. Menu Leftover Performance Ranking Card */}
+            <div className="card" style={{ marginBottom: '16px' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px' }}>Menu Leftover Performance</h4>
+              <p style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
+                Weekly dishes rated by leftover generation (fewer leftovers = more stars!).
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {menuPerformance.map(m => (
+                  <div key={m.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
+                    <div style={{ flex: 1, paddingRight: '8px' }}>
+                      <strong style={{ display: 'block', color: 'var(--color-text-primary)' }}>{m.name}</strong>
+                      <span style={{ fontSize: '0.65rem', color: m.stars <= 2 ? '#EF5350' : 'var(--color-text-secondary)' }}>
+                        Avg Leftovers: {m.avgWaste} kg | {m.desc}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '2px', color: '#FFB300' }}>
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={12} fill={i < m.stars ? '#FFB300' : 'none'} stroke="#FFB300" />
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
 
-          <div className="card" style={{ marginTop: '16px' }}>
-            <h4 style={{ fontSize: '0.9rem', marginBottom: '8px' }}>Organic Waste Breakdown</h4>
-            <div style={styles.breakdownRow}>
-              <span>Overcooked Grains</span>
-              <strong>40%</strong>
+            {/* 6. Attendance vs Servings vs Leftovers SVG Chart */}
+            <div className="card" style={{ marginBottom: '16px' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '4px' }}>Surplus vs Attendance Correlation</h4>
+              <p style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
+                Tracks relationship between Attendance, Servings Cooked, and Leftovers. Note how Wednesday's attendance drop causes the waste spike.
+              </p>
+
+              <div style={{ position: 'relative', padding: '10px 0' }}>
+                <svg viewBox="0 0 100 45" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+                  {/* Grid lines */}
+                  <line x1="10" y1="10" x2="90" y2="10" stroke="var(--color-border)" strokeWidth="0.25" strokeDasharray="1,1" />
+                  <line x1="10" y1="21" x2="90" y2="21" stroke="var(--color-border)" strokeWidth="0.25" strokeDasharray="1,1" />
+                  <line x1="10" y1="32" x2="90" y2="32" stroke="var(--color-border)" strokeWidth="0.25" strokeDasharray="1,1" />
+                  <line x1="10" y1="35" x2="90" y2="35" stroke="var(--color-border)" strokeWidth="0.5" />
+
+                  {/* Line graphs */}
+                  <path d={cookPath} fill="none" stroke="#4CAF50" strokeWidth="1.2" strokeDasharray="2,1.5" />
+                  <path d={attPath} fill="none" stroke="#2196F3" strokeWidth="1.2" />
+                  <path d={wstPath} fill="none" stroke="#E65100" strokeWidth="1.5" />
+
+                  {/* Draw points & values */}
+                  {chartPoints.map((p, idx) => (
+                    <g key={idx}>
+                      <circle cx={p.x} cy={p.attY} r="1" fill="#2196F3" />
+                      <circle cx={p.x} cy={p.cookY} r="1" fill="#4CAF50" />
+                      <circle cx={p.x} cy={p.wasteY} r="1.2" fill="#E65100" />
+                      
+                      {/* Highlight Wednesday anomaly values */}
+                      {p.day === 'Wednesday' && (
+                        <g>
+                          <text x={p.x} y={p.attY + 4} fontSize="2" fill="#2196F3" fontWeight="bold" textAnchor="middle">{p.att} Att</text>
+                          <text x={p.x} y={p.wasteY - 3} fontSize="2.2" fill="#E65100" fontWeight="bold" textAnchor="middle">{p.wst}kg Waste</text>
+                        </g>
+                      )}
+                    </g>
+                  ))}
+                </svg>
+
+                {/* Day Labels */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 8px', fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                  <span>Mon</span>
+                  <span>Tue</span>
+                  <span>Wed</span>
+                  <span>Thu</span>
+                  <span>Fri</span>
+                </div>
+
+                {/* Chart Legends */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', fontSize: '0.62rem', color: 'var(--color-text-secondary)', marginTop: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '8px', height: '2px', backgroundColor: '#4CAF50', display: 'inline-block' }} />
+                    <span>Servings Cooked</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '8px', height: '2px', backgroundColor: '#2196F3', display: 'inline-block' }} />
+                    <span>Student Attendance</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '8px', height: '2px', backgroundColor: '#E65100', display: 'inline-block' }} />
+                    <span>Leftovers Generated (kg)</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div style={styles.breakdownRow}>
-              <span>Low Student Attendance</span>
-              <strong>35%</strong>
+
+            {/* 7. Actionable Recommendations & Suggestions */}
+            <div className="card" style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <Info size={16} color="var(--color-primary)" />
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Kitchen Audit Recommendations</h4>
+              </div>
+              <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.75rem', color: 'var(--color-text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {auditReport.suggestions.map((s, idx) => (
+                  <li key={idx} style={{ lineHeight: '1.4' }}>{s}</li>
+                ))}
+              </ul>
             </div>
-            <div style={styles.breakdownRow}>
-              <span>Kitchen Scraps / Peels</span>
-              <strong>25%</strong>
+
+            {/* 8. Seasonal Trends Insight Card */}
+            <div className="card" style={{ marginBottom: '30px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <CloudRain size={16} color="#0288D1" />
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Seasonal Absenteeism Trends</h4>
+              </div>
+              <p style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', lineHeight: '1.4', margin: 0 }}>
+                📅 Coimbatore monsoon cycles (July/August) correlate with a <strong>14% drop</strong> in student attendance on rainy mornings. Integrated weather warnings alert the kitchen to scale down cooking capacity dynamically, saving up to 25kg/week of grains.
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 3. COLLECTIONS TAB (TIMELINE PROGRESS & LOGS & MARKETPLACE) */}
       {activeTab === 'collections' && (
@@ -1176,6 +1457,117 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                   Publish Post
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 8. PRINTABLE MONTHLY FOOD AUDIT REPORT MODAL */}
+      {showPrintReportModal && (
+        <div style={styles.wizardOverlay}>
+          <div className="card animate-scale" style={{ 
+            width: '90%', 
+            maxWidth: '460px', 
+            padding: '20px', 
+            backgroundColor: '#FFFFFF', 
+            boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            {/* Report Header for printing */}
+            <div style={{ textAlign: 'center', borderBottom: '2px solid var(--color-primary)', paddingBottom: '10px', marginBottom: '14px' }}>
+              <span style={{ fontSize: '1.5rem' }}>🏆</span>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '4px 0', color: 'var(--color-primary)' }}>IDEX Food Audit Report</h2>
+              <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Coimbatore District Mid-Day Meals Scheme
+              </span>
+            </div>
+
+            {/* Audit Details */}
+            <div style={{ fontSize: '0.72rem', lineHeight: '1.4', color: 'var(--color-text-primary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span>School Kitchen:</span>
+                <strong>{school.name}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span>Report Month:</span>
+                <strong>{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <span>Kitchen Waste Rating:</span>
+                <strong style={{ color: 'var(--color-primary)', fontSize: '0.8rem' }}>Grade {auditReport.wasteScore}</strong>
+              </div>
+
+              <h4 style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '4px', marginBottom: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
+                Audit Metrics
+              </h4>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '12px', fontSize: '0.7rem' }}>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <td style={{ padding: '5px 0' }}>Total Estimated Meals Served</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{auditReport.totalMealsServed} servings</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <td style={{ padding: '5px 0' }}>Total Surplus Food Leftovers</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--color-error)' }}>{auditReport.totalWaste} kg</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <td style={{ padding: '5px 0' }}>Daily Leftover Average</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{currentDailyAvg} kg/day</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <td style={{ padding: '5px 0' }}>Most Efficient Day</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--color-primary)' }}>{auditReport.mostEfficientDay}</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <td style={{ padding: '5px 0' }}>Most Wasteful Day</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: '#E65100' }}>{auditReport.mostWastefulDay}</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <td style={{ padding: '5px 0' }}>Collector Reliability Rate</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--color-primary)' }}>{auditReport.collectorSuccessRate}%</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h4 style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '4px', marginBottom: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
+                Top Leftover Causes
+              </h4>
+              <ul style={{ paddingLeft: '14px', margin: '0 0 12px 0' }}>
+                {auditReport.topReasons.map((r, i) => (
+                  <li key={i} style={{ marginBottom: '3px' }}>
+                    <strong>{r.reason}</strong>: {r.percentage}% of all surplus ({r.weight} kg)
+                  </li>
+                ))}
+              </ul>
+
+              <h4 style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '4px', marginBottom: '6px', fontSize: '0.75rem', fontWeight: 700 }}>
+                Audit Recommendations
+              </h4>
+              <ul style={{ paddingLeft: '14px', margin: '0 0 16px 0', color: 'var(--color-text-secondary)' }}>
+                {auditReport.suggestions.map((s, i) => (
+                  <li key={i} style={{ marginBottom: '3px', fontStyle: 'italic' }}>{s}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Print Action Buttons */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                onClick={() => setShowPrintReportModal(false)} 
+                className="btn-secondary" 
+                style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem' }}
+              >
+                Close Report
+              </button>
+              <button 
+                onClick={() => {
+                  window.print();
+                }} 
+                className="btn-primary" 
+                style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+              >
+                <span>🖨️ Print Audit</span>
+              </button>
             </div>
           </div>
         </div>

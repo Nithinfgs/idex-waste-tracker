@@ -727,46 +727,70 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
           </div>
 
           {activeSettingsSubPage === 'menu' && (
-            <form onSubmit={handleProfileSave} className="card" style={{ marginTop: '12px' }}>
-              <div className="form-group">
-                <label className="form-label">Collector Name</label>
-                <input type="text" className="form-input" value={collector.name} disabled />
+            <>
+              <form onSubmit={handleProfileSave} className="card" style={{ marginTop: '12px' }}>
+                <div className="form-group">
+                  <label className="form-label">Collector Name</label>
+                  <input type="text" className="form-input" value={collector.name} disabled />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Collector Category</label>
+                  <select 
+                    className="form-input"
+                    value={profileData.collectorType}
+                    onChange={(e) => setProfileData(p => ({ ...p, collectorType: e.target.value }))}
+                  >
+                    <option value="Farmer">Farmer / Livestock Owner</option>
+                    <option value="Compost Company">Compost Company</option>
+                    <option value="Vermicompost Site">Vermicompost Facility</option>
+                    <option value="Organic Buyer">Organic Resource Buyer</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Operating Travel Radius (km)</label>
+                  <input 
+                    type="number" 
+                    className="form-input" 
+                    value={profileData.radius}
+                    onChange={(e) => setProfileData(p => ({ ...p, radius: e.target.value }))}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Vehicle Type</label>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    value={profileData.vehicle}
+                    onChange={(e) => setProfileData(p => ({ ...p, vehicle: e.target.value }))}
+                  />
+                </div>
+                <button type="submit" className="btn-primary" style={{ marginTop: '8px' }}>
+                  {t('comConfigurations')}
+                </button>
+              </form>
+
+              {/* Collector Reliability stats card */}
+              <div className="card" style={{ marginTop: '16px' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px' }}>Logistics Reliability Statistics</h4>
+                <p style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
+                  Your municipal collection scores for mid-day meal pickups.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  <div style={{ backgroundColor: 'var(--color-background)', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Completed</span>
+                    <strong style={{ fontSize: '1rem', color: 'var(--color-primary)' }}>{collector.id === 'col-1' ? 28 : 22}</strong>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--color-background)', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Late Arrived</span>
+                    <strong style={{ fontSize: '1rem', color: '#E65100' }}>{collector.id === 'col-1' ? 2 : 1}</strong>
+                  </div>
+                  <div style={{ backgroundColor: 'var(--color-background)', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', display: 'block' }}>Cancelled</span>
+                    <strong style={{ fontSize: '1rem', color: '#C62828' }}>{collector.id === 'col-1' ? 1 : 0}</strong>
+                  </div>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Collector Category</label>
-                <select 
-                  className="form-input"
-                  value={profileData.collectorType}
-                  onChange={(e) => setProfileData(p => ({ ...p, collectorType: e.target.value }))}
-                >
-                  <option value="Farmer">Farmer / Livestock Owner</option>
-                  <option value="Compost Company">Compost Company</option>
-                  <option value="Vermicompost Site">Vermicompost Facility</option>
-                  <option value="Organic Buyer">Organic Resource Buyer</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Operating Travel Radius (km)</label>
-                <input 
-                  type="number" 
-                  className="form-input" 
-                  value={profileData.radius}
-                  onChange={(e) => setProfileData(p => ({ ...p, radius: e.target.value }))}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Vehicle Type</label>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  value={profileData.vehicle}
-                  onChange={(e) => setProfileData(p => ({ ...p, vehicle: e.target.value }))}
-                />
-              </div>
-              <button type="submit" className="btn-primary" style={{ marginTop: '8px' }}>
-                {t('comConfigurations')}
-              </button>
-            </form>
+            </>
           )}
 
           {activeSettingsSubPage === 'settings' && (

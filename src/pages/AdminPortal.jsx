@@ -211,6 +211,75 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
               Export District Audit (PDF)
             </button>
           </div>
+
+          {/* District Insights surplus cause breakdown */}
+          <div className="card" style={{ marginTop: '16px' }}>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '12px' }}>District Waste Cause Distribution</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+              {[
+                { reason: 'Low Attendance', pct: 42, color: 'var(--color-accent)' },
+                { reason: 'Disliked Menu', pct: 28, color: '#EF5350' },
+                { reason: 'Cooking Error', pct: 18, color: '#FFA726' },
+                { reason: 'Spoilage', pct: 12, color: '#95A5A6' }
+              ].map(item => (
+                <div key={item.reason} style={{ fontSize: '0.72rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                    <span style={{ fontWeight: 500 }}>{item.reason}</span>
+                    <strong>{item.pct}%</strong>
+                  </div>
+                  <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--color-border)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ 
+                      height: '100%', 
+                      width: `${item.pct}%`, 
+                      backgroundColor: item.color,
+                      borderRadius: '3px'
+                    }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ 
+              backgroundColor: 'rgba(30, 136, 229, 0.06)', 
+              borderLeft: '3px solid var(--color-accent)', 
+              padding: '8px 10px', 
+              borderRadius: '4px',
+              fontSize: '0.72rem',
+              color: '#1565C0',
+              lineHeight: '1.3'
+            }}>
+              <strong>District Summary:</strong> Low student attendance is the largest driver of food surplus across Coimbatore schools (42%). Promoting calendar sync features could save the municipality up to 450kg/month of raw ingredients.
+            </div>
+          </div>
+
+          {/* Collector Reliability Center */}
+          <div className="card" style={{ marginTop: '16px' }}>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px' }}>Logistics Collection Reliability</h4>
+            <p style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
+              Performance stats for municipal organic collection partners.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {collectors.map(c => {
+                // Generate realistic stats based on collector ID for demo purposes
+                const completedCount = c.id === 'col-1' ? 28 : 22;
+                const lateCount = c.id === 'col-1' ? 2 : 1;
+                const cancelledCount = c.id === 'col-1' ? 1 : 0;
+                
+                return (
+                  <div key={c.id} style={{ fontSize: '0.72rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: '4px' }}>
+                      <span>🚜 {c.name}</span>
+                      <span style={{ color: 'var(--color-primary)' }}>Active</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', fontSize: '0.68rem', color: 'var(--color-text-secondary)' }}>
+                      <span>Completed: <strong style={{ color: 'var(--color-primary)' }}>{completedCount}</strong></span>
+                      <span>Late: <strong style={{ color: '#E65100' }}>{lateCount}</strong></span>
+                      <span>Cancelled: <strong style={{ color: '#C62828' }}>{cancelledCount}</strong></span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 

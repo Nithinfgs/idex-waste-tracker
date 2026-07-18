@@ -4,7 +4,13 @@ import { INITIAL_WASTE_POSTS, calculateWeight, getDistance, sortWastePosts } fro
 import { INITIAL_COLLECTORS, filterWastePosts } from '../state/collectors';
 import { INITIAL_HISTORY, createActivityLogEntry } from '../state/history';
 import { INITIAL_NOTIFICATIONS, groupNotifications } from '../state/notifications';
-import { computeStatistics, generateSchoolInsights } from '../state/dashboard';
+import { 
+  computeStatistics, 
+  generateSchoolInsights,
+  generateFoodAuditReport,
+  getMenuPerformance,
+  getAttendanceWasteCorrelation
+} from '../state/dashboard';
 import { predictServings } from '../state/prediction';
 import { TRANSLATIONS } from '../state/localization';
 
@@ -1097,6 +1103,18 @@ export const StateProvider = ({ children }) => {
       getSchoolInsights: (schoolId) => {
         const schoolHistory = history.filter(h => h.schoolId === schoolId);
         return generateSchoolInsights(schoolHistory);
+      },
+      getFoodAuditReport: (schoolId) => {
+        const school = schools.find(s => s.id === schoolId);
+        return generateFoodAuditReport(history, school);
+      },
+      getMenuPerformance: (schoolId) => {
+        const school = schools.find(s => s.id === schoolId);
+        return getMenuPerformance(history, school);
+      },
+      getAttendanceWasteCorrelation: (schoolId) => {
+        const school = schools.find(s => s.id === schoolId);
+        return getAttendanceWasteCorrelation(history, school);
       },
       getMealPrediction: (schoolId, attendance, menuName, dayOfWeek) => {
         const schoolHistory = history.filter(h => h.schoolId === schoolId);

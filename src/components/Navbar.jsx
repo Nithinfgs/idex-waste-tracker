@@ -44,7 +44,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
         return [
           { id: 'home', label: t('dashboard'), icon: Home },
           { id: 'collections', label: t('collections'), icon: ShoppingBag },
-          { id: 'dashboard', label: t('analytics'), icon: BarChart3 },
+          { id: 'dashboard', label: 'Food Audit', icon: BarChart3 },
           { id: 'notifications', label: t('notifications'), icon: Bell, badge: unreadCount },
           { id: 'profile', label: t('profile'), icon: User }
         ];
