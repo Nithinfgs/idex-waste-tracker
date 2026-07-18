@@ -88,33 +88,62 @@ export default function Navbar({ activeTab, setActiveTab }) {
   const currentSchool = schools.find(s => s.id === selectedSchoolId);
   const currentCollector = collectors.find(c => c.id === selectedCollectorId);
 
+  const getGreeting = () => {
+    const hr = new Date().getHours();
+    if (hr < 12) return { text: 'Good Morning', icon: '☀' };
+    if (hr < 17) return { text: 'Good Afternoon', icon: '🌤️' };
+    return { text: 'Good Evening', icon: '🌙' };
+  };
+
+  const greeting = getGreeting();
+  const currentName = currentRole === 'school' ? (currentSchool?.name || 'Government High School') : 
+                      currentRole === 'collector' ? (currentCollector?.name || 'Collector') : 'District Admin';
+
   return (
     <>
-      {/* Top Role Switcher Header */}
-      <header style={styles.header}>
-        <div style={styles.brandContainer}>
-          <span style={styles.logoText}>IDEX</span>
-          <span style={styles.tagline}>Waste Less. Feed Better.</span>
+      {/* 1. TOP FIXED GREETING HEADER */}
+      <header style={styles.headerFixed}>
+        <div style={styles.headerLeft}>
+          <span style={styles.headerSun}>{greeting.icon}</span>
+          <div style={styles.headerGreetingGroup}>
+            <span style={styles.headerGreeting}>{greeting.text}</span>
+            <h1 style={styles.schoolHeaderName}>{currentName.split(',')[0]}</h1>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={styles.headerRight}>
+          {/* Notification Bell */}
           <button 
-            onClick={() => setShowRolePanel(!showRolePanel)}
+            onClick={() => setActiveTab('notifications')}
             style={{
-              ...styles.roleButton,
-              backgroundColor: currentRole === 'admin' ? '#EAEFF8' : '#E8F5E9',
-              color: currentRole === 'admin' ? '#1A237E' : '#1B5E20'
+              ...styles.headerIconBtn,
+              color: activeTab === 'notifications' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+              position: 'relative'
             }}
           >
-            <Shield size={14} style={{ marginRight: '6px' }} />
-            <span style={styles.roleButtonText}>
-              {currentRole === 'school' && `School: ${currentSchool?.name.split(',')[0]}`}
-              {currentRole === 'collector' && `Collector: ${currentCollector?.name.split(' ')[0]}`}
-              {currentRole === 'admin' && 'District Admin'}
-            </span>
+            <Bell size={18} />
+            {unreadCount > 0 && (
+              <span style={styles.bellBadge}>{unreadCount}</span>
+            )}
           </button>
           
-          <button onClick={handleLogout} style={styles.logoutBtn} title="Logout">
-            <LogOut size={16} />
+          {/* Profile Shortcut */}
+          <button 
+            onClick={() => setActiveTab('profile')}
+            style={{
+              ...styles.headerIconBtn,
+              color: activeTab === 'profile' ? 'var(--color-primary)' : 'var(--color-text-secondary)'
+            }}
+          >
+            <User size={18} />
+          </button>
+
+          {/* Simple Role switcher badge to simulate roles easily */}
+          <button 
+            onClick={() => setShowRolePanel(!showRolePanel)}
+            style={styles.roleSwitchBtn}
+            title="Switch Profile Role"
+          >
+            <Shield size={12} />
           </button>
         </div>
       </header>
@@ -150,7 +179,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
 
               {/* Collector Profile options */}
               <div style={styles.roleSection}>
-                <h4 style={styles.sectionHeader}>Collector Portals</h4>
+                <h4 style={styles.sectionHeader}>Logistics Collectors</h4>
                 {collectors.map(col => (
                   <button
                     key={col.id}
@@ -163,20 +192,20 @@ export default function Navbar({ activeTab, setActiveTab }) {
                       border: currentRole === 'collector' && selectedCollectorId === col.id ? '2px solid var(--color-primary)' : '1px solid var(--color-border)'
                     }}
                   >
-                    <span>🚜 {col.name} ({col.collectorType})</span>
-                    <span style={styles.selectStrength}>{col.vehicle}</span>
+                    <span>🚜 {col.name}</span>
+                    <span style={styles.selectStrength}>{col.collectorType}</span>
                   </button>
                 ))}
               </div>
 
-              {/* District Admin */}
+              {/* District Admin options */}
               <div style={styles.roleSection}>
-                <h4 style={styles.sectionHeader}>Government Officials</h4>
+                <h4 style={styles.sectionHeader}>District Administration</h4>
                 <button
                   onClick={() => handleRoleChange('admin')}
                   style={{
                     ...styles.selectOption,
-                    border: currentRole === 'admin' ? '2px solid #1A237E' : '1px solid var(--color-border)',
+                    border: currentRole === 'admin' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                     backgroundColor: '#F5F5FA'
                   }}
                 >
@@ -205,18 +234,25 @@ export default function Navbar({ activeTab, setActiveTab }) {
                 onClick={() => setActiveTab(tab.id)}
                 style={{
                   ...styles.tabButton,
-                  color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)'
+                  color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  transform: isActive ? 'translateY(-6px)' : 'none'
                 }}
               >
-                <div style={styles.iconWrapper}>
-                  <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <div style={{
+                  ...styles.iconWrapper,
+                  backgroundColor: isActive ? 'rgba(46, 125, 50, 0.08)' : 'transparent',
+                  padding: '6px',
+                  borderRadius: '12px'
+                }}>
+                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                   {tab.badge > 0 && (
                     <span style={styles.badge}>{tab.badge}</span>
                   )}
                 </div>
                 <span style={{
                   ...styles.tabLabel,
-                  fontWeight: isActive ? '600' : '400'
+                  fontWeight: isActive ? '600' : '400',
+                  color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)'
                 }}>
                   {tab.label}
                 </span>
@@ -230,63 +266,98 @@ export default function Navbar({ activeTab, setActiveTab }) {
 }
 
 const styles = {
-  header: {
-    height: '60px',
-    backgroundColor: '#FFFFFF',
-    borderBottom: '1px solid var(--color-border)',
+  headerFixed: {
+    height: '70px',
+    backgroundColor: 'var(--color-card)',
+    borderBottom: '1.5px solid var(--color-border)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 var(--spacing-md)',
+    padding: '0 var(--spacing-sm)',
     position: 'sticky',
     top: 0,
-    zIndex: 10,
+    zIndex: 100,
     width: '100%'
   },
-  brandContainer: {
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  headerSun: {
+    fontSize: '1.4rem',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  headerGreetingGroup: {
     display: 'flex',
     flexDirection: 'column'
   },
-  logoText: {
-    fontFamily: 'var(--font-display)',
-    fontSize: '1.25rem',
-    fontWeight: 700,
-    color: 'var(--color-primary)',
-    lineHeight: '1.1'
-  },
-  tagline: {
-    fontSize: '0.65rem',
+  headerGreeting: {
+    fontSize: '0.68rem',
     color: 'var(--color-text-secondary)',
-    fontWeight: 500
+    fontWeight: 500,
+    textTransform: 'uppercase',
+    letterSpacing: '0.03em',
+    lineHeight: '1.2'
   },
-  roleButton: {
-    minHeight: '36px',
-    padding: '0 var(--spacing-sm)',
+  schoolHeaderName: {
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    color: 'var(--color-text-primary)',
+    margin: 0,
+    fontFamily: 'var(--font-display)',
+    maxWidth: '180px',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    lineHeight: '1.2'
+  },
+  headerRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
+  headerIconBtn: {
+    width: '38px',
+    height: '38px',
+    minWidth: 'auto',
+    minHeight: 'auto',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    position: 'relative',
+    transition: 'all 150ms ease'
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: '4px',
+    right: '4px',
+    width: '15px',
+    height: '15px',
+    borderRadius: '50%',
+    backgroundColor: 'var(--color-error)',
+    color: '#FFFFFF',
+    fontSize: '0.58rem',
+    fontWeight: 800,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  roleSwitchBtn: {
+    width: '28px',
+    height: '28px',
+    minWidth: 'auto',
+    minHeight: 'auto',
     borderRadius: '8px',
+    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    color: 'var(--color-text-secondary)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer'
-  },
-  roleButtonText: {
-    fontSize: '0.75rem',
-    fontWeight: 600,
-    maxWidth: '120px',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
-  },
-  logoutBtn: {
-    width: '36px',
-    height: '36px',
-    minWidth: 'auto',
-    minHeight: 'auto',
-    borderRadius: '8px',
-    border: '1px solid var(--color-border)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'var(--color-text-secondary)'
   },
   overlay: {
     position: 'fixed',

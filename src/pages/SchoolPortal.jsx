@@ -617,6 +617,33 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
               </button>
             )}
           </div>
+
+          {/* Recent Activity */}
+          <div className="card" style={{ marginTop: '16px', marginBottom: '30px' }}>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '12px' }}>Recent Activity</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {history.filter(h => h.schoolId === school.id).slice(0, 3).map(hist => (
+                <div key={hist.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
+                  <div>
+                    <span style={{ display: 'block', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                      Diverted {hist.estimatedWeight} kg
+                    </span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>
+                      Collected by {hist.collectorName || 'Farmer'}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>
+                    {new Date(hist.date).toLocaleDateString()}
+                  </span>
+                </div>
+              ))}
+              {history.filter(h => h.schoolId === school.id).length === 0 && (
+                <p style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', textAlign: 'center', padding: '8px' }}>
+                  No recent activities recorded.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -1354,83 +1381,116 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
         <div style={styles.wizardOverlay}>
           <div style={styles.wizardPanel}>
             <div style={styles.wizardHeader}>
-              <h3 style={{ fontSize: '1rem' }}>Upload Waste Log</h3>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Upload Waste Log</h3>
               <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>Step {uploadStep} of 3</span>
             </div>
 
             <div style={styles.wizardBody}>
               {uploadStep === 1 && (
                 <div>
-                  <p style={styles.wizardQuestion}>1. Select organic waste drum fill level:</p>
-                  <div style={styles.levelCirclesContainer}>
+                  <p style={styles.wizardQuestion}>Select Drum Fill Level</p>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginTop: '12px' }}>
                     {[
-                      { value: 0.25, label: '25%' },
-                      { value: 0.50, label: '50%' },
-                      { value: 0.75, label: '75%' },
-                      { value: 1.00, label: '100%' }
+                      { value: 0.25, label: '25% Drum' },
+                      { value: 0.50, label: '50% Drum' },
+                      { value: 0.75, label: '75% Drum' },
+                      { value: 1.00, label: '100% Full' }
                     ].map(lvl => (
                       <button
                         key={lvl.value}
                         onClick={() => {
                           setFormData(f => ({ ...f, drumLevel: lvl.value, customWeight: '' }));
-                          setUploadStep(2); // Auto advance
+                          setUploadStep(2); // Auto-advance to Step 2
                         }}
                         style={{
-                          ...styles.lvlCircle,
-                          borderColor: formData.drumLevel === lvl.value && !formData.customWeight ? 'var(--color-primary)' : 'var(--color-border)',
-                          backgroundColor: formData.drumLevel === lvl.value && !formData.customWeight ? 'var(--color-primary)' : '#FFFFFF',
-                          color: formData.drumLevel === lvl.value && !formData.customWeight ? '#FFFFFF' : 'var(--color-text-primary)'
+                          minHeight: '54px',
+                          padding: '12px',
+                          borderRadius: '14px',
+                          border: (formData.drumLevel === lvl.value && !formData.customWeight) ? '2px solid var(--color-primary)' : '1.5px solid var(--color-border)',
+                          backgroundColor: (formData.drumLevel === lvl.value && !formData.customWeight) ? 'rgba(46, 125, 50, 0.05)' : 'var(--color-card)',
+                          color: 'var(--color-text-primary)',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'flex-start',
+                          gap: '8px',
+                          width: '100%'
                         }}
                       >
+                        <span style={{ 
+                          width: '14px', 
+                          height: '14px', 
+                          borderRadius: '50%', 
+                          border: '1.5px solid var(--color-primary)', 
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: (formData.drumLevel === lvl.value && !formData.customWeight) ? 'var(--color-primary)' : 'transparent'
+                        }}>
+                          {(formData.drumLevel === lvl.value && !formData.customWeight) && <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#FFFFFF' }} />}
+                        </span>
                         {lvl.label}
                       </button>
                     ))}
                   </div>
 
-                  <div style={{ textAlign: 'center', margin: '16px 0', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>— OR —</div>
+                  <div style={{ textAlign: 'center', margin: '14px 0', fontSize: '0.7rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>— OR INPUT WEIGHT —</div>
 
                   <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Input exact custom weight (kg)</label>
+                    <label className="form-label" style={{ fontSize: '0.7rem' }}>Custom weight (kg)</label>
                     <input 
                       type="number" 
-                      placeholder="Enter weight in kg (Max 150kg)" 
+                      placeholder="Enter exact weight in kg (Max 150kg)" 
                       className="form-input" 
                       value={formData.customWeight}
                       onChange={(e) => setFormData(f => ({ ...f, customWeight: e.target.value }))}
+                      style={{ fontSize: '0.8rem', minHeight: '40px' }}
                     />
                   </div>
 
-                  <div style={styles.wizardCalculatedNote}>
-                    Calculated weight: <strong>{formData.customWeight ? formData.customWeight : calculateWeight(school.drumCapacity, formData.drumLevel)} kg</strong>
+                  <div style={{ ...styles.wizardCalculatedNote, marginTop: '12px' }}>
+                    Est. leftovers weight: <strong>{formData.customWeight ? formData.customWeight : calculateWeight(school.drumCapacity, formData.drumLevel)} kg</strong>
                   </div>
                 </div>
               )}
 
               {uploadStep === 2 && (
                 <div>
-                  <p style={styles.wizardQuestion}>2. Select the main reason for waste surplus:</p>
-                  <div style={styles.reasonOptionList}>
+                  <p style={styles.wizardQuestion}>Select Surplus Cause</p>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginTop: '12px' }}>
                     {[
-                      'Low Attendance',
-                      'Overcooked',
-                      'Disliked Menu',
-                      'Scraps / Peels',
-                      'Spoilage',
-                      'Other'
-                    ].map(reason => (
+                      { reason: 'Overcooked', label: '🍚 Overcooked' },
+                      { reason: 'Low Attendance', label: '👨‍🎓 Low Attendance' },
+                      { reason: 'Disliked Menu', label: '🍛 Disliked Menu' },
+                      { reason: 'Scraps / Peels', label: '🥬 Prep Waste' }
+                    ].map(item => (
                       <button
-                        key={reason}
+                        key={item.reason}
                         onClick={() => {
-                          setFormData(f => ({ ...f, reason }));
-                          setUploadStep(3); // Auto advance
+                          setFormData(f => ({ ...f, reason: item.reason }));
+                          setUploadStep(3); // Auto-advance to Step 3
                         }}
                         style={{
-                          ...styles.reasonSelectBtn,
-                          border: formData.reason === reason ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
-                          backgroundColor: formData.reason === reason ? 'rgba(46, 125, 50, 0.05)' : '#FFFFFF'
+                          height: '84px',
+                          borderRadius: '18px',
+                          border: formData.reason === item.reason ? '2px solid var(--color-primary)' : '1.5px solid var(--color-border)',
+                          backgroundColor: formData.reason === item.reason ? 'rgba(46, 125, 50, 0.05)' : 'var(--color-card)',
+                          color: 'var(--color-text-primary)',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '10px',
+                          width: '100%'
                         }}
                       >
-                        {reason}
+                        {item.label}
                       </button>
                     ))}
                   </div>
@@ -1438,26 +1498,31 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
               )}
 
               {uploadStep === 3 && (
-                <div>
-                  <p style={styles.wizardQuestion}>3. Confirm details before publishing:</p>
-                  <div style={styles.reviewCard}>
-                    <div style={styles.reviewRow}>
-                      <span>School Kitchen:</span>
-                      <strong>{school.name}</strong>
+                <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                  <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '8px' }}>⚖️</span>
+                  <h3 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--color-primary)', margin: '0 0 4px 0' }}>
+                    {formData.customWeight ? formData.customWeight : calculateWeight(school.drumCapacity, formData.drumLevel)} kg
+                  </h3>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', margin: 0 }}>
+                    Confirm leftovers dispatch logging for {school.name}.
+                  </p>
+                  
+                  <div style={{ 
+                    backgroundColor: 'var(--color-background)', 
+                    padding: '12px', 
+                    borderRadius: '12px', 
+                    marginTop: '16px', 
+                    fontSize: '0.72rem', 
+                    textAlign: 'left',
+                    border: '1px solid var(--color-border)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ color: 'var(--color-text-secondary)' }}>Surplus Reason:</span>
+                      <strong style={{ color: 'var(--color-text-primary)' }}>{formData.reason}</strong>
                     </div>
-                    <div style={styles.reviewRow}>
-                      <span>Measurement:</span>
-                      <strong>{formData.customWeight ? 'Custom Weight' : `Drum Level (${formData.drumLevel * 100}%)`}</strong>
-                    </div>
-                    <div style={styles.reviewRow}>
-                      <span>Est. Weight:</span>
-                      <strong style={{ color: 'var(--color-primary)', fontSize: '1.05rem' }}>
-                        {formData.customWeight ? formData.customWeight : calculateWeight(school.drumCapacity, formData.drumLevel)} kg
-                      </strong>
-                    </div>
-                    <div style={styles.reviewRow}>
-                      <span>Surplus Reason:</span>
-                      <strong>{formData.reason}</strong>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--color-text-secondary)' }}>Destination Program:</span>
+                      <strong style={{ color: 'var(--color-primary)' }}>Coimbatore Corporation Livestock Feed</strong>
                     </div>
                   </div>
                 </div>
@@ -1481,7 +1546,7 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                 </button>
               ) : (
                 <button onClick={handleUploadSubmit} className="btn-primary" style={styles.wizardNavBtn}>
-                  Publish Post
+                  Publish
                 </button>
               )}
             </div>

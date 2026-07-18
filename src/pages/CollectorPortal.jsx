@@ -504,15 +504,18 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
 
                 {/* Uber-style slide up bottom sheet (30% height) */}
                 {selectedPostForBottomSheet && (
-                  <div className="bottom-sheet">
+                  <div className="bottom-sheet" style={{ height: '30%', display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--color-border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }} onClick={() => setSelectedPostForBottomSheet(null)}>
+                      <div style={{ width: '40px', height: '4px', backgroundColor: 'var(--color-border)', borderRadius: '2px', marginTop: '2px', cursor: 'pointer' }} />
+                    </div>
                     <div style={styles.sheetHeader}>
                       <h4 style={styles.sheetSchool}>{selectedPostForBottomSheet.schoolName}</h4>
                       <button onClick={() => setSelectedPostForBottomSheet(null)} style={styles.sheetCloseBtn}>×</button>
                     </div>
                     <div style={styles.sheetBody}>
                       <div style={styles.sheetMeta}>
-                        <span>Weight: <strong>{selectedPostForBottomSheet.estimatedWeight} kg</strong></span>
-                        <span>Distance: <strong>{getDistanceToPost(selectedPostForBottomSheet)} km</strong></span>
+                        <span>⚖️ Weight: <strong>{selectedPostForBottomSheet.estimatedWeight} kg</strong></span>
+                        <span>📍 Distance: <strong>{getDistanceToPost(selectedPostForBottomSheet)} km</strong></span>
                       </div>
                       <p style={styles.sheetReason}>Surplus Reason: {selectedPostForBottomSheet.reason}</p>
                       <button 
@@ -520,10 +523,10 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                           setShowReserveConfirmationPost(selectedPostForBottomSheet);
                           setSelectedPostForBottomSheet(null);
                         }}
-                        className="btn-primary" 
-                        style={styles.sheetReserveBtn}
+                        className="btn-primary animate-ripple" 
+                        style={{ ...styles.sheetReserveBtn, minHeight: '44px', borderRadius: '14px', fontSize: '0.85rem' }}
                       >
-                        {t('reserve')}
+                        Reserve Pickup
                       </button>
                     </div>
                   </div>
@@ -532,21 +535,21 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
             ) : (
               <div style={styles.scrollArea}>
                 {filteredPosts.map(post => (
-                  <div key={post.id} className="card card-interactive" style={{ marginBottom: '12px', padding: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <h4 style={{ fontSize: '0.85rem' }}>{post.schoolName}</h4>
+                  <div key={post.id} className="card card-interactive" style={{ marginBottom: '16px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>{post.schoolName}</h4>
                       <span className="badge badge-available">Available</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>
-                      <span>Weight: <strong>{post.estimatedWeight} kg</strong></span>
-                      <span>Distance: <strong>{getDistanceToPost(post)} km</strong></span>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                      <span>⚖️ Weight: <strong style={{ color: 'var(--color-text-primary)' }}>{post.estimatedWeight} kg</strong></span>
+                      <span>📍 Distance: <strong style={{ color: 'var(--color-text-primary)' }}>{getDistanceToPost(post)} km</strong></span>
                     </div>
                     <button 
                       onClick={() => setShowReserveConfirmationPost(post)}
-                      className="btn-primary" 
-                      style={{ minHeight: '38px', fontSize: '0.8rem' }}
+                      className="btn-primary animate-ripple" 
+                      style={{ minHeight: '44px', fontSize: '0.85rem', fontWeight: 700, borderRadius: '14px', marginTop: '4px' }}
                     >
-                      {t('reserve')}
+                      Reserve Pickup
                     </button>
                   </div>
                 ))}

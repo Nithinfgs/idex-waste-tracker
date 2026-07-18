@@ -1,38 +1,39 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@700&display=swap');
 
 :root {
-  /* MD3 Inspired Colors from Specification */
-  --color-primary: #2E7D32;       /* Deep Green */
-  --color-secondary: #81C784;     /* Light Green */
-  --color-accent: #F9A825;        /* Amber */
-  --color-success: #43A047;       /* Success Green */
-  --color-error: #D32F2F;         /* Error Red */
-  --color-background: #F7F9FB;    /* Background (Not pure white) */
-  --color-card: #FFFFFF;          /* Card White */
-  --color-text-primary: #212121;  /* Primary Text */
-  --color-text-secondary: #616161;/* Secondary Text */
+  /* Specification Color Scheme */
+  --color-primary: #2E7D32;       /* Buttons, Navigation, Active States */
+  --color-secondary: #81C784;     /* Cards Hover, Highlights */
+  --color-accent: #F9A825;        /* Reservation Timers, Pending, Alerts Only */
+  --color-success: #43A047;       /* Collection Completed */
+  --color-error: #D32F2F;         /* Cancelled, Failed, Offline */
+  --color-info: #1976D2;          /* Analytics, Graphs */
+  --color-background: #F8FAFC;    /* Background (Not pure white) */
+  --color-card: #FFFFFF;          /* Card Background */
+  --color-text-primary: #1E293B;  /* Slate Primary */
+  --color-text-secondary: #64748B;/* Slate Secondary */
   --color-white: #FFFFFF;
-  --color-border: #E0E0E0;
+  --color-border: #E5E7EB;        /* Divider Color */
 
-  /* Typography */
+  /* Typography spec */
   --font-primary: 'Inter', sans-serif;
   --font-display: 'Poppins', sans-serif;
 
-  /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
+  /* Spacing Spec Grid */
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
 
-  /* Shape / Borders */
-  --border-radius-sm: 8px;
-  --border-radius-md: 12px;
-  --border-radius-lg: 16px;
+  /* Border Radius Spec */
+  --border-radius-sm: 12px;       /* Inputs */
+  --border-radius-md: 14px;       /* Buttons */
+  --border-radius-lg: 18px;       /* Cards */
   
-  /* Soft Shadows from Spec */
-  --shadow-subtle: 0 2px 4px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.05);
+  /* Soft Shadows Spec (0 4px 18px, opacity 8%, no floating/glowing) */
+  --shadow-subtle: 0 4px 18px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.08);
 
   /* Touch Target */
   --touch-target-size: 48px;
@@ -205,11 +206,12 @@ button:active {
   text-transform: uppercase;
 }
 
-.badge-available { background-color: rgba(33, 150, 243, 0.15); color: #2196F3; } /* Blue */
-.badge-reserved { background-color: rgba(249, 168, 37, 0.15); color: var(--color-accent); } /* Orange */
-.badge-intransit { background-color: rgba(103, 58, 183, 0.15); color: #673AB7; } /* Purple */
-.badge-awaiting { background-color: rgba(244, 67, 54, 0.1); color: var(--color-error); }
-.badge-collected { background-color: rgba(67, 160, 71, 0.15); color: var(--color-success); } /* Green */
+.badge-available { background-color: rgba(76, 175, 80, 0.1); color: #4CAF50; } /* Green */
+.badge-reserved { background-color: rgba(249, 168, 37, 0.1); color: #F9A825; } /* Amber */
+.badge-intransit { background-color: rgba(25, 118, 210, 0.1); color: #1976D2; } /* Blue */
+.badge-awaiting { background-color: rgba(156, 39, 176, 0.1); color: #9C27B0; } /* Purple */
+.badge-collected { background-color: rgba(46, 125, 50, 0.1); color: #2E7D32; } /* Dark Green */
+.badge-cancelled { background-color: rgba(211, 47, 47, 0.1); color: #D32F2F; } /* Red */
 
 /* Floating Action Button (FAB) */
 .fab {
@@ -375,7 +377,7 @@ button:active {
 .dark-theme {
   --color-background: #121212;
   --color-card: #1E1E1E;
-  --color-text-primary: #F5F5F5;
+  --color-text-primary: #FFFFFF;
   --color-text-secondary: #B0B0B0;
   --color-border: #333333;
 }
