@@ -98,11 +98,12 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
 
     if (!menuStr) return ['Rice & Sambhar'];
 
-    // Clean up menu text and split into clean lines
-    const rawLines = menuStr.split(/\n+/);
+    // Clean up menu text and split into clean lines by double pipe delimiter
+    const rawLines = menuStr.split('||');
     const cleanLines = [];
     rawLines.forEach(line => {
-      let clean = line.replace(/^\d+(st|nd|rd|th)\s*Week\s*:\s*/i, '').trim();
+      let clean = line.replace(/^(1st\/3rd Week|2nd\/4th Week|5th Week)\s*:\s*/i, '').trim();
+      clean = clean.replace(/^\d+(st|nd|rd|th)\s*Week\s*:\s*/i, '').trim();
       clean = clean.replace(/^[a-zA-Z0-9\s/]+Week:\s*/i, '').trim();
       if (clean && clean.length > 2) {
         cleanLines.push(clean);
@@ -115,8 +116,14 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
   const menuOptions = getMenuOptions();
 
   React.useEffect(() => {
-    if (menuOptions.length > 0 && !menuOptions.includes(predMenu)) {
-      setPredMenu(menuOptions[0]);
+    if (menuOptions.length > 0) {
+      // Determine if it is Week 2/4 (alternative week) vs Week 1/3/5
+      const dayOfMonth = new Date().getDate();
+      const weekOfMonth = Math.ceil(dayOfMonth / 7);
+      const isAltWeek = (weekOfMonth === 2 || weekOfMonth === 4);
+      
+      const defaultSel = (isAltWeek && menuOptions.length > 1) ? menuOptions[1] : menuOptions[0];
+      setPredMenu(defaultSel);
     }
   }, [predDay, selectedSchoolId, menuOptions.join(',')]);
 

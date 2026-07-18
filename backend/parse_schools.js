@@ -99,11 +99,11 @@ try {
       drum_capacity: rawCapacity,
       contact: rawContact.trim(),
       address: rawAddress.replace(/\s+/g, ' ').trim(),
-      menu_mon: rawMenuMon.replace(/\s+/g, ' ').trim(),
-      menu_tue: rawMenuTue.replace(/\s+/g, ' ').trim(),
-      menu_wed: rawMenuWed.replace(/\s+/g, ' ').trim(),
-      menu_thu: rawMenuThu.replace(/\s+/g, ' ').trim(),
-      menu_fri: rawMenuFri.replace(/\s+/g, ' ').trim()
+      menu_mon: rawMenuMon.replace(/\r\n/g, '\n').replace(/\n+/g, ' || ').replace(/\s+/g, ' ').replace(/\s*\|\|\s*/g, ' || ').trim(),
+      menu_tue: rawMenuTue.replace(/\r\n/g, '\n').replace(/\n+/g, ' || ').replace(/\s+/g, ' ').replace(/\s*\|\|\s*/g, ' || ').trim(),
+      menu_wed: rawMenuWed.replace(/\r\n/g, '\n').replace(/\n+/g, ' || ').replace(/\s+/g, ' ').replace(/\s*\|\|\s*/g, ' || ').trim(),
+      menu_thu: rawMenuThu.replace(/\r\n/g, '\n').replace(/\n+/g, ' || ').replace(/\s+/g, ' ').replace(/\s*\|\|\s*/g, ' || ').trim(),
+      menu_fri: rawMenuFri.replace(/\r\n/g, '\n').replace(/\n+/g, ' || ').replace(/\s+/g, ' ').replace(/\s*\|\|\s*/g, ' || ').trim()
     });
   }
 
