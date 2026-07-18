@@ -11,7 +11,8 @@ import {
   Truck, 
   ListOrdered,
   Clock,
-  LogOut
+  LogOut,
+  MessageSquare
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab }) {
@@ -72,6 +73,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
         return [
           { id: 'dashboard', label: t('analytics'), icon: BarChart3 },
           { id: 'schools', label: 'Schools', icon: ListOrdered },
+          { id: 'sms', label: 'SMS Dispatch', icon: MessageSquare },
           { id: 'notifications', label: t('notifications'), icon: Bell },
           { id: 'profile', label: t('profile'), icon: User }
         ];

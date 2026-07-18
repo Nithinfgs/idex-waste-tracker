@@ -24,10 +24,72 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
     notifications,
     collectors,
     getDistrictStatistics,
+    addToast,
     t
   } = useContext(StateContext);
 
   const [mapMode, setMapMode] = useState('heat'); // 'heat' | 'list'
+  const [selectedSmsCollectorId, setSelectedSmsCollectorId] = useState('');
+  const [smsPhone, setSmsPhone] = useState('');
+  const [smsMessage, setSmsMessage] = useState('');
+  const [showSmsGatewaySettings, setShowSmsGatewaySettings] = useState(false);
+  const [smsApiKey, setSmsApiKey] = useState(localStorage.getItem('idex_sms_apikey') || '');
+  const [smsDeviceId, setSmsDeviceId] = useState(localStorage.getItem('idex_sms_deviceid') || '');
+  const [isSendingSms, setIsSendingSms] = useState(false);
+
+  const handleSendSms = async () => {
+    if (!smsPhone.trim()) {
+      alert('Please enter a phone number.');
+      return;
+    }
+    if (!smsMessage.trim()) {
+      alert('Please enter message text.');
+      return;
+    }
+
+    setIsSendingSms(true);
+    
+    // Save settings to local storage
+    localStorage.setItem('idex_sms_apikey', smsApiKey);
+    localStorage.setItem('idex_sms_deviceid', smsDeviceId);
+
+    if (smsApiKey.trim() && smsDeviceId.trim()) {
+      try {
+        const response = await fetch(`https://api.textbee.dev/api/v1/gateway/devices/${smsDeviceId.trim()}/send-sms`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': smsApiKey.trim()
+          },
+          body: JSON.stringify({
+            number: smsPhone.trim(),
+            message: smsMessage.trim()
+          })
+        });
+
+        if (response.ok) {
+          addToast(`[Textbee Gateway] SMS sent successfully to ${smsPhone}!`, 'success');
+        } else {
+          const errText = await response.text();
+          console.warn('Textbee response error:', errText);
+          addToast(`Gateway failed to send. Falling back to simulation.`, 'warning');
+          addToast(`[Simulated SMS] Sent successfully to ${smsPhone}!`, 'success');
+        }
+      } catch (err) {
+        console.error('Failed calling Textbee API:', err);
+        addToast(`Gateway connection error. Falling back to simulation.`, 'warning');
+        addToast(`[Simulated SMS] Sent successfully to ${smsPhone}!`, 'success');
+      }
+    } else {
+      setTimeout(() => {
+        addToast(`[Simulated SMS] Sent successfully to ${smsPhone}!`, 'success');
+        addToast(`Configure Textbee credentials to send real messages.`, 'info');
+      }, 800);
+    }
+
+    setIsSendingSms(false);
+  };
+
   const stats = getDistrictStatistics();
 
   // Sort schools for rank
@@ -414,6 +476,120 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                 Official municipal control board setup. Configuration options lock under authorized staff credentials.
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. SMS DISPATCHER TAB */}
+      {activeTab === 'sms' && (
+        <div style={styles.scrollable}>
+          <h3 style={styles.sectionTitle}>Compost Feedstock SMS Dispatcher</h3>
+          <p style={styles.subText}>Send direct SMS alerts to farmers without smartphones. Powered by free Android SMS gateways.</p>
+          
+          <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>Broadcast Alert</h4>
+            
+            <div className="form-group">
+              <label className="form-label">Select Farmer / Recipient</label>
+              <select 
+                className="form-input"
+                style={{ fontSize: '0.8rem' }}
+                value={selectedSmsCollectorId}
+                onChange={(e) => {
+                  setSelectedSmsCollectorId(e.target.value);
+                  const col = collectors.find(c => c.id === e.target.value);
+                  if (col) {
+                    setSmsPhone(col.phone || col.contact || '+91 98765 43220');
+                    setSmsMessage(`Hello ${col.name}, a new organic feedstock batch is available for pickup. Please log in to check locations.`);
+                  }
+                }}
+              >
+                <option value="">-- Select Farmer --</option>
+                {collectors.map(col => (
+                  <option key={col.id} value={col.id}>{col.name} ({col.collectorType})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Recipient Phone Number</label>
+              <input 
+                type="tel" 
+                className="form-input" 
+                placeholder="+91 xxxxx xxxxx" 
+                value={smsPhone}
+                onChange={(e) => setSmsPhone(e.target.value)}
+                style={{ fontSize: '0.8rem' }}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">SMS Message Body</label>
+              <textarea 
+                className="form-input" 
+                style={{ minHeight: '80px', resize: 'none', fontSize: '0.8rem' }}
+                value={smsMessage}
+                onChange={(e) => setSmsMessage(e.target.value)}
+                placeholder="Write SMS alert contents here..."
+              />
+            </div>
+
+            {/* Gateway settings (Advanced configuration) */}
+            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '12px', marginTop: '4px' }}>
+              <button 
+                onClick={() => setShowSmsGatewaySettings(!showSmsGatewaySettings)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-primary)',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: 0
+                }}
+              >
+                ⚙️ {showSmsGatewaySettings ? 'Hide Gateway Settings' : 'Configure Android Gateway (Textbee.dev)'}
+              </button>
+              
+              {showSmsGatewaySettings && (
+                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }} className="animate-scale">
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: '4px', display: 'block' }}>Textbee API Key</label>
+                    <input 
+                      type="password" 
+                      placeholder="Paste your Textbee API Key..." 
+                      className="form-input"
+                      value={smsApiKey}
+                      onChange={(e) => setSmsApiKey(e.target.value)}
+                      style={{ fontSize: '0.75rem', minHeight: '34px' }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: '4px', display: 'block' }}>Textbee Device ID</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter Textbee Device ID..." 
+                      className="form-input"
+                      value={smsDeviceId}
+                      onChange={(e) => setSmsDeviceId(e.target.value)}
+                      style={{ fontSize: '0.75rem', minHeight: '34px' }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button 
+              onClick={handleSendSms}
+              className="btn-primary animate-ripple"
+              style={{ minHeight: '44px', fontWeight: 700, borderRadius: '14px', marginTop: '8px' }}
+              disabled={isSendingSms}
+            >
+              {isSendingSms ? 'Sending SMS Alert...' : '🚀 Dispatch SMS Alert'}
+            </button>
           </div>
         </div>
       )}
