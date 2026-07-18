@@ -76,6 +76,7 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
   const [activeSettingsSubPage, setActiveSettingsSubPage] = useState('menu'); // 'menu' | 'settings' | 'help'
   
   const [showPrintReportModal, setShowPrintReportModal] = useState(false);
+  const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   const auditReport = getFoodAuditReport(selectedSchoolId);
   const menuPerformance = getMenuPerformance(selectedSchoolId);
   const correlationData = getAttendanceWasteCorrelation(selectedSchoolId);
@@ -581,14 +582,33 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                 <span style={styles.rankName}>{school.name} (You)</span>
                 <strong style={styles.rankPoints}>{stats.wasteScore} pts</strong>
               </div>
-              {comparableSchools.map((comp, idx) => (
+              {(showFullLeaderboard ? comparableSchools : comparableSchools.slice(0, 2)).map((comp, idx) => (
                 <div key={comp.id} style={styles.rankRow}>
-                  <span style={styles.rankBadge}>{idx === 0 ? '🥈' : '🥉'}</span>
+                  <span style={styles.rankBadge}>{idx === 0 ? '🥈' : idx === 1 ? '🥉' : '🎖️'}</span>
                   <span style={styles.rankName}>{comp.name}</span>
                   <strong style={styles.rankPoints}>85 pts</strong>
                 </div>
               ))}
             </div>
+
+            {comparableSchools.length > 2 && (
+              <button 
+                onClick={() => setShowFullLeaderboard(!showFullLeaderboard)}
+                className="btn-secondary animate-ripple"
+                style={{ 
+                  width: '100%', 
+                  marginTop: '12px', 
+                  minHeight: '34px', 
+                  fontSize: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px'
+                }}
+              >
+                {showFullLeaderboard ? 'Show Less' : `Show All District Rankings (${comparableSchools.length + 1} schools)`}
+              </button>
+            )}
           </div>
         </div>
       )}
