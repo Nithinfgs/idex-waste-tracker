@@ -24,6 +24,9 @@ export default function Navbar({ activeTab, setActiveTab }) {
     collectors,
     selectedCollectorId,
     setSelectedCollectorId,
+    buyers,
+    selectedBuyerId,
+    setSelectedBuyerId,
     notifications,
     setIsLoggedIn,
     t
@@ -35,6 +38,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
   const unreadCount = notifications.filter(n => {
     if (currentRole === 'school') return n.role === 'school' && n.targetId === selectedSchoolId && !n.read;
     if (currentRole === 'collector') return n.role === 'collector' && n.targetId === selectedCollectorId && !n.read;
+    if (currentRole === 'buyer') return n.role === 'buyer' && n.targetId === selectedBuyerId && !n.read;
     return false;
   }).length;
 
@@ -56,6 +60,14 @@ export default function Navbar({ activeTab, setActiveTab }) {
           { id: 'notifications', label: t('notifications'), icon: Bell, badge: unreadCount },
           { id: 'profile', label: t('profile'), icon: User }
         ];
+      case 'buyer':
+        return [
+          { id: 'home', label: 'Dashboard', icon: Home },
+          { id: 'nearby', label: 'Feedstock Map', icon: Map },
+          { id: 'active', label: 'My Orders', icon: Truck },
+          { id: 'notifications', label: 'Alerts', icon: Bell, badge: unreadCount },
+          { id: 'profile', label: 'Agency Profile', icon: User }
+        ];
       case 'admin':
         return [
           { id: 'dashboard', label: t('analytics'), icon: BarChart3 },
@@ -75,6 +87,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
       setActiveTab('home');
     } else if (role === 'collector') {
       setActiveTab('home');
+    } else if (role === 'buyer') {
+      setActiveTab('home');
     } else if (role === 'admin') {
       setActiveTab('dashboard');
     }
@@ -87,6 +101,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
   const tabs = getTabs();
   const currentSchool = schools.find(s => s.id === selectedSchoolId);
   const currentCollector = collectors.find(c => c.id === selectedCollectorId);
+  const currentBuyer = buyers?.find(b => b.id === selectedBuyerId);
 
   const getGreeting = () => {
     const hr = new Date().getHours();
@@ -97,7 +112,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
 
   const greeting = getGreeting();
   const currentName = currentRole === 'school' ? (currentSchool?.name || 'Government High School') : 
-                      currentRole === 'collector' ? (currentCollector?.name || 'Collector') : 'District Admin';
+                      currentRole === 'collector' ? (currentCollector?.name || 'Collector') : 
+                      currentRole === 'buyer' ? (currentBuyer?.agencyName || 'Compost Buyer Agency') : 'District Admin';
 
   return (
     <>
@@ -194,6 +210,27 @@ export default function Navbar({ activeTab, setActiveTab }) {
                   >
                     <span>🚜 {col.name}</span>
                     <span style={styles.selectStrength}>{col.collectorType}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Compost Buyers & Agencies */}
+              <div style={styles.roleSection}>
+                <h4 style={styles.sectionHeader}>Compost Buyers & Agencies</h4>
+                {buyers?.map(buy => (
+                  <button
+                    key={buy.id}
+                    onClick={() => {
+                      setSelectedBuyerId(buy.id);
+                      handleRoleChange('buyer');
+                    }}
+                    style={{
+                      ...styles.selectOption,
+                      border: currentRole === 'buyer' && selectedBuyerId === buy.id ? '2px solid var(--color-primary)' : '1px solid var(--color-border)'
+                    }}
+                  >
+                    <span>🌱 {buy.name}</span>
+                    <span style={styles.selectStrength}>{buy.rating} Rating</span>
                   </button>
                 ))}
               </div>

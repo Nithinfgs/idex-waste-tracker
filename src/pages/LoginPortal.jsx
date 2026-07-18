@@ -6,9 +6,11 @@ export default function LoginPortal({ onLoginSuccess }) {
   const { 
     schools, 
     collectors, 
+    buyers,
     setCurrentRole, 
     setSelectedSchoolId, 
     setSelectedCollectorId,
+    setSelectedBuyerId,
     addToast
   } = useContext(StateContext);
 
@@ -69,6 +71,10 @@ export default function LoginPortal({ onLoginSuccess }) {
         const found = collectors.find(c => (c.phone && c.phone.includes(phone)) || (c.contact && c.contact.includes(phone)) || c.id === 'col-1');
         setSelectedCollectorId(found ? found.id : 'col-1');
         setStep('onboarding');
+      } else if (role === 'buyer') {
+        const found = buyers.find(b => (b.contact && b.contact.includes(phone)) || b.id === 'buy-1');
+        setSelectedBuyerId(found ? found.id : 'buy-1');
+        onLoginSuccess();
       } else {
         // Admin skips onboarding
         onLoginSuccess();
@@ -152,6 +158,18 @@ export default function LoginPortal({ onLoginSuccess }) {
               <div>
                 <h4 style={styles.roleCardTitle}>Waste Collector / Farmer</h4>
                 <p style={styles.roleCardDesc}>Divert organic waste for composting or livestock feed.</p>
+              </div>
+            </button>
+
+            <button 
+              onClick={() => handleRoleSelect('buyer')} 
+              className="card card-interactive" 
+              style={styles.roleCard}
+            >
+              <span style={styles.roleIcon}>🌱</span>
+              <div>
+                <h4 style={styles.roleCardTitle}>Compost Buyer / Agency</h4>
+                <p style={styles.roleCardDesc}>Purchase organic feedstock or compost in bulk.</p>
               </div>
             </button>
 

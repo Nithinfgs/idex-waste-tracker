@@ -5,6 +5,7 @@ import SchoolPortal from './pages/SchoolPortal';
 import CollectorPortal from './pages/CollectorPortal';
 import AdminPortal from './pages/AdminPortal';
 import LoginPortal from './pages/LoginPortal';
+import BuyerPortal from './pages/BuyerPortal';
 
 function MainApp() {
   const { currentRole, isLoggedIn, setIsLoggedIn } = useContext(StateContext);
@@ -28,6 +29,9 @@ function MainApp() {
         )}
         {currentRole === 'collector' && (
           <CollectorPortal activeTab={activeTab} setActiveTab={setActiveTab} />
+        )}
+        {currentRole === 'buyer' && (
+          <BuyerPortal activeTab={activeTab} setActiveTab={setActiveTab} />
         )}
         {currentRole === 'admin' && (
           <AdminPortal activeTab={activeTab} setActiveTab={setActiveTab} />

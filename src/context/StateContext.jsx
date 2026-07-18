@@ -14,6 +14,11 @@ import {
 import { predictServings } from '../state/prediction';
 import { TRANSLATIONS } from '../state/localization';
 
+export const INITIAL_BUYERS = [
+  { id: 'buy-1', name: 'Coimbatore Agri-Gov Agency', agencyName: 'Coimbatore Agriculture Department', contact: '0422 230 1122', latitude: 11.0250, longitude: 76.9620, vehicle: 'Agriculture Dept Truck', radius: 25, budget: '₹50,000/mo', rating: 'A+' },
+  { id: 'buy-2', name: 'GreenSoil Organics Agency', agencyName: 'GreenSoil Fertilizers & Compost Corp', contact: '0422 244 5566', latitude: 10.9850, longitude: 76.9420, vehicle: 'Mini Flatbed Dump Truck', radius: 15, budget: '₹80,000/mo', rating: 'A' }
+];
+
 const API_URL = import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:5001`;
 
 export const StateContext = createContext();
@@ -159,6 +164,15 @@ export const StateProvider = ({ children }) => {
     return localStorage.getItem('idex_selected_collector') || 'col-1';
   });
 
+  const [buyers, setBuyers] = useState(() => {
+    const local = localStorage.getItem('idex_buyers');
+    return local ? JSON.parse(local) : INITIAL_BUYERS;
+  });
+
+  const [selectedBuyerId, setSelectedBuyerId] = useState(() => {
+    return localStorage.getItem('idex_selected_buyer') || 'buy-1';
+  });
+
   // Sync settings/auth on changes
   useEffect(() => {
     localStorage.setItem('idex_logged_in', isLoggedIn);
@@ -175,6 +189,14 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('idex_selected_collector', selectedCollectorId);
   }, [selectedCollectorId]);
+
+  useEffect(() => {
+    localStorage.setItem('idex_selected_buyer', selectedBuyerId);
+  }, [selectedBuyerId]);
+
+  useEffect(() => {
+    localStorage.setItem('idex_buyers', JSON.stringify(buyers));
+  }, [buyers]);
 
   useEffect(() => {
     localStorage.setItem('idex_dark_mode', isDarkMode);
@@ -561,6 +583,23 @@ export const StateProvider = ({ children }) => {
         setTimeout(() => {
           addToast(`[SMS Alert] Sent to Farmer ${col.name} (${col.phone || '+91 98765 43220'}): ${school.name} has posted ${estimatedWeight} kg of waste nearby!`, 'success');
         }, 1500);
+      }
+    });
+
+    // Notify nearby compost buyer agencies
+    buyers.forEach(buy => {
+      const dist = getDistance(school.latitude, school.longitude, buy.latitude, buy.longitude);
+      if (dist <= buy.radius) {
+        addSystemNotification(
+          'buyer',
+          buy.id,
+          'New Feedstock Available',
+          `${school.name} has ${estimatedWeight} kg of organic feedstock available (${dist} km away).`,
+          'info'
+        );
+        setTimeout(() => {
+          addToast(`[Notification] Sent to Buyer Agency ${buy.name}: Feedstock available at ${school.name}!`, 'info');
+        }, 2000);
       }
     });
 
@@ -1068,6 +1107,10 @@ export const StateProvider = ({ children }) => {
       setSelectedSchoolId,
       selectedCollectorId,
       setSelectedCollectorId,
+      buyers,
+      setBuyers,
+      selectedBuyerId,
+      setSelectedBuyerId,
 
       uploadWaste,
       reserveWaste,
