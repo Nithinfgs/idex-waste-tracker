@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { StateContext } from '../context/StateContext';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { 
@@ -480,6 +480,19 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                         html: `<div style="background-color: #1E3A8A; color: white; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.3);"></div>`,
                         iconSize: [16, 16]
                       })}
+                    />
+
+                    {/* Travel Radius Highlights */}
+                    <Circle 
+                      center={[collector.latitude, collector.longitude]}
+                      radius={(collector.radius || 15) * 1000}
+                      pathOptions={{
+                        fillColor: 'var(--color-primary)',
+                        fillOpacity: 0.08,
+                        color: 'var(--color-primary)',
+                        weight: 1.5,
+                        dashArray: '4, 4'
+                      }}
                     />
 
                     {/* School markers */}

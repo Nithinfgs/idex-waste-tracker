@@ -25,7 +25,7 @@ import {
   User,
   Bell
 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
 import L from 'leaflet';
 
 export default function BuyerPortal() {
@@ -492,6 +492,19 @@ export default function BuyerPortal() {
                         html: `<div style="background-color: #2E7D32; color: white; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.3);"></div>`,
                         iconSize: [16, 16]
                       })}
+                    />
+
+                    {/* Travel Radius Highlights */}
+                    <Circle 
+                      center={[buyer.latitude, buyer.longitude]}
+                      radius={buyer.radius * 1000}
+                      pathOptions={{
+                        fillColor: 'var(--color-primary)',
+                        fillOpacity: 0.08,
+                        color: 'var(--color-primary)',
+                        weight: 1.5,
+                        dashArray: '4, 4'
+                      }}
                     />
 
                     {/* School pins */}
@@ -963,7 +976,8 @@ const styles = {
   contentArea: {
     flex: 1,
     position: 'relative',
-    height: 'calc(100% - 62px)'
+    width: '100%',
+    overflow: 'hidden'
   },
   mapWrapperRelative: {
     position: 'relative',
