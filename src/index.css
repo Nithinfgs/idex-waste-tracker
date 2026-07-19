@@ -1,19 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@700&display=swap');
 
 :root {
-  /* Specification Color Scheme */
-  --color-primary: #2E7D32;       /* Buttons, Navigation, Active States */
-  --color-secondary: #81C784;     /* Cards Hover, Highlights */
-  --color-accent: #F9A825;        /* Reservation Timers, Pending, Alerts Only */
-  --color-success: #43A047;       /* Collection Completed */
+  /* Specification Color Scheme - Sage Green Palette */
+  --color-primary: #659287;       /* Sage Green Buttons, Navigation, Active States */
+  --color-secondary: #88BDA4;     /* Secondary Highlight */
+  --color-accent: #F9A825;        /* Keep warm amber for timers, pending, alerts */
+  --color-success: #88BDA4;       /* Collection Completed / Muted green success */
   --color-error: #D32F2F;         /* Cancelled, Failed, Offline */
-  --color-info: #1976D2;          /* Analytics, Graphs */
-  --color-background: #F8FAFC;    /* Background (Not pure white) */
-  --color-card: #FFFFFF;          /* Card Background */
-  --color-text-primary: #1E293B;  /* Slate Primary */
-  --color-text-secondary: #64748B;/* Slate Secondary */
+  --color-info: #659287;          /* Analytics */
+  --color-background: #E6F2DD;    /* Soft Sage Green Background */
+  --color-card: #FFFFFF;          /* Pure White Cards */
+  --color-text-primary: #2D3A37;  /* Deep Sage Slate Text */
+  --color-text-secondary: #5C6E6A;/* Medium Sage Slate Text */
   --color-white: #FFFFFF;
-  --color-border: #E5E7EB;        /* Divider Color */
+  --color-border: #B1D3B9;        /* Soft Sage Green Divider/Border */
 
   /* Typography spec */
   --font-primary: 'Inter', sans-serif;
