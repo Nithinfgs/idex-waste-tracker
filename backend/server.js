@@ -47,6 +47,10 @@ let db = {
     { id: 'col-1', name: 'Kavin Kumar (Organic Pig Farm)', collector_type: 'Farmer', vehicle: 'Mahindra Bolero Pickup', radius: 15.0, latitude: 11.0458, longitude: 76.9158, entry_code: '1', password: '12345' },
     { id: 'col-2', name: 'Deepak Raj (Coimbatore BioCompost)', collector_type: 'Compost Company', vehicle: 'Tata Ace Mini Truck', radius: 20.0, latitude: 10.9858, longitude: 76.9858, entry_code: '2', password: '12345' }
   ],
+  buyers: [
+    { id: 'buy-1', name: 'Coimbatore Agri-Gov Agency', agency_name: 'Coimbatore Agriculture Department', contact: '0422 230 1122', latitude: 11.0250, longitude: 76.9620, vehicle: 'Agriculture Dept Truck', radius: 25.0, budget: '₹50,000/mo', rating: 'A+', entry_code: '1', password: '12345' },
+    { id: 'buy-2', name: 'GreenSoil Organics Agency', agency_name: 'GreenSoil Fertilizers & Compost Corp', contact: '0422 244 5566', latitude: 10.9850, longitude: 76.9420, vehicle: 'Mini Flatbed Dump Truck', radius: 15.0, budget: '₹80,000/mo', rating: 'A', entry_code: '2', password: '12345' }
+  ],
   waste_posts: [],
   produce_posts: [],
   notifications: [],
@@ -170,6 +174,47 @@ app.post('/api/collectors', async (req, res) => {
         db.collectors[idx] = mapped;
       } else {
         db.collectors.push(mapped);
+      }
+      saveDatabaseToFile();
+      return [];
+    }
+  );
+  res.json({ success: true });
+});
+
+// 2.5. Buyers
+app.get('/api/buyers', async (req, res) => {
+  const data = await executeQuery('SELECT * FROM buyers', [], () => db.buyers);
+  res.json(data);
+});
+
+app.post('/api/buyers', async (req, res) => {
+  const buyer = req.body;
+  await executeQuery(
+    'INSERT INTO buyers (id, name, agency_name, contact, latitude, longitude, vehicle, radius, budget, rating, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (id) DO UPDATE SET agency_name = EXCLUDED.agency_name, vehicle = EXCLUDED.vehicle, radius = EXCLUDED.radius, contact = EXCLUDED.contact, entry_code = EXCLUDED.entry_code, password = EXCLUDED.password',
+    [buyer.id, buyer.name, buyer.agencyName || buyer.agency_name || '', buyer.contact || '', parseFloat(buyer.latitude || 11.0), parseFloat(buyer.longitude || 76.9), buyer.vehicle || 'Truck', parseFloat(buyer.radius || 25.0), buyer.budget || '₹50,000/mo', buyer.rating || 'A+', buyer.entryCode || '', buyer.password || '12345'],
+    () => {
+      const idx = db.buyers.findIndex(b => b.id === buyer.id);
+      const mapped = {
+        id: buyer.id,
+        name: buyer.name,
+        agency_name: buyer.agencyName || buyer.agency_name || '',
+        agencyName: buyer.agencyName || buyer.agency_name || '',
+        contact: buyer.contact || '',
+        latitude: parseFloat(buyer.latitude || 11.0),
+        longitude: parseFloat(buyer.longitude || 76.9),
+        vehicle: buyer.vehicle || 'Truck',
+        radius: parseFloat(buyer.radius || 25.0),
+        budget: buyer.budget || '₹50,000/mo',
+        rating: buyer.rating || 'A+',
+        entryCode: buyer.entryCode || '',
+        entry_code: buyer.entryCode || '',
+        password: buyer.password || '12345'
+      };
+      if (idx >= 0) {
+        db.buyers[idx] = mapped;
+      } else {
+        db.buyers.push(mapped);
       }
       saveDatabaseToFile();
       return [];
@@ -466,6 +511,22 @@ async function initializeDatabase() {
       console.log('✅ Collectors seeded successfully!');
     } else {
       console.log(`ℹ️ Collectors table already contains ${collectorCount} records. Skipping seed.`);
+    }
+
+    // 4. Check and seed buyers
+    const buyerCheck = await pool.query('SELECT COUNT(*) FROM buyers');
+    const buyerCount = parseInt(buyerCheck.rows[0].count);
+    if (buyerCount === 0) {
+      console.log(`🌱 Seeding database with ${db.buyers.length} buyers...`);
+      for (const b of db.buyers) {
+        await pool.query(
+          'INSERT INTO buyers (id, name, agency_name, contact, latitude, longitude, vehicle, radius, budget, rating, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (id) DO NOTHING',
+          [b.id, b.name, b.agency_name || b.agencyName, b.contact, b.latitude, b.longitude, b.vehicle, b.radius, b.budget, b.rating, b.entry_code || '', b.password || '12345']
+        );
+      }
+      console.log('✅ Buyers seeded successfully!');
+    } else {
+      console.log(`ℹ️ Buyers table already contains ${buyerCount} records. Skipping seed.`);
     }
 
   } catch (err) {

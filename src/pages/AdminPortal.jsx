@@ -23,9 +23,11 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
     history,
     notifications,
     collectors,
+    buyers,
     getDistrictStatistics,
     addNewSchoolProfile,
     addNewCollectorProfile,
+    addNewBuyerProfile,
     addToast,
     t
   } = useContext(StateContext);
@@ -58,6 +60,21 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
   const [newColRadius, setNewColRadius] = useState('10');
   const [newColEntryCode, setNewColEntryCode] = useState('');
   const [newColPassword, setNewColPassword] = useState('');
+
+  // Profile management states - Buyers (Composters)
+  const [showAddBuyer, setShowAddBuyer] = useState(false);
+  const [newBuyerName, setNewBuyerName] = useState('');
+  const [newBuyerAgency, setNewBuyerAgency] = useState('');
+  const [newBuyerContact, setNewBuyerContact] = useState('');
+  const [newBuyerVehicle, setNewBuyerVehicle] = useState('Truck');
+  const [newBuyerRadius, setNewBuyerRadius] = useState('25');
+  const [newBuyerBudget, setNewBuyerBudget] = useState('₹50,000/mo');
+  const [newBuyerEntryCode, setNewBuyerEntryCode] = useState('');
+  const [newBuyerPassword, setNewBuyerPassword] = useState('');
+
+  // Unified Registry Control View State
+  const [registrySection, setRegistrySection] = useState('schools'); // 'schools' | 'collectors' | 'buyers'
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSendSms = async () => {
     if (!smsPhone.trim()) {
@@ -164,6 +181,35 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
     setNewColEntryCode('');
     setNewColPassword('');
     setShowAddCollector(false);
+  };
+
+  const handleBuyerSubmit = (e) => {
+    e.preventDefault();
+    if (!newBuyerName.trim() || !newBuyerAgency.trim() || !newBuyerEntryCode || !newBuyerPassword) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    addNewBuyerProfile({
+      name: newBuyerName.trim(),
+      agencyName: newBuyerAgency.trim(),
+      contact: newBuyerContact.trim(),
+      vehicle: newBuyerVehicle.trim(),
+      radius: parseFloat(newBuyerRadius),
+      budget: newBuyerBudget.trim(),
+      entryCode: newBuyerEntryCode.trim(),
+      password: newBuyerPassword.trim(),
+      latitude: 11.0250 + (Math.random() - 0.5) * 0.04,
+      longitude: 76.9620 + (Math.random() - 0.5) * 0.04
+    });
+    setNewBuyerName('');
+    setNewBuyerAgency('');
+    setNewBuyerContact('');
+    setNewBuyerVehicle('Truck');
+    setNewBuyerRadius('25');
+    setNewBuyerBudget('₹50,000/mo');
+    setNewBuyerEntryCode('');
+    setNewBuyerPassword('');
+    setShowAddBuyer(false);
   };
 
   const stats = getDistrictStatistics();
@@ -421,22 +467,84 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
         </div>
       )}
 
-      {/* 2. ONBOARDED SCHOOLS DATABASE TAB */}
-      {activeTab === 'schools' && (
+      {/* 2. MUNICIPAL REGISTRY & CREDENTIALS CONTROL TAB */}
+      {activeTab === 'registry' && (
         <div style={styles.scrollable}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <h3 style={styles.sectionTitle}>Onboarded Schools Directory ({schools.length})</h3>
-            <button 
-              onClick={() => setShowAddSchool(!showAddSchool)} 
-              className="btn-primary" 
-              style={{ padding: '6px 12px', fontSize: '0.72rem', borderRadius: '10px', minHeight: 'auto', width: 'auto' }}
-            >
-              {showAddSchool ? 'Cancel' : '+ Add School'}
-            </button>
-          </div>
-          <p style={styles.subText}>List of active mid-day meal kitchens monitored under district jurisdiction.</p>
+          <h3 style={styles.sectionTitle}>Municipal Registry & Credentials Control</h3>
+          <p style={styles.subText}>Manage login accounts, passwords, coordinates, and details for all platform profiles.</p>
 
-          {showAddSchool && (
+          {/* Sub-Section Role Selector Tabs */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', backgroundColor: 'rgba(0,0,0,0.03)', padding: '4px', borderRadius: '12px' }}>
+            {[
+              { id: 'schools', label: '🏫 Schools', count: schools.length },
+              { id: 'collectors', label: '🚜 Farmers & Collectors', count: collectors.length },
+              { id: 'buyers', label: '🌱 Compost Buyers', count: buyers.length }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setRegistrySection(tab.id);
+                  setSearchQuery('');
+                }}
+                className={registrySection === tab.id ? 'btn-primary' : ''}
+                style={{
+                  flex: 1,
+                  fontSize: '0.72rem',
+                  padding: '6px 4px',
+                  minHeight: 'auto',
+                  borderRadius: '10px',
+                  backgroundColor: registrySection === tab.id ? 'var(--color-primary)' : 'transparent',
+                  color: registrySection === tab.id ? '#FFFFFF' : 'var(--color-text-secondary)',
+                  border: 'none',
+                  boxShadow: 'none'
+                }}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </div>
+
+          {/* Search bar & Registration trigger */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+            <input
+              type="text"
+              placeholder={`Search ${registrySection} by name or entry code...`}
+              className="form-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ flex: 1, minHeight: '38px', fontSize: '0.75rem' }}
+            />
+            {registrySection === 'schools' && (
+              <button 
+                onClick={() => setShowAddSchool(!showAddSchool)} 
+                className="btn-primary" 
+                style={{ padding: '0 12px', fontSize: '0.72rem', borderRadius: '10px', minHeight: '38px', width: 'auto' }}
+              >
+                {showAddSchool ? 'Cancel' : '+ Add School'}
+              </button>
+            )}
+            {registrySection === 'collectors' && (
+              <button 
+                onClick={() => setShowAddCollector(!showAddCollector)} 
+                className="btn-primary" 
+                style={{ padding: '0 12px', fontSize: '0.72rem', borderRadius: '10px', minHeight: '38px', width: 'auto' }}
+              >
+                {showAddCollector ? 'Cancel' : '+ Add Collector'}
+              </button>
+            )}
+            {registrySection === 'buyers' && (
+              <button 
+                onClick={() => setShowAddBuyer(!showAddBuyer)} 
+                className="btn-primary" 
+                style={{ padding: '0 12px', fontSize: '0.72rem', borderRadius: '10px', minHeight: '38px', width: 'auto' }}
+              >
+                {showAddBuyer ? 'Cancel' : '+ Add Buyer'}
+              </button>
+            )}
+          </div>
+
+          {/* Registration forms */}
+          {registrySection === 'schools' && showAddSchool && (
             <form onSubmit={handleSchoolSubmit} className="card" style={{ padding: '16px', marginBottom: '16px', border: '2px solid var(--color-primary)' }}>
               <h4 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '12px', color: 'var(--color-primary)' }}>Register New School Profile</h4>
               
@@ -530,51 +638,7 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
             </form>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {schools.map(sch => {
-              const schoolHistory = history.filter(h => h.schoolId === sch.id);
-              const totalDiverted = schoolHistory.reduce((sum, h) => sum + h.estimatedWeight, 0);
-              const currentActive = wastePosts.find(p => p.schoolId === sch.id);
-
-              return (
-                <div key={sch.id} className="card" style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{sch.name}</h4>
-                    <span className={`badge ${currentActive ? 'badge-available' : 'badge-collected'}`} style={{ fontSize: '0.6rem' }}>
-                      {currentActive ? 'Active Post' : 'No Active Logs'}
-                    </span>
-                  </div>
-                  <div style={styles.registryDetails}>
-                    <div>Enrollment: <strong>{sch.studentStrength} pupils</strong></div>
-                    <div>Drum Limit: <strong>{sch.drumCapacity} kg</strong></div>
-                    <div>Diverted Weight: <strong style={{ color: 'var(--color-primary)' }}>{totalDiverted.toFixed(1)} kg</strong></div>
-                    <div style={{ gridColumn: 'span 2', fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
-                      📍 {sch.address}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 3. REGISTERED COLLECTORS DATABASE TAB (Active Tab on Bottom Nav) */}
-      {activeTab === 'active' && (
-        <div style={styles.scrollable}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <h3 style={styles.sectionTitle}>Collectors Directory ({collectors.length})</h3>
-            <button 
-              onClick={() => setShowAddCollector(!showAddCollector)} 
-              className="btn-primary" 
-              style={{ padding: '6px 12px', fontSize: '0.72rem', borderRadius: '10px', minHeight: 'auto', width: 'auto' }}
-            >
-              {showAddCollector ? 'Cancel' : '+ Add Collector'}
-            </button>
-          </div>
-          <p style={styles.subText}>Active logistics recycling partners diverting organic feedstock.</p>
-
-          {showAddCollector && (
+          {registrySection === 'collectors' && showAddCollector && (
             <form onSubmit={handleCollectorSubmit} className="card" style={{ padding: '16px', marginBottom: '16px', border: '2px solid var(--color-primary)' }}>
               <h4 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '12px', color: 'var(--color-primary)' }}>Register New Collector / Farmer</h4>
               
@@ -673,35 +737,282 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
             </form>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {collectors.map(col => {
-              const colHistory = history.filter(h => h.collectorId === col.id);
-              const colDiverted = colHistory.reduce((sum, h) => sum + h.estimatedWeight, 0);
-              const activeReservation = wastePosts.find(p => p.collectorId === col.id);
+          {registrySection === 'buyers' && showAddBuyer && (
+            <form onSubmit={handleBuyerSubmit} className="card" style={{ padding: '16px', marginBottom: '16px', border: '2px solid var(--color-primary)' }}>
+              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '12px', color: 'var(--color-primary)' }}>Register New Compost Buyer</h4>
+              
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <label className="form-label" style={{ fontSize: '0.65rem' }}>Agency Name *</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. GreenSoil Fertilizers Corp" 
+                  className="form-input" 
+                  value={newBuyerAgency}
+                  onChange={(e) => setNewBuyerAgency(e.target.value)}
+                  required
+                />
+              </div>
 
-              return (
-                <div key={col.id} className="card" style={{ padding: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{col.name}</h4>
-                    <span className="badge badge-collected" style={{ fontSize: '0.6rem', backgroundColor: activeReservation ? 'rgba(249,168,37,0.1)' : 'rgba(67,160,71,0.1)', color: activeReservation ? 'var(--color-accent)' : 'var(--color-success)' }}>
-                      {activeReservation ? 'On Route' : 'Idle'}
-                    </span>
-                  </div>
-                  <div style={styles.registryDetails}>
-                    <div>Category: <strong>{col.collectorType}</strong></div>
-                    <div>Vehicle: <strong>{col.vehicle}</strong></div>
-                    <div>Operating Radius: <strong>{col.radius} km</strong></div>
-                    <div>Diverted Weight: <strong style={{ color: 'var(--color-primary)' }}>{colDiverted.toFixed(1)} kg</strong></div>
-                    <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem' }}>
-                      <span>User Rating:</span>
-                      <strong style={{ color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                        ★ {col.rating}
-                      </strong>
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <label className="form-label" style={{ fontSize: '0.65rem' }}>Representative Name *</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Ramesh Kumar" 
+                  className="form-input" 
+                  value={newBuyerName}
+                  onChange={(e) => setNewBuyerName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Vehicle Type</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Flatbed Dump Truck" 
+                    className="form-input" 
+                    value={newBuyerVehicle}
+                    onChange={(e) => setNewBuyerVehicle(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Operating Radius (km) *</label>
+                  <input 
+                    type="number" 
+                    placeholder="e.g. 25" 
+                    className="form-input" 
+                    value={newBuyerRadius}
+                    onChange={(e) => setNewBuyerRadius(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Contact Phone</label>
+                  <input 
+                    type="tel" 
+                    placeholder="e.g. 0422 244 5566" 
+                    className="form-input" 
+                    value={newBuyerContact}
+                    onChange={(e) => setNewBuyerContact(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Monthly Budget Estimate</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. ₹50,000/mo" 
+                    className="form-input" 
+                    value={newBuyerBudget}
+                    onChange={(e) => setNewBuyerBudget(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Entry Code *</label>
+                  <input 
+                    type="text" 
+                    placeholder="Login code (e.g. buy-3)" 
+                    className="form-input" 
+                    value={newBuyerEntryCode}
+                    onChange={(e) => setNewBuyerEntryCode(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Password *</label>
+                  <input 
+                    type="password" 
+                    placeholder="Login pwd" 
+                    className="form-input" 
+                    value={newBuyerPassword}
+                    onChange={(e) => setNewBuyerPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="btn-primary" style={{ width: '100%', minHeight: '38px', fontSize: '0.75rem' }}>
+                Register Buyer Profile
+              </button>
+            </form>
+          )}
+
+          {/* Directory filtered listings */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            
+            {/* 1. Schools List */}
+            {registrySection === 'schools' && schools
+              .filter(sch => 
+                sch.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                sch.entryCode?.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map(sch => {
+                const schoolHistory = history.filter(h => h.schoolId === sch.id);
+                const totalDiverted = schoolHistory.reduce((sum, h) => sum + h.estimatedWeight, 0);
+                const currentActive = wastePosts.find(p => p.schoolId === sch.id);
+
+                return (
+                  <div key={sch.id} className="card" style={{ padding: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <div>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{sch.name}</h4>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>ID: {sch.id}</span>
+                      </div>
+                      <span className={`badge ${currentActive ? 'badge-available' : 'badge-collected'}`} style={{ fontSize: '0.6rem' }}>
+                        {currentActive ? 'Active Post' : 'No Active Logs'}
+                      </span>
+                    </div>
+
+                    <div style={{
+                      backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                      border: '1.5px dashed var(--color-border)',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px'
+                    }}>
+                      <div style={{ fontSize: '0.72rem' }}>
+                        Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{sch.entryCode || '-'}</strong>
+                      </div>
+                      <div style={{ fontSize: '0.72rem' }}>
+                        Password: <strong style={{ color: 'var(--color-text-primary)' }}>{sch.password || '12345'}</strong>
+                      </div>
+                    </div>
+
+                    <div style={styles.registryDetails}>
+                      <div>Enrollment: <strong>{sch.studentStrength} pupils</strong></div>
+                      <div>Drum Limit: <strong>{sch.drumCapacity} kg</strong></div>
+                      <div>Diverted: <strong style={{ color: 'var(--color-primary)' }}>{totalDiverted.toFixed(1)} kg</strong></div>
+                      <div style={{ gridColumn: 'span 2', fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                        📍 {sch.address}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+
+            {/* 2. Collectors List */}
+            {registrySection === 'collectors' && collectors
+              .filter(col => 
+                col.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                col.entryCode?.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map(col => {
+                const colHistory = history.filter(h => h.collectorId === col.id);
+                const colDiverted = colHistory.reduce((sum, h) => sum + h.estimatedWeight, 0);
+                const activeReservation = wastePosts.find(p => p.collectorId === col.id);
+
+                return (
+                  <div key={col.id} className="card" style={{ padding: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <div>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{col.name}</h4>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>ID: {col.id}</span>
+                      </div>
+                      <span className="badge badge-collected" style={{ fontSize: '0.6rem', backgroundColor: activeReservation ? 'rgba(249,168,37,0.1)' : 'rgba(67,160,71,0.1)', color: activeReservation ? 'var(--color-accent)' : 'var(--color-success)' }}>
+                        {activeReservation ? 'On Route' : 'Idle'}
+                      </span>
+                    </div>
+
+                    <div style={{
+                      backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                      border: '1.5px dashed var(--color-border)',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px'
+                    }}>
+                      <div style={{ fontSize: '0.72rem' }}>
+                        Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{col.entryCode || '-'}</strong>
+                      </div>
+                      <div style={{ fontSize: '0.72rem' }}>
+                        Password: <strong style={{ color: 'var(--color-text-primary)' }}>{col.password || '12345'}</strong>
+                      </div>
+                    </div>
+
+                    <div style={styles.registryDetails}>
+                      <div>Category: <strong>{col.collectorType}</strong></div>
+                      <div>Vehicle: <strong>{col.vehicle}</strong></div>
+                      <div>Radius: <strong>{col.radius} km</strong></div>
+                      <div>Diverted: <strong style={{ color: 'var(--color-primary)' }}>{colDiverted.toFixed(1)} kg</strong></div>
+                      <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', marginTop: '4px' }}>
+                        <span>Rating: <strong>★ {col.rating}</strong></span>
+                        <span style={{ marginLeft: '12px' }}>Phone: <strong>{col.phone}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+            {/* 3. Buyers List */}
+            {registrySection === 'buyers' && buyers
+              .filter(buy => 
+                buy.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                buy.agencyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                buy.entryCode?.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map(buy => {
+                return (
+                  <div key={buy.id} className="card" style={{ padding: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <div>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{buy.agencyName}</h4>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>Rep: {buy.name} | ID: {buy.id}</span>
+                      </div>
+                      <span className="badge badge-collected" style={{ fontSize: '0.6rem', backgroundColor: 'rgba(67,160,71,0.1)', color: 'var(--color-success)' }}>
+                        Active Agency
+                      </span>
+                    </div>
+
+                    <div style={{
+                      backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                      border: '1.5px dashed var(--color-border)',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px'
+                    }}>
+                      <div style={{ fontSize: '0.72rem' }}>
+                        Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{buy.entryCode || '-'}</strong>
+                      </div>
+                      <div style={{ fontSize: '0.72rem' }}>
+                        Password: <strong style={{ color: 'var(--color-text-primary)' }}>{buy.password || '12345'}</strong>
+                      </div>
+                    </div>
+
+                    <div style={styles.registryDetails}>
+                      <div>Vehicle: <strong>{buy.vehicle}</strong></div>
+                      <div>Radius: <strong>{buy.radius} km</strong></div>
+                      <div>Budget: <strong>{buy.budget}</strong></div>
+                      <div>Rating Grade: <strong style={{ color: 'var(--color-accent)' }}>{buy.rating}</strong></div>
+                      <div style={{ gridColumn: 'span 2', fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                        📞 Contact: <strong>{buy.contact}</strong>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+            {/* Empty States */}
+            {((registrySection === 'schools' && schools.length === 0) ||
+              (registrySection === 'collectors' && collectors.length === 0) ||
+              (registrySection === 'buyers' && buyers.length === 0)) && (
+              <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-text-secondary)', padding: '24px' }}>
+                No active profiles found under this section.
+              </p>
+            )}
           </div>
         </div>
       )}

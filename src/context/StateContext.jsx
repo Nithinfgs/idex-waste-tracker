@@ -214,13 +214,14 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     const loadServerData = async () => {
       try {
-        const [resSch, resCol, resPosts, resHist, resNotif, resProduce] = await Promise.all([
+        const [resSch, resCol, resPosts, resHist, resNotif, resProduce, resBuy] = await Promise.all([
           fetch(`${API_URL}/api/schools`),
           fetch(`${API_URL}/api/collectors`),
           fetch(`${API_URL}/api/waste-posts`),
           fetch(`${API_URL}/api/history`),
           fetch(`${API_URL}/api/notifications`),
-          fetch(`${API_URL}/api/produce-posts`)
+          fetch(`${API_URL}/api/produce-posts`),
+          fetch(`${API_URL}/api/buyers`).catch(() => null)
         ]);
 
         if (resSch.ok) {
@@ -232,14 +233,16 @@ export const StateProvider = ({ children }) => {
             latitude: parseFloat(s.latitude || 0),
             longitude: parseFloat(s.longitude || 0),
             studentStrength: parseInt(s.student_strength || s.studentStrength || 0),
-            drumCapacity: parseInt(s.drum_capacity || s.drumCapacity || 0),
+            drumCapacity: parseFloat(s.drum_capacity || s.drumCapacity || 0),
             contact: s.contact,
             address: s.address,
             menuMon: s.menu_mon || s.menuMon || '',
             menuTue: s.menu_tue || s.menuTue || '',
             menuWed: s.menu_wed || s.menuWed || '',
             menuThu: s.menu_thu || s.menuThu || '',
-            menuFri: s.menu_fri || s.menuFri || ''
+            menuFri: s.menu_fri || s.menuFri || '',
+            entryCode: s.entry_code || s.entryCode || '',
+            password: s.password || '12345'
           }));
           setSchools(mappedSchools);
         }
@@ -252,7 +255,9 @@ export const StateProvider = ({ children }) => {
             vehicle: c.vehicle,
             radius: parseFloat(c.radius || 0),
             latitude: parseFloat(c.latitude || 0),
-            longitude: parseFloat(c.longitude || 0)
+            longitude: parseFloat(c.longitude || 0),
+            entryCode: c.entry_code || c.entryCode || '',
+            password: c.password || '12345'
           }));
           setCollectors(mappedCollectors);
         }
@@ -324,6 +329,24 @@ export const StateProvider = ({ children }) => {
             createdAt: p.created_at || p.createdAt
           }));
           setProducePosts(mappedProduce);
+        }
+        if (resBuy && resBuy.ok) {
+          const rawBuyers = await resBuy.json();
+          const mappedBuyers = rawBuyers.map(b => ({
+            id: b.id,
+            name: b.name,
+            agencyName: b.agency_name || b.agencyName,
+            contact: b.contact,
+            latitude: parseFloat(b.latitude || 0),
+            longitude: parseFloat(b.longitude || 0),
+            vehicle: b.vehicle,
+            radius: parseFloat(b.radius || 25.0),
+            budget: b.budget,
+            rating: b.rating,
+            entryCode: b.entry_code || b.entryCode || '',
+            password: b.password || '12345'
+          }));
+          setBuyers(mappedBuyers);
         }
         console.log('Synchronized database data successfully from Express server!');
       } catch (err) {
@@ -1008,6 +1031,33 @@ export const StateProvider = ({ children }) => {
     addToast(`Collector profile ${newCollector.name} added successfully!`, 'success');
   };
 
+  // Add new buyer profile (Admin only)
+  const addNewBuyerProfile = (buyerData) => {
+    const newBuyer = {
+      id: `buy-${Date.now()}`,
+      name: buyerData.name,
+      agencyName: buyerData.agencyName || buyerData.name,
+      contact: buyerData.contact || '',
+      latitude: parseFloat(buyerData.latitude || 11.0250),
+      longitude: parseFloat(buyerData.longitude || 76.9620),
+      vehicle: buyerData.vehicle || 'Truck',
+      radius: parseFloat(buyerData.radius || 25.0),
+      budget: buyerData.budget || '₹50,000/mo',
+      rating: buyerData.rating || 'A+',
+      entryCode: buyerData.entryCode || `buy-${Math.floor(10 + Math.random() * 90)}`,
+      password: buyerData.password || '12345'
+    };
+
+    fetch(`${API_URL}/api/buyers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newBuyer)
+    }).catch(err => console.warn('Failed to sync new buyer profile to backend:', err.message));
+
+    setBuyers(prev => [...prev, newBuyer]);
+    addToast(`Buyer profile ${newBuyer.name} added successfully!`, 'success');
+  };
+
   // Farmer lists excess produce
   const uploadProducePost = (collectorId, title, quantity, price, deliveryEstimate, imageUrl, description) => {
     const collector = collectors.find(c => c.id === collectorId);
@@ -1209,6 +1259,7 @@ export const StateProvider = ({ children }) => {
       updateCollectorOnboarding,
       addNewSchoolProfile,
       addNewCollectorProfile,
+      addNewBuyerProfile,
       uploadProducePost,
       claimProducePost,
       forceSimulateTimeout,

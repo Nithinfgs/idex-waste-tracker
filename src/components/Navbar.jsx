@@ -73,7 +73,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
       case 'admin':
         return [
           { id: 'dashboard', label: t('analytics'), icon: BarChart3 },
-          { id: 'schools', label: 'Schools', icon: ListOrdered },
+          { id: 'registry', label: 'Registry Control', icon: Users },
           { id: 'sms', label: 'SMS Dispatch', icon: MessageSquare },
           { id: 'notifications', label: t('notifications'), icon: Bell },
           { id: 'profile', label: t('profile'), icon: User }
