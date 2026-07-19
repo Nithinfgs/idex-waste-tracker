@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">idex-waste-tracker</string>
+    <string name="title_activity_main">idex-waste-tracker</string>
+    <string name="package_name">com.idex.wastetracker</string>
+    <string name="custom_url_scheme">com.idex.wastetracker</string>
+</resources>
