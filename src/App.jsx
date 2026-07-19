@@ -14,9 +14,9 @@ function MainApp() {
   const [activeTab, setActiveTab] = useState('home');
 
   if (!isLoggedIn) {
-    return <LoginPortal onLoginSuccess={() => {
+    return <LoginPortal onLoginSuccess={(role) => {
       setIsLoggedIn(true);
-      setActiveTab('home');
+      setActiveTab(role === 'admin' ? 'dashboard' : 'home');
     }} />;
   }
 

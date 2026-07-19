@@ -293,7 +293,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
         <div style={styles.navContainer}>
           {tabs.map(tab => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+            const isActive = activeTab === tab.id || (tab.id === 'dashboard' && activeTab === 'home' && currentRole === 'admin');
             return (
               <button
                 key={tab.id}

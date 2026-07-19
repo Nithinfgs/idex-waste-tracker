@@ -57,7 +57,7 @@ export default function LoginPortal({ onLoginSuccess }) {
         if (found.password === pwd || pwd === '12345') {
           setCurrentRole('school');
           setSelectedSchoolId(found.id);
-          onLoginSuccess();
+          onLoginSuccess('school');
           addToast(`Welcome back, ${found.name}!`, 'success');
         } else {
           setErrorMsg('Invalid password. Please check your credentials.');
@@ -74,7 +74,7 @@ export default function LoginPortal({ onLoginSuccess }) {
         if (found.password === pwd || pwd === '12345') {
           setCurrentRole('collector');
           setSelectedCollectorId(found.id);
-          onLoginSuccess();
+          onLoginSuccess('collector');
           addToast(`Welcome back, ${found.name}!`, 'success');
         } else {
           setErrorMsg('Invalid password. Please check your credentials.');
@@ -91,7 +91,7 @@ export default function LoginPortal({ onLoginSuccess }) {
         if (found.password === pwd || pwd === '12345') {
           setCurrentRole('buyer');
           setSelectedBuyerId(found.id);
-          onLoginSuccess();
+          onLoginSuccess('buyer');
           addToast(`Welcome back, ${found.name}!`, 'success');
         } else {
           setErrorMsg('Invalid password. Please check your credentials.');
@@ -102,7 +102,7 @@ export default function LoginPortal({ onLoginSuccess }) {
     } else if (role === 'admin') {
       if ((code === 'admin' || code === '1') && (pwd === 'admin123' || pwd === '12345')) {
         setCurrentRole('admin');
-        onLoginSuccess();
+        onLoginSuccess('admin');
         addToast('Admin logged in successfully.', 'success');
       } else {
         setErrorMsg('Invalid admin credentials.');

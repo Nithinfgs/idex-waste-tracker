@@ -97,6 +97,30 @@ export const StateProvider = ({ children }) => {
     return localStorage.getItem('idex_dark_mode') === 'true';
   });
 
+  const [districtJurisdiction, setDistrictJurisdiction] = useState(() => {
+    return localStorage.getItem('idex_district_jurisdiction') || 'Coimbatore District Municipal Corp';
+  });
+  const [minPostingThreshold, setMinPostingThreshold] = useState(() => {
+    const local = localStorage.getItem('idex_min_posting_threshold');
+    return local ? parseInt(local, 10) : 25;
+  });
+  const [systemReservationTimeout, setSystemReservationTimeout] = useState(() => {
+    const local = localStorage.getItem('idex_system_reservation_timeout');
+    return local ? parseInt(local, 10) : 30;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('idex_district_jurisdiction', districtJurisdiction);
+  }, [districtJurisdiction]);
+
+  useEffect(() => {
+    localStorage.setItem('idex_min_posting_threshold', minPostingThreshold);
+  }, [minPostingThreshold]);
+
+  useEffect(() => {
+    localStorage.setItem('idex_system_reservation_timeout', systemReservationTimeout);
+  }, [systemReservationTimeout]);
+
   // Simulated Offline Mode
   const [isOfflineMode, setIsOfflineMode] = useState(false);
   const [saveStatus, setSaveStatus] = useState('Saved'); // 'Saving...' | 'Saved' | 'Offline'
@@ -1058,6 +1082,62 @@ export const StateProvider = ({ children }) => {
     addToast(`Buyer profile ${newBuyer.name} added successfully!`, 'success');
   };
 
+  // Update credentials for a profile (Admin only)
+  const updateProfileCredentials = (role, id, entryCode, password) => {
+    if (role === 'schools' || role === 'school') {
+      const school = schools.find(s => s.id === id);
+      if (!school) return;
+      const updatedSchool = {
+        ...school,
+        entryCode,
+        password
+      };
+      
+      fetch(`${API_URL}/api/schools`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSchool)
+      }).catch(err => console.warn('Failed to sync updated school credentials:', err.message));
+
+      setSchools(prev => prev.map(s => s.id === id ? updatedSchool : s));
+      addToast(`Credentials for school ${school.name} updated!`, 'success');
+    } else if (role === 'collectors' || role === 'collector') {
+      const collector = collectors.find(c => c.id === id);
+      if (!collector) return;
+      const updatedCollector = {
+        ...collector,
+        entryCode,
+        password
+      };
+
+      fetch(`${API_URL}/api/collectors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedCollector)
+      }).catch(err => console.warn('Failed to sync updated collector credentials:', err.message));
+
+      setCollectors(prev => prev.map(c => c.id === id ? updatedCollector : c));
+      addToast(`Credentials for collector ${collector.name} updated!`, 'success');
+    } else if (role === 'buyers' || role === 'buyer') {
+      const buyer = buyers.find(b => b.id === id);
+      if (!buyer) return;
+      const updatedBuyer = {
+        ...buyer,
+        entryCode,
+        password
+      };
+
+      fetch(`${API_URL}/api/buyers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedBuyer)
+      }).catch(err => console.warn('Failed to sync updated buyer credentials:', err.message));
+
+      setBuyers(prev => prev.map(b => b.id === id ? updatedBuyer : b));
+      addToast(`Credentials for buyer ${buyer.name} updated!`, 'success');
+    }
+  };
+
   // Farmer lists excess produce
   const uploadProducePost = (collectorId, title, quantity, price, deliveryEstimate, imageUrl, description) => {
     const collector = collectors.find(c => c.id === collectorId);
@@ -1260,6 +1340,13 @@ export const StateProvider = ({ children }) => {
       addNewSchoolProfile,
       addNewCollectorProfile,
       addNewBuyerProfile,
+      updateProfileCredentials,
+      districtJurisdiction,
+      setDistrictJurisdiction,
+      minPostingThreshold,
+      setMinPostingThreshold,
+      systemReservationTimeout,
+      setSystemReservationTimeout,
       uploadProducePost,
       claimProducePost,
       forceSimulateTimeout,

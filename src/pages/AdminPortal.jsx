@@ -28,6 +28,13 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
     addNewSchoolProfile,
     addNewCollectorProfile,
     addNewBuyerProfile,
+    updateProfileCredentials,
+    districtJurisdiction,
+    setDistrictJurisdiction,
+    minPostingThreshold,
+    setMinPostingThreshold,
+    systemReservationTimeout,
+    setSystemReservationTimeout,
     addToast,
     t
   } = useContext(StateContext);
@@ -75,6 +82,14 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
   // Unified Registry Control View State
   const [registrySection, setRegistrySection] = useState('schools'); // 'schools' | 'collectors' | 'buyers'
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Credentials editing states
+  const [editingProfileId, setEditingProfileId] = useState(null);
+  const [editEntryCode, setEditEntryCode] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+
+  // Map settings
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
 
   const handleSendSms = async () => {
     if (!smsPhone.trim()) {
@@ -239,7 +254,7 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
   return (
     <div style={styles.container}>
       {/* 1. DISTRICT ANALYTICS TAB */}
-      {activeTab === 'dashboard' && (
+      {(activeTab === 'dashboard' || activeTab === 'home') && (
         <div style={styles.scrollable}>
           <div style={{ marginBottom: '16px' }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 500 }}>Municipal Overview</p>
@@ -317,10 +332,13 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
           {/* Leaflet map with Circle Heat Overlay */}
           {mapMode === 'heat' ? (
             <div className="card" style={styles.mapCard}>
-              <div style={styles.mapWrapper}>
+              <div style={{ ...styles.mapWrapper, height: isMapExpanded ? '380px' : '150px', transition: 'height 0.3s ease' }}>
                 <MapContainer 
                   center={[11.0168, 76.9558]} 
                   zoom={12} 
+                  scrollWheelZoom={false}
+                  dragging={isMapExpanded}
+                  zoomControl={isMapExpanded}
                   style={{ height: '100%', width: '100%' }}
                 >
                   <TileLayer
@@ -347,6 +365,28 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                     );
                   })}
                 </MapContainer>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                <button
+                  onClick={() => setIsMapExpanded(!isMapExpanded)}
+                  className="btn-primary"
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: '0.68rem',
+                    minHeight: 'auto',
+                    width: 'auto',
+                    backgroundColor: 'rgba(62, 107, 95, 0.08)',
+                    color: 'var(--color-primary)',
+                    border: '1px solid var(--color-primary)',
+                    borderRadius: '8px',
+                    boxShadow: 'none'
+                  }}
+                >
+                  {isMapExpanded ? 'Collapse Map' : 'Expand Map & Interact'}
+                </button>
+                <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>
+                  {isMapExpanded ? 'Scroll zoom is disabled. Drag to pan.' : 'Map locked. Scroll down past map card.'}
+                </span>
               </div>
               <div style={styles.heatLegend}>
                 <span style={styles.legendTitle}>Waste Load Index:</span>
@@ -869,23 +909,106 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                       </span>
                     </div>
 
-                    <div style={{
-                      backgroundColor: 'rgba(62, 107, 95, 0.05)',
-                      border: '1.5px dashed var(--color-border)',
-                      borderRadius: '8px',
-                      padding: '8px 12px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '8px'
-                    }}>
-                      <div style={{ fontSize: '0.72rem' }}>
-                        Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{sch.entryCode || '-'}</strong>
+                    {editingProfileId === sch.id ? (
+                      <div style={{
+                        backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                        border: '1.5px solid var(--color-primary)',
+                        borderRadius: '8px',
+                        padding: '10px',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                          <div>
+                            <label style={{ fontSize: '0.6rem', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Entry Code</label>
+                            <input
+                              type="text"
+                              value={editEntryCode}
+                              onChange={(e) => setEditEntryCode(e.target.value)}
+                              className="form-input"
+                              style={{ fontSize: '0.7rem', padding: '4px 6px', minHeight: 'auto' }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '0.6rem', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Password</label>
+                            <input
+                              type="text"
+                              value={editPassword}
+                              onChange={(e) => setEditPassword(e.target.value)}
+                              className="form-input"
+                              style={{ fontSize: '0.7rem', padding: '4px 6px', minHeight: 'auto' }}
+                            />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => setEditingProfileId(null)}
+                            style={{
+                              fontSize: '0.65rem',
+                              padding: '3px 8px',
+                              backgroundColor: '#E0E0E0',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => {
+                              updateProfileCredentials(registrySection, sch.id, editEntryCode, editPassword);
+                              setEditingProfileId(null);
+                            }}
+                            style={{
+                              fontSize: '0.65rem',
+                              padding: '3px 8px',
+                              backgroundColor: 'var(--color-primary)',
+                              color: '#FFF',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Save
+                          </button>
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.72rem' }}>
-                        Password: <strong style={{ color: 'var(--color-text-primary)' }}>{sch.password || '12345'}</strong>
+                    ) : (
+                      <div style={{
+                        backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                        border: '1.5px dashed var(--color-border)',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ fontSize: '0.72rem' }}>
+                          Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{sch.entryCode || '-'}</strong>
+                        </div>
+                        <div style={{ fontSize: '0.72rem' }}>
+                          Password: <strong style={{ color: 'var(--color-text-primary)' }}>{sch.password || '12345'}</strong>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setEditingProfileId(sch.id);
+                            setEditEntryCode(sch.entryCode || '');
+                            setEditPassword(sch.password || '12345');
+                          }}
+                          style={{
+                            fontSize: '0.6rem',
+                            padding: '2px 6px',
+                            backgroundColor: 'transparent',
+                            color: 'var(--color-primary)',
+                            border: '1px solid var(--color-primary)',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Edit
+                        </button>
                       </div>
-                    </div>
+                    )}
 
                     <div style={styles.registryDetails}>
                       <div>Enrollment: <strong>{sch.studentStrength} pupils</strong></div>
@@ -922,23 +1045,106 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                       </span>
                     </div>
 
-                    <div style={{
-                      backgroundColor: 'rgba(62, 107, 95, 0.05)',
-                      border: '1.5px dashed var(--color-border)',
-                      borderRadius: '8px',
-                      padding: '8px 12px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '8px'
-                    }}>
-                      <div style={{ fontSize: '0.72rem' }}>
-                        Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{col.entryCode || '-'}</strong>
+                    {editingProfileId === col.id ? (
+                      <div style={{
+                        backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                        border: '1.5px solid var(--color-primary)',
+                        borderRadius: '8px',
+                        padding: '10px',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                          <div>
+                            <label style={{ fontSize: '0.6rem', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Entry Code</label>
+                            <input
+                              type="text"
+                              value={editEntryCode}
+                              onChange={(e) => setEditEntryCode(e.target.value)}
+                              className="form-input"
+                              style={{ fontSize: '0.7rem', padding: '4px 6px', minHeight: 'auto' }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '0.6rem', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Password</label>
+                            <input
+                              type="text"
+                              value={editPassword}
+                              onChange={(e) => setEditPassword(e.target.value)}
+                              className="form-input"
+                              style={{ fontSize: '0.7rem', padding: '4px 6px', minHeight: 'auto' }}
+                            />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => setEditingProfileId(null)}
+                            style={{
+                              fontSize: '0.65rem',
+                              padding: '3px 8px',
+                              backgroundColor: '#E0E0E0',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => {
+                              updateProfileCredentials(registrySection, col.id, editEntryCode, editPassword);
+                              setEditingProfileId(null);
+                            }}
+                            style={{
+                              fontSize: '0.65rem',
+                              padding: '3px 8px',
+                              backgroundColor: 'var(--color-primary)',
+                              color: '#FFF',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Save
+                          </button>
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.72rem' }}>
-                        Password: <strong style={{ color: 'var(--color-text-primary)' }}>{col.password || '12345'}</strong>
+                    ) : (
+                      <div style={{
+                        backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                        border: '1.5px dashed var(--color-border)',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ fontSize: '0.72rem' }}>
+                          Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{col.entryCode || '-'}</strong>
+                        </div>
+                        <div style={{ fontSize: '0.72rem' }}>
+                          Password: <strong style={{ color: 'var(--color-text-primary)' }}>{col.password || '12345'}</strong>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setEditingProfileId(col.id);
+                            setEditEntryCode(col.entryCode || '');
+                            setEditPassword(col.password || '12345');
+                          }}
+                          style={{
+                            fontSize: '0.6rem',
+                            padding: '2px 6px',
+                            backgroundColor: 'transparent',
+                            color: 'var(--color-primary)',
+                            border: '1px solid var(--color-primary)',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Edit
+                        </button>
                       </div>
-                    </div>
+                    )}
 
                     <div style={styles.registryDetails}>
                       <div>Category: <strong>{col.collectorType}</strong></div>
@@ -974,23 +1180,106 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                       </span>
                     </div>
 
-                    <div style={{
-                      backgroundColor: 'rgba(62, 107, 95, 0.05)',
-                      border: '1.5px dashed var(--color-border)',
-                      borderRadius: '8px',
-                      padding: '8px 12px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '8px'
-                    }}>
-                      <div style={{ fontSize: '0.72rem' }}>
-                        Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{buy.entryCode || '-'}</strong>
+                    {editingProfileId === buy.id ? (
+                      <div style={{
+                        backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                        border: '1.5px solid var(--color-primary)',
+                        borderRadius: '8px',
+                        padding: '10px',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                          <div>
+                            <label style={{ fontSize: '0.6rem', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Entry Code</label>
+                            <input
+                              type="text"
+                              value={editEntryCode}
+                              onChange={(e) => setEditEntryCode(e.target.value)}
+                              className="form-input"
+                              style={{ fontSize: '0.7rem', padding: '4px 6px', minHeight: 'auto' }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '0.6rem', display: 'block', marginBottom: '2px', fontWeight: 600 }}>Password</label>
+                            <input
+                              type="text"
+                              value={editPassword}
+                              onChange={(e) => setEditPassword(e.target.value)}
+                              className="form-input"
+                              style={{ fontSize: '0.7rem', padding: '4px 6px', minHeight: 'auto' }}
+                            />
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => setEditingProfileId(null)}
+                            style={{
+                              fontSize: '0.65rem',
+                              padding: '3px 8px',
+                              backgroundColor: '#E0E0E0',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => {
+                              updateProfileCredentials(registrySection, buy.id, editEntryCode, editPassword);
+                              setEditingProfileId(null);
+                            }}
+                            style={{
+                              fontSize: '0.65rem',
+                              padding: '3px 8px',
+                              backgroundColor: 'var(--color-primary)',
+                              color: '#FFF',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Save
+                          </button>
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.72rem' }}>
-                        Password: <strong style={{ color: 'var(--color-text-primary)' }}>{buy.password || '12345'}</strong>
+                    ) : (
+                      <div style={{
+                        backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                        border: '1.5px dashed var(--color-border)',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ fontSize: '0.72rem' }}>
+                          Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{buy.entryCode || '-'}</strong>
+                        </div>
+                        <div style={{ fontSize: '0.72rem' }}>
+                          Password: <strong style={{ color: 'var(--color-text-primary)' }}>{buy.password || '12345'}</strong>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setEditingProfileId(buy.id);
+                            setEditEntryCode(buy.entryCode || '');
+                            setEditPassword(buy.password || '12345');
+                          }}
+                          style={{
+                            fontSize: '0.6rem',
+                            padding: '2px 6px',
+                            backgroundColor: 'transparent',
+                            color: 'var(--color-primary)',
+                            border: '1px solid var(--color-primary)',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Edit
+                        </button>
                       </div>
-                    </div>
+                    )}
 
                     <div style={styles.registryDetails}>
                       <div>Vehicle: <strong>{buy.vehicle}</strong></div>
@@ -1052,12 +1341,22 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
             
             <div className="form-group">
               <label className="form-label">Active District Jurisdiction</label>
-              <input type="text" className="form-input" value="Coimbatore District Municipal Corp" disabled style={{ backgroundColor: 'var(--color-background)' }} />
+              <input 
+                type="text" 
+                className="form-input" 
+                value={districtJurisdiction} 
+                onChange={(e) => setDistrictJurisdiction(e.target.value)}
+              />
             </div>
 
             <div className="form-group">
               <label className="form-label">Min Posting Threshold (kg)</label>
-              <input type="number" className="form-input" value={25} disabled style={{ backgroundColor: 'var(--color-background)' }} />
+              <input 
+                type="number" 
+                className="form-input" 
+                value={minPostingThreshold} 
+                onChange={(e) => setMinPostingThreshold(parseInt(e.target.value, 10) || 0)}
+              />
               <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
                 Schools only post when waste exceeds this threshold (prevents inefficient collections).
               </span>
@@ -1065,13 +1364,18 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
 
             <div className="form-group">
               <label className="form-label">System Reservation Timeout (min)</label>
-              <input type="number" className="form-input" value={30} disabled style={{ backgroundColor: 'var(--color-background)' }} />
+              <input 
+                type="number" 
+                className="form-input" 
+                value={systemReservationTimeout} 
+                onChange={(e) => setSystemReservationTimeout(parseInt(e.target.value, 10) || 0)}
+              />
             </div>
 
             <div style={{ marginTop: '16px', display: 'flex', gap: '8px', padding: '10px', backgroundColor: 'rgba(46, 125, 50, 0.05)', borderRadius: '8px', border: '1px solid rgba(46, 125, 50, 0.1)' }}>
               <AlertCircle size={18} color="var(--color-primary)" style={{ flexShrink: 0 }} />
               <p style={{ fontSize: '0.7rem', color: 'var(--color-primary)', lineHeight: '1.3' }}>
-                Official municipal control board setup. Configuration options lock under authorized staff credentials.
+                Official municipal control board setup. Configuration changes are auto-saved in real-time.
               </p>
             </div>
           </div>
