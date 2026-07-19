@@ -255,6 +255,39 @@ export default function LoginPortal({ onLoginSuccess }) {
           </button>
         </div>
       )}
+      {/* Configurable Server API URL Settings */}
+      <div style={{ marginTop: '32px', textAlign: 'center', width: '100%', maxWidth: '360px', zIndex: 10 }}>
+        <button
+          onClick={() => {
+            const currentVal = localStorage.getItem('idex_custom_api_url') || '';
+            const val = prompt('Enter your Custom Cloud Sync Server URL (e.g. http://192.168.1.12:5001 or live domain):', currentVal);
+            if (val !== null) {
+              if (val.trim() === '') {
+                localStorage.removeItem('idex_custom_api_url');
+                alert('Resetting to default localhost/Vite environment host URL.');
+              } else {
+                localStorage.setItem('idex_custom_api_url', val.trim());
+                alert('Server Sync URL successfully updated! Reloading app...');
+              }
+              window.location.reload();
+            }
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--color-primary)',
+            fontSize: '0.72rem',
+            textDecoration: 'underline',
+            cursor: 'pointer',
+            opacity: 0.8
+          }}
+        >
+          ⚙️ Configure Cloud Sync Server IP
+        </button>
+        <div style={{ fontSize: '0.62rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+          Current Sync Node: <code style={{ wordBreak: 'break-all' }}>{localStorage.getItem('idex_custom_api_url') || 'Default local host (port 5001)'}</code>
+        </div>
+      </div>
     </div>
   );
 }
