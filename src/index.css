@@ -1,19 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@700&display=swap');
 
 :root {
-  /* Specification Color Scheme - Sage Green Palette */
-  --color-primary: #659287;       /* Sage Green Buttons, Navigation, Active States */
-  --color-secondary: #88BDA4;     /* Secondary Highlight */
-  --color-accent: #F9A825;        /* Keep warm amber for timers, pending, alerts */
-  --color-success: #88BDA4;       /* Collection Completed / Muted green success */
+  /* Specification Color Scheme - Darker Sage Green Palette for Richer Contrast */
+  --color-primary: #3E6B5F;       /* Deep Forest Sage Green Buttons, Navigation, Active */
+  --color-secondary: #5C8C7E;     /* Medium Sage Green Highlight */
+  --color-accent: #F9A825;        /* Warm alert/pending amber */
+  --color-success: #3E6B5F;       /* Collection Completed */
   --color-error: #D32F2F;         /* Cancelled, Failed, Offline */
-  --color-info: #659287;          /* Analytics */
-  --color-background: #E6F2DD;    /* Soft Sage Green Background */
-  --color-card: #FFFFFF;          /* Pure White Cards */
-  --color-text-primary: #2D3A37;  /* Deep Sage Slate Text */
-  --color-text-secondary: #5C6E6A;/* Medium Sage Slate Text */
+  --color-info: #3E6B5F;          /* Analytics */
+  --color-background: #DBEAD0;    /* Richer Pastel Sage Green Background */
+  --color-card: #FFFFFF;          /* High contrast pure white cards */
+  --color-text-primary: #172320;  /* Very deep sage near-black for high contrast readability */
+  --color-text-secondary: #455853;/* Slate sage for descriptions */
   --color-white: #FFFFFF;
-  --color-border: #B1D3B9;        /* Soft Sage Green Divider/Border */
+  --color-border: #A2C0B2;        /* Defined Sage Divider/Border */
 
   /* Typography spec */
   --font-primary: 'Inter', sans-serif;
