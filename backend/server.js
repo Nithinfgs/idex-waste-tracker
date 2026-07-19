@@ -38,14 +38,14 @@ if (process.env.DATABASE_URL) {
 // In-Memory Database Fallback for instant local testability
 let db = {
   schools: [
-    { id: 'sch-1', name: 'Corporation Middle School, RS Puram', district: 'Coimbatore', latitude: 11.0084, longitude: 76.9458, student_strength: 380, drum_capacity: 40, contact: '+91 98765 43210', address: 'West RS Puram, Coimbatore, Tamil Nadu 641002' },
-    { id: 'sch-2', name: 'Government Girls High School, Gandhipuram', district: 'Coimbatore', latitude: 11.0182, longitude: 76.9631, student_strength: 510, drum_capacity: 60, contact: '+91 98765 43211', address: 'Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012' },
-    { id: 'sch-3', name: 'Municipal Higher Secondary School, Peelamedu', district: 'Coimbatore', latitude: 11.0268, longitude: 76.9958, student_strength: 420, drum_capacity: 40, contact: '+91 98765 43212', address: 'Peelamedu Main Road, Coimbatore, Tamil Nadu 641004' },
-    { id: 'sch-4', name: 'Corporation School, Town Hall', district: 'Coimbatore', latitude: 10.9958, longitude: 76.9592, student_strength: 290, drum_capacity: 30, contact: '+91 98765 43213', address: 'Near Big Bazaar Street, Town Hall, Coimbatore, Tamil Nadu 641001' }
+    { id: 'sch-1', name: 'Corporation Middle School, RS Puram', district: 'Coimbatore', latitude: 11.0084, longitude: 76.9458, student_strength: 380, drum_capacity: 40, contact: '+91 98765 43210', address: 'West RS Puram, Coimbatore, Tamil Nadu 641002', entry_code: '1', password: '12345' },
+    { id: 'sch-2', name: 'Government Girls High School, Gandhipuram', district: 'Coimbatore', latitude: 11.0182, longitude: 76.9631, student_strength: 510, drum_capacity: 60, contact: '+91 98765 43211', address: 'Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012', entry_code: '2', password: '12345' },
+    { id: 'sch-3', name: 'Municipal Higher Secondary School, Peelamedu', district: 'Coimbatore', latitude: 11.0268, longitude: 76.9958, student_strength: 420, drum_capacity: 40, contact: '+91 98765 43212', address: 'Peelamedu Main Road, Coimbatore, Tamil Nadu 641004', entry_code: '3', password: '12345' },
+    { id: 'sch-4', name: 'Corporation School, Town Hall', district: 'Coimbatore', latitude: 10.9958, longitude: 76.9592, student_strength: 290, drum_capacity: 30, contact: '+91 98765 43213', address: 'Near Big Bazaar Street, Town Hall, Coimbatore, Tamil Nadu 641001', entry_code: '4', password: '12345' }
   ],
   collectors: [
-    { id: 'col-1', name: 'Kavin Kumar (Organic Pig Farm)', collector_type: 'Farmer', vehicle: 'Mahindra Bolero Pickup', radius: 15.0, latitude: 11.0458, longitude: 76.9158 },
-    { id: 'col-2', name: 'Deepak Raj (Coimbatore BioCompost)', collector_type: 'Compost Company', vehicle: 'Tata Ace Mini Truck', radius: 20.0, latitude: 10.9858, longitude: 76.9858 }
+    { id: 'col-1', name: 'Kavin Kumar (Organic Pig Farm)', collector_type: 'Farmer', vehicle: 'Mahindra Bolero Pickup', radius: 15.0, latitude: 11.0458, longitude: 76.9158, entry_code: '1', password: '12345' },
+    { id: 'col-2', name: 'Deepak Raj (Coimbatore BioCompost)', collector_type: 'Compost Company', vehicle: 'Tata Ace Mini Truck', radius: 20.0, latitude: 10.9858, longitude: 76.9858, entry_code: '2', password: '12345' }
   ],
   waste_posts: [],
   produce_posts: [],
@@ -102,10 +102,80 @@ app.get('/api/schools', async (req, res) => {
   res.json(data);
 });
 
+app.post('/api/schools', async (req, res) => {
+  const school = req.body;
+  await executeQuery(
+    'INSERT INTO schools (id, name, district, latitude, longitude, student_strength, drum_capacity, contact, address, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (id) DO UPDATE SET student_strength = EXCLUDED.student_strength, drum_capacity = EXCLUDED.drum_capacity, contact = EXCLUDED.contact, address = EXCLUDED.address, entry_code = EXCLUDED.entry_code, password = EXCLUDED.password',
+    [school.id, school.name, school.district || 'Coimbatore', parseFloat(school.latitude || 11.0), parseFloat(school.longitude || 76.9), parseInt(school.studentStrength || 0), parseFloat(school.drumCapacity || 0), school.contact || '', school.address || '', school.entryCode || '', school.password || '12345'],
+    () => {
+      const idx = db.schools.findIndex(s => s.id === school.id);
+      const mapped = {
+        id: school.id,
+        name: school.name,
+        district: school.district || 'Coimbatore',
+        latitude: parseFloat(school.latitude || 11.0),
+        longitude: parseFloat(school.longitude || 76.9),
+        student_strength: parseInt(school.studentStrength || 0),
+        studentStrength: parseInt(school.studentStrength || 0),
+        drum_capacity: parseFloat(school.drumCapacity || 0),
+        drumCapacity: parseFloat(school.drumCapacity || 0),
+        contact: school.contact || '',
+        address: school.address || '',
+        entryCode: school.entryCode || '',
+        entry_code: school.entryCode || '',
+        password: school.password || '12345'
+      };
+      if (idx >= 0) {
+        db.schools[idx] = mapped;
+      } else {
+        db.schools.push(mapped);
+      }
+      saveDatabaseToFile();
+      return [];
+    }
+  );
+  res.json({ success: true });
+});
+
 // 2. Collectors
 app.get('/api/collectors', async (req, res) => {
   const data = await executeQuery('SELECT * FROM collectors', [], () => db.collectors);
   res.json(data);
+});
+
+app.post('/api/collectors', async (req, res) => {
+  const collector = req.body;
+  await executeQuery(
+    'INSERT INTO collectors (id, name, phone, collector_type, vehicle, radius, latitude, longitude, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (id) DO UPDATE SET collector_type = EXCLUDED.collector_type, vehicle = EXCLUDED.vehicle, radius = EXCLUDED.radius, phone = EXCLUDED.phone, entry_code = EXCLUDED.entry_code, password = EXCLUDED.password',
+    [collector.id, collector.name, collector.phone || '', collector.collectorType || 'Farmer', collector.vehicle || 'Tractor', parseFloat(collector.radius || 10.0), parseFloat(collector.latitude || 11.0), parseFloat(collector.longitude || 76.9), collector.entryCode || '', collector.password || '12345'],
+    () => {
+      const idx = db.collectors.findIndex(c => c.id === collector.id);
+      const mapped = {
+        id: collector.id,
+        name: collector.name,
+        phone: collector.phone || '',
+        collector_type: collector.collectorType || 'Farmer',
+        collectorType: collector.collectorType || 'Farmer',
+        vehicle: collector.vehicle || 'Tractor',
+        radius: parseFloat(collector.radius || 10.0),
+        latitude: parseFloat(collector.latitude || 11.0),
+        longitude: parseFloat(collector.longitude || 76.9),
+        entryCode: collector.entryCode || '',
+        entry_code: collector.entryCode || '',
+        password: collector.password || '12345',
+        totalPickups: 0,
+        rating: 5.0
+      };
+      if (idx >= 0) {
+        db.collectors[idx] = mapped;
+      } else {
+        db.collectors.push(mapped);
+      }
+      saveDatabaseToFile();
+      return [];
+    }
+  );
+  res.json({ success: true });
 });
 
 // 3. Waste Posts
@@ -356,8 +426,8 @@ async function initializeDatabase() {
       await pool.query(
         `INSERT INTO schools (
           id, name, district, latitude, longitude, student_strength, drum_capacity, contact, address, 
-          menu_mon, menu_tue, menu_wed, menu_thu, menu_fri
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          menu_mon, menu_tue, menu_wed, menu_thu, menu_fri, entry_code, password
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         ON CONFLICT (id) DO UPDATE SET
           name = EXCLUDED.name,
           district = EXCLUDED.district,
@@ -371,10 +441,12 @@ async function initializeDatabase() {
           menu_tue = EXCLUDED.menu_tue,
           menu_wed = EXCLUDED.menu_wed,
           menu_thu = EXCLUDED.menu_thu,
-          menu_fri = EXCLUDED.menu_fri`,
+          menu_fri = EXCLUDED.menu_fri,
+          entry_code = EXCLUDED.entry_code,
+          password = EXCLUDED.password`,
         [
           s.id, s.name, s.district, s.latitude, s.longitude, s.student_strength, s.drum_capacity, s.contact, s.address,
-          s.menu_mon || '', s.menu_tue || '', s.menu_wed || '', s.menu_thu || '', s.menu_fri || ''
+          s.menu_mon || '', s.menu_tue || '', s.menu_wed || '', s.menu_thu || '', s.menu_fri || '', s.entry_code || '', s.password || '12345'
         ]
       );
     }
@@ -387,8 +459,8 @@ async function initializeDatabase() {
       console.log(`🌱 Seeding database with ${db.collectors.length} collectors...`);
       for (const c of db.collectors) {
         await pool.query(
-          'INSERT INTO collectors (id, name, collector_type, vehicle, radius, latitude, longitude) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING',
-          [c.id, c.name, c.collector_type || c.collectorType, c.vehicle, c.radius, c.latitude, c.longitude]
+          'INSERT INTO collectors (id, name, collector_type, vehicle, radius, latitude, longitude, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (id) DO NOTHING',
+          [c.id, c.name, c.collector_type || c.collectorType, c.vehicle, c.radius, c.latitude, c.longitude, c.entry_code || '', c.password || '12345']
         );
       }
       console.log('✅ Collectors seeded successfully!');

@@ -24,6 +24,8 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
     notifications,
     collectors,
     getDistrictStatistics,
+    addNewSchoolProfile,
+    addNewCollectorProfile,
     addToast,
     t
   } = useContext(StateContext);
@@ -36,6 +38,26 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
   const [smsApiKey, setSmsApiKey] = useState(localStorage.getItem('idex_sms_apikey') || '');
   const [smsDeviceId, setSmsDeviceId] = useState(localStorage.getItem('idex_sms_deviceid') || '');
   const [isSendingSms, setIsSendingSms] = useState(false);
+
+  // Profile management states - Schools
+  const [showAddSchool, setShowAddSchool] = useState(false);
+  const [newSchoolName, setNewSchoolName] = useState('');
+  const [newSchoolStrength, setNewSchoolStrength] = useState('');
+  const [newSchoolCapacity, setNewSchoolCapacity] = useState('');
+  const [newSchoolContact, setNewSchoolContact] = useState('');
+  const [newSchoolAddress, setNewSchoolAddress] = useState('');
+  const [newSchoolEntryCode, setNewSchoolEntryCode] = useState('');
+  const [newSchoolPassword, setNewSchoolPassword] = useState('');
+
+  // Profile management states - Collectors
+  const [showAddCollector, setShowAddCollector] = useState(false);
+  const [newColName, setNewColName] = useState('');
+  const [newColPhone, setNewColPhone] = useState('');
+  const [newColType, setNewColType] = useState('Farmer');
+  const [newColVehicle, setNewColVehicle] = useState('Tractor');
+  const [newColRadius, setNewColRadius] = useState('10');
+  const [newColEntryCode, setNewColEntryCode] = useState('');
+  const [newColPassword, setNewColPassword] = useState('');
 
   const handleSendSms = async () => {
     if (!smsPhone.trim()) {
@@ -88,6 +110,60 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
     }
 
     setIsSendingSms(false);
+  };
+
+  const handleSchoolSubmit = (e) => {
+    e.preventDefault();
+    if (!newSchoolName.trim() || !newSchoolStrength || !newSchoolCapacity || !newSchoolEntryCode || !newSchoolPassword) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    addNewSchoolProfile({
+      name: newSchoolName.trim(),
+      studentStrength: parseInt(newSchoolStrength, 10),
+      drumCapacity: parseFloat(newSchoolCapacity),
+      contact: newSchoolContact.trim(),
+      address: newSchoolAddress.trim(),
+      entryCode: newSchoolEntryCode.trim(),
+      password: newSchoolPassword.trim(),
+      latitude: 11.0180 + (Math.random() - 0.5) * 0.04,
+      longitude: 76.9680 + (Math.random() - 0.5) * 0.04
+    });
+    setNewSchoolName('');
+    setNewSchoolStrength('');
+    setNewSchoolCapacity('');
+    setNewSchoolContact('');
+    setNewSchoolAddress('');
+    setNewSchoolEntryCode('');
+    setNewSchoolPassword('');
+    setShowAddSchool(false);
+  };
+
+  const handleCollectorSubmit = (e) => {
+    e.preventDefault();
+    if (!newColName.trim() || !newColRadius || !newColEntryCode || !newColPassword) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    addNewCollectorProfile({
+      name: newColName.trim(),
+      phone: newColPhone.trim(),
+      collectorType: newColType,
+      vehicle: newColVehicle,
+      radius: parseFloat(newColRadius),
+      entryCode: newColEntryCode.trim(),
+      password: newColPassword.trim(),
+      latitude: 11.0210 + (Math.random() - 0.5) * 0.03,
+      longitude: 76.9600 + (Math.random() - 0.5) * 0.03
+    });
+    setNewColName('');
+    setNewColPhone('');
+    setNewColType('Farmer');
+    setNewColVehicle('Tractor');
+    setNewColRadius('10');
+    setNewColEntryCode('');
+    setNewColPassword('');
+    setShowAddCollector(false);
   };
 
   const stats = getDistrictStatistics();
@@ -348,8 +424,111 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
       {/* 2. ONBOARDED SCHOOLS DATABASE TAB */}
       {activeTab === 'schools' && (
         <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Onboarded Schools Directory ({schools.length})</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <h3 style={styles.sectionTitle}>Onboarded Schools Directory ({schools.length})</h3>
+            <button 
+              onClick={() => setShowAddSchool(!showAddSchool)} 
+              className="btn-primary" 
+              style={{ padding: '6px 12px', fontSize: '0.72rem', borderRadius: '10px', minHeight: 'auto', width: 'auto' }}
+            >
+              {showAddSchool ? 'Cancel' : '+ Add School'}
+            </button>
+          </div>
           <p style={styles.subText}>List of active mid-day meal kitchens monitored under district jurisdiction.</p>
+
+          {showAddSchool && (
+            <form onSubmit={handleSchoolSubmit} className="card" style={{ padding: '16px', marginBottom: '16px', border: '2px solid var(--color-primary)' }}>
+              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '12px', color: 'var(--color-primary)' }}>Register New School Profile</h4>
+              
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <label className="form-label" style={{ fontSize: '0.65rem' }}>School Name *</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Government High School, Peelamedu" 
+                  className="form-input" 
+                  value={newSchoolName}
+                  onChange={(e) => setNewSchoolName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Student Strength *</label>
+                  <input 
+                    type="number" 
+                    placeholder="e.g. 450" 
+                    className="form-input" 
+                    value={newSchoolStrength}
+                    onChange={(e) => setNewSchoolStrength(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Drum Capacity (kg) *</label>
+                  <input 
+                    type="number" 
+                    placeholder="e.g. 40" 
+                    className="form-input" 
+                    value={newSchoolCapacity}
+                    onChange={(e) => setNewSchoolCapacity(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <label className="form-label" style={{ fontSize: '0.65rem' }}>Contact Phone</label>
+                <input 
+                  type="tel" 
+                  placeholder="e.g. +91 98765 43212" 
+                  className="form-input" 
+                  value={newSchoolContact}
+                  onChange={(e) => setNewSchoolContact(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <label className="form-label" style={{ fontSize: '0.65rem' }}>Address</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Town Hall Road, Coimbatore" 
+                  className="form-input" 
+                  value={newSchoolAddress}
+                  onChange={(e) => setNewSchoolAddress(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Entry Code *</label>
+                  <input 
+                    type="text" 
+                    placeholder="Login code (e.g. 10)" 
+                    className="form-input" 
+                    value={newSchoolEntryCode}
+                    onChange={(e) => setNewSchoolEntryCode(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Password *</label>
+                  <input 
+                    type="password" 
+                    placeholder="Login pwd" 
+                    className="form-input" 
+                    value={newSchoolPassword}
+                    onChange={(e) => setNewSchoolPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="btn-primary" style={{ width: '100%', minHeight: '38px', fontSize: '0.75rem' }}>
+                Register School Kitchen
+              </button>
+            </form>
+          )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {schools.map(sch => {
@@ -383,8 +562,116 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
       {/* 3. REGISTERED COLLECTORS DATABASE TAB (Active Tab on Bottom Nav) */}
       {activeTab === 'active' && (
         <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Collectors Directory ({collectors.length})</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <h3 style={styles.sectionTitle}>Collectors Directory ({collectors.length})</h3>
+            <button 
+              onClick={() => setShowAddCollector(!showAddCollector)} 
+              className="btn-primary" 
+              style={{ padding: '6px 12px', fontSize: '0.72rem', borderRadius: '10px', minHeight: 'auto', width: 'auto' }}
+            >
+              {showAddCollector ? 'Cancel' : '+ Add Collector'}
+            </button>
+          </div>
           <p style={styles.subText}>Active logistics recycling partners diverting organic feedstock.</p>
+
+          {showAddCollector && (
+            <form onSubmit={handleCollectorSubmit} className="card" style={{ padding: '16px', marginBottom: '16px', border: '2px solid var(--color-primary)' }}>
+              <h4 style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '12px', color: 'var(--color-primary)' }}>Register New Collector / Farmer</h4>
+              
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <label className="form-label" style={{ fontSize: '0.65rem' }}>Full Name *</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Senthil Kumar (Farms)" 
+                  className="form-input" 
+                  value={newColName}
+                  onChange={(e) => setNewColName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Collector Type *</label>
+                  <select 
+                    className="form-input" 
+                    value={newColType}
+                    onChange={(e) => setNewColType(e.target.value)}
+                    required
+                  >
+                    <option value="Farmer">Farmer (Livestock Feed)</option>
+                    <option value="Compost Company">Compost Company</option>
+                    <option value="Vermicompost Producer">Vermicompost Producer</option>
+                    <option value="Organic Buyer">Organic Buyer</option>
+                    <option value="Recycling Company">Recycling Company</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Operating Radius (km) *</label>
+                  <input 
+                    type="number" 
+                    placeholder="e.g. 10" 
+                    className="form-input" 
+                    value={newColRadius}
+                    onChange={(e) => setNewColRadius(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Vehicle Type</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Tractor or Light Truck" 
+                    className="form-input" 
+                    value={newColVehicle}
+                    onChange={(e) => setNewColVehicle(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Contact Phone</label>
+                  <input 
+                    type="tel" 
+                    placeholder="e.g. +91 98765 43224" 
+                    className="form-input" 
+                    value={newColPhone}
+                    onChange={(e) => setNewColPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Entry Code *</label>
+                  <input 
+                    type="text" 
+                    placeholder="Login code (e.g. 101)" 
+                    className="form-input" 
+                    value={newColEntryCode}
+                    onChange={(e) => setNewColEntryCode(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.65rem' }}>Password *</label>
+                  <input 
+                    type="password" 
+                    placeholder="Login pwd" 
+                    className="form-input" 
+                    value={newColPassword}
+                    onChange={(e) => setNewColPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="btn-primary" style={{ width: '100%', minHeight: '38px', fontSize: '0.75rem' }}>
+                Register Collector Profile
+              </button>
+            </form>
+          )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {collectors.map(col => {

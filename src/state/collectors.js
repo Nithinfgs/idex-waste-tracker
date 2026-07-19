@@ -9,7 +9,9 @@ export const INITIAL_COLLECTORS = [
     latitude: 11.0210,
     longitude: 76.9600,
     totalPickups: 34,
-    rating: 4.8
+    rating: 4.8,
+    entryCode: "1",
+    password: "12345"
   },
   {
     id: "col-2",
@@ -21,7 +23,9 @@ export const INITIAL_COLLECTORS = [
     latitude: 10.9980,
     longitude: 76.9500,
     totalPickups: 112,
-    rating: 4.9
+    rating: 4.9,
+    entryCode: "2",
+    password: "12345"
   },
   {
     id: "col-3",
@@ -33,7 +37,9 @@ export const INITIAL_COLLECTORS = [
     latitude: 11.0280,
     longitude: 76.9700,
     totalPickups: 8,
-    rating: 4.5
+    rating: 4.5,
+    entryCode: "3",
+    password: "12345"
   }
 ];
 

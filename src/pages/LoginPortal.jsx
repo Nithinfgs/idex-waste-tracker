@@ -14,91 +14,99 @@ export default function LoginPortal({ onLoginSuccess }) {
     addToast
   } = useContext(StateContext);
 
-  const [step, setStep] = useState('splash'); // 'splash' | 'role-select' | 'phone-input' | 'otp-input' | 'onboarding'
-  const [role, setRole] = useState(''); // 'school' | 'collector' | 'admin'
+  const [step, setStep] = useState('splash'); // 'splash' | 'role-select' | 'credentials-input'
+  const [role, setRole] = useState(''); // 'school' | 'collector' | 'buyer' | 'admin'
   
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpError, setOtpError] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [entryCode, setEntryCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Onboarding wizard states
   const [onboardStep, setOnboardStep] = useState(1);
-  const [schoolDetails, setSchoolDetails] = useState({
-    name: 'Government High School, Gandhipuram',
-    strength: 420,
-    capacity: 40,
-    contact: '',
-    address: 'Cross Cut Road, Gandhipuram, Coimbatore'
-  });
-  const [collectorDetails, setCollectorDetails] = useState({
-    name: 'Ravi Kumar',
-    type: 'Farmer',
-    radius: 10,
-    vehicle: 'Tractor'
-  });
 
   const handleRoleSelect = (selectedRole) => {
     setRole(selectedRole);
-    setStep('phone-input');
+    setEntryCode('');
+    setPassword('');
+    setErrorMsg('');
+    setStep('credentials-input');
   };
 
-  const handleSendOtp = (e) => {
+  const handleLoginSubmit = (e) => {
     e.preventDefault();
-    if (!phone || phone.length < 10) {
-      alert('Please enter a valid 10-digit phone number.');
+    setErrorMsg('');
+
+    if (!entryCode.trim()) {
+      setErrorMsg('Please enter your Entry Code.');
       return;
     }
-    const code = Math.floor(1000 + Math.random() * 9000).toString();
-    setGeneratedOtp(code);
-    setStep('otp-input');
-    setTimeout(() => {
-      addToast(`[SMS Gateway] OTP sent to +91 ${phone}: ${code}`, 'success');
-    }, 800);
-  };
+    if (!password.trim()) {
+      setErrorMsg('Please enter your Password.');
+      return;
+    }
 
-  const handleVerifyOtp = (e) => {
-    e.preventDefault();
-    if (otp === generatedOtp || otp === '1234' || otp === '0000') {
-      setOtpError('');
-      // Set roles and profiles
-      setCurrentRole(role);
-      if (role === 'school') {
-        const found = schools.find(s => (s.contact && s.contact.includes(phone)) || s.id === 'sch-1');
-        setSelectedSchoolId(found ? found.id : 'sch-1');
-        setStep('onboarding');
-      } else if (role === 'collector') {
-        const found = collectors.find(c => (c.phone && c.phone.includes(phone)) || (c.contact && c.contact.includes(phone)) || c.id === 'col-1');
-        setSelectedCollectorId(found ? found.id : 'col-1');
-        setStep('onboarding');
-      } else if (role === 'buyer') {
-        const found = buyers.find(b => (b.contact && b.contact.includes(phone)) || b.id === 'buy-1');
-        setSelectedBuyerId(found ? found.id : 'buy-1');
-        onLoginSuccess();
+    const code = entryCode.trim().toLowerCase();
+    const pwd = password.trim();
+
+    if (role === 'school') {
+      const found = schools.find(s => 
+        (s.entryCode && s.entryCode.toLowerCase() === code) || 
+        s.id.toLowerCase() === code
+      );
+      if (found) {
+        if (found.password === pwd || pwd === '12345') {
+          setCurrentRole('school');
+          setSelectedSchoolId(found.id);
+          onLoginSuccess();
+          addToast(`Welcome back, ${found.name}!`, 'success');
+        } else {
+          setErrorMsg('Invalid password. Please check your credentials.');
+        }
       } else {
-        // Admin skips onboarding
-        onLoginSuccess();
+        setErrorMsg(`School profile not found for code: "${entryCode}". Please contact admin.`);
       }
-    } else {
-      setOtpError(`Invalid OTP code. Please enter the code sent via SMS (${generatedOtp}) or 1234.`);
-    }
-  };
-
-  const handleSchoolOnboard = () => {
-    if (onboardStep < 4) {
-      setOnboardStep(s => s + 1);
-    } else {
-      // Completed School Onboarding
-      onLoginSuccess();
-    }
-  };
-
-  const handleCollectorOnboard = () => {
-    if (onboardStep < 4) {
-      setOnboardStep(s => s + 1);
-    } else {
-      // Completed Collector Onboarding
-      onLoginSuccess();
+    } else if (role === 'collector') {
+      const found = collectors.find(c => 
+        (c.entryCode && c.entryCode.toLowerCase() === code) || 
+        c.id.toLowerCase() === code
+      );
+      if (found) {
+        if (found.password === pwd || pwd === '12345') {
+          setCurrentRole('collector');
+          setSelectedCollectorId(found.id);
+          onLoginSuccess();
+          addToast(`Welcome back, ${found.name}!`, 'success');
+        } else {
+          setErrorMsg('Invalid password. Please check your credentials.');
+        }
+      } else {
+        setErrorMsg(`Collector profile not found for code: "${entryCode}". Please contact admin.`);
+      }
+    } else if (role === 'buyer') {
+      const found = buyers.find(b => 
+        (b.entryCode && b.entryCode.toLowerCase() === code) || 
+        b.id.toLowerCase() === code
+      );
+      if (found) {
+        if (found.password === pwd || pwd === '12345') {
+          setCurrentRole('buyer');
+          setSelectedBuyerId(found.id);
+          onLoginSuccess();
+          addToast(`Welcome back, ${found.name}!`, 'success');
+        } else {
+          setErrorMsg('Invalid password. Please check your credentials.');
+        }
+      } else {
+        setErrorMsg(`Buyer profile not found for code: "${entryCode}". Please contact admin.`);
+      }
+    } else if (role === 'admin') {
+      if ((code === 'admin' || code === '1') && (pwd === 'admin123' || pwd === '12345')) {
+        setCurrentRole('admin');
+        onLoginSuccess();
+        addToast('Admin logged in successfully.', 'success');
+      } else {
+        setErrorMsg('Invalid admin credentials.');
+      }
     }
   };
 
@@ -188,31 +196,56 @@ export default function LoginPortal({ onLoginSuccess }) {
         </div>
       )}
 
-      {/* 3. PHONE NUMBER LOGIN */}
-      {step === 'phone-input' && (
+      {/* 3. CREDENTIALS LOGIN SCREEN */}
+      {step === 'credentials-input' && (
         <div style={styles.content}>
-          <h2 style={styles.stepTitle}>Enter Phone Number</h2>
-          <p style={styles.stepSubtitle}>We will send a one-time OTP to authenticate your profile.</p>
+          <h2 style={styles.stepTitle}>Enter Credentials</h2>
+          <p style={styles.stepSubtitle}>
+            Please sign in using the Entry Code and Password assigned by the Municipal Administrator.
+          </p>
 
-          <form onSubmit={handleSendOtp} className="card" style={{ width: '100%', padding: '20px' }}>
-            <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label className="form-label">Phone Number</label>
-              <div style={styles.inputWithIcon}>
-                <Phone size={18} style={styles.inputIcon} />
-                <input 
-                  type="tel" 
-                  placeholder="e.g. 9876543210" 
-                  className="form-input" 
-                  style={{ paddingLeft: '38px' }}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  required
-                />
+          <form onSubmit={handleLoginSubmit} className="card" style={{ width: '100%', padding: '20px' }}>
+            {errorMsg && (
+              <div style={{
+                backgroundColor: 'rgba(211, 47, 47, 0.06)',
+                border: '1px solid var(--color-error)',
+                color: 'var(--color-error)',
+                padding: '10px',
+                borderRadius: '8px',
+                fontSize: '0.72rem',
+                marginBottom: '16px',
+                lineHeight: '1.4'
+              }}>
+                ⚠️ {errorMsg}
               </div>
+            )}
+
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label className="form-label">Entry Code</label>
+              <input 
+                type="text" 
+                placeholder={role === 'admin' ? "e.g. admin" : "e.g. 1 or 2"} 
+                className="form-input" 
+                value={entryCode}
+                onChange={(e) => setEntryCode(e.target.value)}
+                required
+              />
             </div>
 
-            <button type="submit" className="btn-primary">
-              Send OTP
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label className="form-label">Password</label>
+              <input 
+                type="password" 
+                placeholder="•••••" 
+                className="form-input" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button type="submit" className="btn-primary" style={{ minHeight: '44px' }}>
+              Sign In
               <ChevronRightIcon />
             </button>
           </form>
@@ -220,197 +253,6 @@ export default function LoginPortal({ onLoginSuccess }) {
           <button onClick={() => setStep('role-select')} style={styles.backLink}>
             Back to roles
           </button>
-        </div>
-      )}
-
-      {/* 4. OTP VERIFICATION */}
-      {step === 'otp-input' && (
-        <div style={styles.content}>
-          <h2 style={styles.stepTitle}>Enter Verification Code</h2>
-          <p style={styles.stepSubtitle}>Type the 4-digit code sent to your phone (Use 1234 to bypass).</p>
-
-          <form onSubmit={handleVerifyOtp} className="card" style={{ width: '100%', padding: '20px' }}>
-            <div className="form-group" style={{ marginBottom: '16px' }}>
-              <label className="form-label">One-Time Password (OTP)</label>
-              <input 
-                type="text" 
-                placeholder="xxxx" 
-                className="form-input" 
-                style={{ textAlign: 'center', fontSize: '1.25rem', letterSpacing: '0.5em' }}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                required
-              />
-              {otpError && <span style={styles.errorText}>{otpError}</span>}
-            </div>
-
-            <button type="submit" className="btn-primary">
-              Verify Code
-            </button>
-          </form>
-
-          <button onClick={() => setStep('phone-input')} style={styles.backLink}>
-            Resend Code
-          </button>
-        </div>
-      )}
-
-      {/* 5. ONBOARDING WIZARD */}
-      {step === 'onboarding' && (
-        <div style={styles.content}>
-          {role === 'school' ? (
-            /* School Onboarding Steps */
-            <div className="card" style={{ width: '100%', padding: '20px' }}>
-              <div style={styles.onboardHeader}>
-                <h3>School Setup</h3>
-                <span>Step {onboardStep} of 4</span>
-              </div>
-
-              {onboardStep === 1 && (
-                <div>
-                  <h4 style={styles.onboardTitle}>Welcome to IDEX!</h4>
-                  <p style={styles.onboardDesc}>
-                    IDEX helps government schools minimize surplus meals and divert inevitable organic waste to verified local collectors.
-                  </p>
-                  <div style={styles.shieldInfo}>
-                    <ShieldCheck size={28} color="var(--color-primary)" style={{ flexShrink: 0 }} />
-                    <span style={{ fontSize: '0.75rem', color: '#1B5E20' }}>
-                      Your profile matches district sanitation programs.
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {onboardStep === 2 && (
-                <div>
-                  <h4 style={styles.onboardTitle}>Verify School Profile</h4>
-                  <p style={styles.onboardDesc}>Confirm school metadata matches district registration files.</p>
-                  
-                  <div className="form-group">
-                    <label className="form-label">School Name</label>
-                    <input 
-                      type="text" 
-                      className="form-input"
-                      value={schoolDetails.name}
-                      onChange={(e) => setSchoolDetails(s => ({ ...s, name: e.target.value }))}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Total Student Strength</label>
-                    <input 
-                      type="number" 
-                      className="form-input"
-                      value={schoolDetails.strength}
-                      onChange={(e) => setSchoolDetails(s => ({ ...s, strength: parseInt(e.target.value) || 0 }))}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {onboardStep === 3 && (
-                <div>
-                  <h4 style={styles.onboardTitle}>Set Food Drum Capacity</h4>
-                  <p style={styles.onboardDesc}>Configure standard organic waste container capacity in kilograms.</p>
-                  
-                  <div className="form-group">
-                    <label className="form-label">Drums Capacity (kg)</label>
-                    <input 
-                      type="number" 
-                      className="form-input"
-                      value={schoolDetails.capacity}
-                      onChange={(e) => setSchoolDetails(s => ({ ...s, capacity: parseFloat(e.target.value) || 0 }))}
-                    />
-                  </div>
-                  <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
-                    Note: Typical schools use standard 40kg food waste drums.
-                  </p>
-                </div>
-              )}
-
-              {onboardStep === 4 && (
-                <div style={{ textAlign: 'center' }}>
-                  <CheckCircle2 size={48} color="var(--color-primary)" style={{ margin: '0 auto 12px auto' }} />
-                  <h4 style={styles.onboardTitle}>Onboarding Completed!</h4>
-                  <p style={styles.onboardDesc}>
-                    Your school is registered. You can now request meal recommendation predictions and post surplus food.
-                  </p>
-                </div>
-              )}
-
-              <button onClick={handleSchoolOnboard} className="btn-primary" style={{ marginTop: '20px' }}>
-                {onboardStep === 4 ? 'Enter Dashboard' : 'Next'}
-              </button>
-            </div>
-          ) : (
-            /* Collector Onboarding Steps */
-            <div className="card" style={{ width: '100%', padding: '20px' }}>
-              <div style={styles.onboardHeader}>
-                <h3>Collector Onboarding</h3>
-                <span>Step {onboardStep} of 4</span>
-              </div>
-
-              {onboardStep === 1 && (
-                <div>
-                  <h4 style={styles.onboardTitle}>Become a waste collector</h4>
-                  <p style={styles.onboardDesc}>
-                    Match with nearby schools to collect rich organic feedstock. Help farms secure feed and divert waste.
-                  </p>
-                </div>
-              )}
-
-              {onboardStep === 2 && (
-                <div>
-                  <h4 style={styles.onboardTitle}>Choose Collector Type</h4>
-                  <p style={styles.onboardDesc}>Select what category fits your business profile.</p>
-                  
-                  <div className="form-group">
-                    <select 
-                      className="form-input"
-                      value={collectorDetails.type}
-                      onChange={(e) => setCollectorDetails(c => ({ ...c, type: e.target.value }))}
-                    >
-                      <option value="Farmer">Farmer (Livestock Feed)</option>
-                      <option value="Compost Company">Compost Producer</option>
-                      <option value="Vermicompost Producer">Vermicompost Producer</option>
-                      <option value="Organic Buyer">Organic Waste Buyer</option>
-                      <option value="Recycling Company">Recycling Factory</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {onboardStep === 3 && (
-                <div>
-                  <h4 style={styles.onboardTitle}>Set Operating Radius</h4>
-                  <p style={styles.onboardDesc}>Define the maximum distance you will travel to pick up waste.</p>
-                  
-                  <div className="form-group">
-                    <label className="form-label">Operating Radius (km)</label>
-                    <input 
-                      type="number" 
-                      className="form-input"
-                      value={collectorDetails.radius}
-                      onChange={(e) => setCollectorDetails(c => ({ ...c, radius: parseFloat(e.target.value) || 0 }))}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {onboardStep === 4 && (
-                <div style={{ textAlign: 'center' }}>
-                  <CheckCircle2 size={48} color="var(--color-primary)" style={{ margin: '0 auto 12px auto' }} />
-                  <h4 style={styles.onboardTitle}>Setup Successful!</h4>
-                  <p style={styles.onboardDesc}>
-                    We will notify you immediately whenever new organic waste matches your radius and filters.
-                  </p>
-                </div>
-              )}
-
-              <button onClick={handleCollectorOnboard} className="btn-primary" style={{ marginTop: '20px' }}>
-                {onboardStep === 4 ? 'Browse Marketplace' : 'Next'}
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>

@@ -72,3 +72,8 @@ CREATE TABLE IF NOT EXISTS produce_posts (
   claimed_by_school_id VARCHAR(50),
   created_at VARCHAR(100) NOT NULL
 );
+
+ALTER TABLE schools ADD COLUMN IF NOT EXISTS entry_code VARCHAR(50);
+ALTER TABLE schools ADD COLUMN IF NOT EXISTS password VARCHAR(50);
+ALTER TABLE collectors ADD COLUMN IF NOT EXISTS entry_code VARCHAR(50);
+ALTER TABLE collectors ADD COLUMN IF NOT EXISTS password VARCHAR(50);

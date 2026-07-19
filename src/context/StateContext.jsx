@@ -15,8 +15,8 @@ import { predictServings } from '../state/prediction';
 import { TRANSLATIONS } from '../state/localization';
 
 export const INITIAL_BUYERS = [
-  { id: 'buy-1', name: 'Coimbatore Agri-Gov Agency', agencyName: 'Coimbatore Agriculture Department', contact: '0422 230 1122', latitude: 11.0250, longitude: 76.9620, vehicle: 'Agriculture Dept Truck', radius: 25, budget: '₹50,000/mo', rating: 'A+' },
-  { id: 'buy-2', name: 'GreenSoil Organics Agency', agencyName: 'GreenSoil Fertilizers & Compost Corp', contact: '0422 244 5566', latitude: 10.9850, longitude: 76.9420, vehicle: 'Mini Flatbed Dump Truck', radius: 15, budget: '₹80,000/mo', rating: 'A' }
+  { id: 'buy-1', name: 'Coimbatore Agri-Gov Agency', agencyName: 'Coimbatore Agriculture Department', contact: '0422 230 1122', latitude: 11.0250, longitude: 76.9620, vehicle: 'Agriculture Dept Truck', radius: 25, budget: '₹50,000/mo', rating: 'A+', entryCode: "1", password: "12345" },
+  { id: 'buy-2', name: 'GreenSoil Organics Agency', agencyName: 'GreenSoil Fertilizers & Compost Corp', contact: '0422 244 5566', latitude: 10.9850, longitude: 76.9420, vehicle: 'Mini Flatbed Dump Truck', radius: 15, budget: '₹80,000/mo', rating: 'A', entryCode: "2", password: "12345" }
 ];
 
 const API_URL = import.meta.env.VITE_API_URL || `${window.location.protocol}//${window.location.hostname}:5001`;
@@ -957,6 +957,59 @@ export const StateProvider = ({ children }) => {
     }));
   };
 
+  // Add new school profile (Admin only)
+  const addNewSchoolProfile = (schoolData) => {
+    const newSchool = {
+      id: `sch-${Date.now()}`,
+      name: schoolData.name,
+      district: schoolData.district || 'Coimbatore District',
+      latitude: parseFloat(schoolData.latitude || 11.0180),
+      longitude: parseFloat(schoolData.longitude || 76.9680),
+      studentStrength: parseInt(schoolData.studentStrength || 400, 10),
+      drumCapacity: parseFloat(schoolData.drumCapacity || 40),
+      contact: schoolData.contact || '',
+      address: schoolData.address || '',
+      entryCode: schoolData.entryCode || `sch-${Math.floor(10 + Math.random() * 90)}`,
+      password: schoolData.password || '12345'
+    };
+
+    fetch(`${API_URL}/api/schools`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newSchool)
+    }).catch(err => console.warn('Failed to sync new school profile to backend:', err.message));
+
+    setSchools(prev => [...prev, newSchool]);
+    addToast(`School profile ${newSchool.name} added successfully!`, 'success');
+  };
+
+  // Add new collector profile (Admin only)
+  const addNewCollectorProfile = (collectorData) => {
+    const newCollector = {
+      id: `col-${Date.now()}`,
+      name: collectorData.name,
+      phone: collectorData.phone || '',
+      collectorType: collectorData.collectorType || 'Farmer',
+      vehicle: collectorData.vehicle || 'Tractor',
+      radius: parseFloat(collectorData.radius || 15.0),
+      latitude: parseFloat(collectorData.latitude || 11.0210),
+      longitude: parseFloat(collectorData.longitude || 76.9600),
+      entryCode: collectorData.entryCode || `col-${Math.floor(10 + Math.random() * 90)}`,
+      password: collectorData.password || '12345',
+      totalPickups: 0,
+      rating: 5.0
+    };
+
+    fetch(`${API_URL}/api/collectors`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCollector)
+    }).catch(err => console.warn('Failed to sync new collector profile to backend:', err.message));
+
+    setCollectors(prev => [...prev, newCollector]);
+    addToast(`Collector profile ${newCollector.name} added successfully!`, 'success');
+  };
+
   // Farmer lists excess produce
   const uploadProducePost = (collectorId, title, quantity, price, deliveryEstimate, imageUrl, description) => {
     const collector = collectors.find(c => c.id === collectorId);
@@ -1156,6 +1209,8 @@ export const StateProvider = ({ children }) => {
       cancelReservation,
       updateSchoolOnboarding,
       updateCollectorOnboarding,
+      addNewSchoolProfile,
+      addNewCollectorProfile,
       uploadProducePost,
       claimProducePost,
       forceSimulateTimeout,
