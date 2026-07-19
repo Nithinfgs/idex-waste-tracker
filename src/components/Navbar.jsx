@@ -30,6 +30,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
     setSelectedBuyerId,
     notifications,
     setIsLoggedIn,
+    saveStatus,
     t
   } = useContext(StateContext);
 
@@ -124,7 +125,32 @@ export default function Navbar({ activeTab, setActiveTab }) {
         <div style={styles.headerLeft}>
           <span style={styles.headerSun}>{greeting.icon}</span>
           <div style={styles.headerGreetingGroup}>
-            <span style={styles.headerGreeting}>{greeting.text}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={styles.headerGreeting}>{greeting.text}</span>
+              <span style={{
+                fontSize: '0.58rem',
+                fontWeight: 700,
+                color: saveStatus === 'Saved' ? 'var(--color-primary)' : saveStatus === 'Saving...' ? 'var(--color-accent)' : 'var(--color-error)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '1px 6px',
+                borderRadius: '999px',
+                backgroundColor: saveStatus === 'Saved' ? 'rgba(46, 125, 50, 0.06)' : saveStatus === 'Saving...' ? 'rgba(249, 168, 37, 0.06)' : 'rgba(211, 47, 47, 0.06)',
+                border: '1px solid currentColor',
+                opacity: 0.9,
+                letterSpacing: '0.02em'
+              }}>
+                <span style={{
+                  width: '5px',
+                  height: '5px',
+                  borderRadius: '50%',
+                  backgroundColor: 'currentColor',
+                  display: 'inline-block'
+                }} />
+                {saveStatus === 'Saved' ? 'Auto-saved' : saveStatus === 'Saving...' ? 'Saving...' : 'Offline'}
+              </span>
+            </div>
             <h1 style={styles.schoolHeaderName}>{currentName.split(',')[0]}</h1>
           </div>
         </div>

@@ -1,5 +1,8 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { StateContext } from '../context/StateContext';
+import { MapContainer, TileLayer, Marker, Polyline, Circle } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { calculateWeight } from '../state/waste';
 import { 
   TrendingDown, 
@@ -66,6 +69,96 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
 
   const school = schools.find(s => s.id === selectedSchoolId);
   const activePost = wastePosts.find(p => p.schoolId === selectedSchoolId && p.status !== 'Collected');
+
+  const [simulatedCollectorLoc, setSimulatedCollectorLoc] = useState(null);
+  const [simulatedDistance, setSimulatedDistance] = useState(null);
+  const [simulatedEta, setSimulatedEta] = useState(null);
+
+  useEffect(() => {
+    if (!activePost || (activePost.status !== 'Reserved' && activePost.status !== 'In Transit' && activePost.status !== 'Awaiting School Confirmation')) {
+      setSimulatedCollectorLoc(null);
+      setSimulatedDistance(null);
+      setSimulatedEta(null);
+      return;
+    }
+
+    const coll = collectors.find(c => c.id === activePost.collectorId);
+    if (!coll) return;
+
+    if (activePost.status === 'Reserved') {
+      setSimulatedCollectorLoc([coll.latitude, coll.longitude]);
+      const d = getDistanceKm(coll.latitude, coll.longitude, school.latitude, school.longitude);
+      setSimulatedDistance(d);
+      setSimulatedEta(Math.ceil(d * 2.5));
+      return;
+    }
+
+    if (activePost.status === 'Awaiting School Confirmation') {
+      setSimulatedCollectorLoc([school.latitude, school.longitude]);
+      setSimulatedDistance(0);
+      setSimulatedEta(0);
+      return;
+    }
+
+    // In Transit: animate the collector's movement toward the school!
+    let progress = 0.05;
+    setSimulatedCollectorLoc([
+      coll.latitude + (school.latitude - coll.latitude) * progress,
+      coll.longitude + (school.longitude - coll.longitude) * progress
+    ]);
+    const initialDist = getDistanceKm(coll.latitude, coll.longitude, school.latitude, school.longitude);
+    setSimulatedDistance(initialDist * (1 - progress));
+    setSimulatedEta(Math.ceil(initialDist * (1 - progress) * 2.5));
+
+    const interval = setInterval(() => {
+      progress += 0.08;
+      if (progress >= 1.0) {
+        progress = 0.99;
+        clearInterval(interval);
+      }
+
+      const lat = coll.latitude + (school.latitude - coll.latitude) * progress;
+      const lng = coll.longitude + (school.longitude - coll.longitude) * progress;
+      setSimulatedCollectorLoc([lat, lng]);
+
+      const currentDist = getDistanceKm(coll.latitude, coll.longitude, school.latitude, school.longitude) * (1 - progress);
+      setSimulatedDistance(currentDist);
+      setSimulatedEta(Math.ceil(currentDist * 2.5));
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [activePost, collectors, school]);
+
+  const getDistanceKm = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c * 10) / 10;
+  };
+
+  const getMapIcons = () => {
+    const schoolIcon = L.divIcon({
+      className: 'school-pin',
+      html: `<div style="background-color: #2E7D32; color: white; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.3);"></div>`,
+      iconSize: [16, 16]
+    });
+
+    const collectorIcon = L.divIcon({
+      className: 'truck-pin',
+      html: `<div style="background-color: #1E3A8A; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-size: 0.9rem;">🚚</div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+
+    return { schoolIcon, collectorIcon };
+  };
   
   // Tab states and form controls
   const [showUploadWizard, setShowUploadWizard] = useState(false);
@@ -81,10 +174,29 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
   const menuPerformance = getMenuPerformance(selectedSchoolId);
   const correlationData = getAttendanceWasteCorrelation(selectedSchoolId);
   
-  // Prediction calculator states
-  const [predAttendance, setPredAttendance] = useState(school ? school.studentStrength - 30 : 390);
-  const [predMenu, setPredMenu] = useState('Rice & Sambhar');
-  const [predDay, setPredDay] = useState('Wednesday');
+  // Prediction calculator states with auto-save
+  const [predAttendance, setPredAttendance] = useState(() => {
+    const val = localStorage.getItem('idex_pred_attendance');
+    return val ? parseInt(val) : (school ? school.studentStrength - 30 : 390);
+  });
+  const [predMenu, setPredMenu] = useState(() => {
+    return localStorage.getItem('idex_pred_menu') || 'Rice & Sambhar';
+  });
+  const [predDay, setPredDay] = useState(() => {
+    return localStorage.getItem('idex_pred_day') || 'Wednesday';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('idex_pred_attendance', predAttendance);
+  }, [predAttendance]);
+
+  useEffect(() => {
+    localStorage.setItem('idex_pred_menu', predMenu);
+  }, [predMenu]);
+
+  useEffect(() => {
+    localStorage.setItem('idex_pred_day', predDay);
+  }, [predDay]);
 
   const getMenuOptions = () => {
     if (!school) return ['Rice & Sambhar'];
@@ -1020,6 +1132,50 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                         );
                       })}
                     </div>
+
+                    {/* Live Tracker Map to track waste collector location during pickups */}
+                    {simulatedCollectorLoc && (
+                      <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ display: 'inline-block', width: '6px', height: '6px', backgroundColor: 'var(--color-success)', borderRadius: '50%' }} />
+                            Live Collector Location
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--color-primary)', fontWeight: 700 }}>
+                            {simulatedDistance > 0.1 ? `ETA: ${simulatedEta}m (${simulatedDistance} km)` : 'Collector Arrived'}
+                          </span>
+                        </div>
+                        <div style={{ height: '180px', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--color-border)', position: 'relative' }}>
+                          <MapContainer
+                            center={[school.latitude, school.longitude]}
+                            zoom={13}
+                            style={{ height: '100%', width: '100%' }}
+                            zoomControl={false}
+                          >
+                            <TileLayer
+                              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                              attribution='&copy; OpenStreetMap'
+                            />
+                            {/* School location */}
+                            <Marker position={[school.latitude, school.longitude]} icon={getMapIcons().schoolIcon} />
+                            
+                            {/* Collector location */}
+                            <Marker position={simulatedCollectorLoc} icon={getMapIcons().collectorIcon} />
+                            
+                            {/* Connector line path */}
+                            <Polyline
+                              positions={[[school.latitude, school.longitude], simulatedCollectorLoc]}
+                              pathOptions={{
+                                color: 'var(--color-primary)',
+                                weight: 3,
+                                dashArray: '6, 6',
+                                opacity: 0.7
+                              }}
+                            />
+                          </MapContainer>
+                        </div>
+                      </div>
+                    )}
 
                     {activePost.status === 'Awaiting School Confirmation' && (
                       <div style={styles.confirmationPanel}>

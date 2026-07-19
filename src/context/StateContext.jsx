@@ -101,6 +101,7 @@ export const StateProvider = ({ children }) => {
 
   // Simulated Offline Mode
   const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('Saved'); // 'Saving...' | 'Saved' | 'Offline'
   const [offlineUploadQueue, setOfflineUploadQueue] = useState(() => {
     const local = localStorage.getItem('idex_offline_queue');
     return local ? JSON.parse(local) : [];
@@ -360,6 +361,40 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('idex_produce_posts', JSON.stringify(producePosts));
   }, [producePosts]);
+
+  // Autosave status indicator hook
+  useEffect(() => {
+    if (isOfflineMode) {
+      setSaveStatus('Offline');
+      return;
+    }
+    setSaveStatus('Saving...');
+    const timer = setTimeout(() => {
+      setSaveStatus('Saved');
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [schools, wastePosts, collectors, history, notifications, producePosts, isOfflineMode]);
+
+  // Network Status Event Listeners (Auto-save/sync online state transition)
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOfflineMode(false);
+      syncOfflineQueue();
+      addToast('Network restored. Syncing database...', 'success');
+    };
+    const handleOffline = () => {
+      setIsOfflineMode(true);
+      addToast('Network offline. Saving to offline storage.', 'warning');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [offlineUploadQueue, schools, collectors]);
 
   // Automatic background upload sync when state changes
   useEffect(() => {
@@ -1095,6 +1130,7 @@ export const StateProvider = ({ children }) => {
       setIsDarkMode,
       isOfflineMode,
       setIsOfflineMode,
+      saveStatus,
       offlineUploadQueue,
       syncPasscode,
       setSyncPasscode,
