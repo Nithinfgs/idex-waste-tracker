@@ -771,51 +771,6 @@ export default function BuyerPortal() {
         </div>
       )}
 
-      {/* Bottom Raised Tabs Menu bar */}
-      <nav style={styles.nav}>
-        <div style={styles.navContainer}>
-          {[
-            { id: 'home', label: 'Home', icon: Home },
-            { id: 'nearby', label: 'Map', icon: Map },
-            { id: 'active', label: 'Orders', icon: Truck, badge: activePurchases.length },
-            { id: 'notifications', label: 'Alerts', icon: Bell },
-            { id: 'profile', label: 'Profile', icon: User }
-          ].map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  ...styles.tabButton,
-                  color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                  transform: isActive ? 'translateY(-6px)' : 'none'
-                }}
-              >
-                <div style={{
-                  ...styles.iconWrapper,
-                  backgroundColor: isActive ? 'rgba(46, 125, 50, 0.08)' : 'transparent',
-                  padding: '6px',
-                  borderRadius: '12px'
-                }}>
-                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                  {tab.badge > 0 && (
-                    <span style={styles.badge}>{tab.badge}</span>
-                  )}
-                </div>
-                <span style={{
-                  ...styles.tabLabel,
-                  fontWeight: isActive ? '600' : '400',
-                  color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)'
-                }}>
-                  {tab.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
     </div>
   );
 }

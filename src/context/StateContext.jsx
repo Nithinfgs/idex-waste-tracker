@@ -91,9 +91,7 @@ export const StateProvider = ({ children }) => {
   }, [syncPasscode]);
 
   // Authentication & Settings states
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('idex_logged_in') === 'true';
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('idex_dark_mode') === 'true';
@@ -176,8 +174,8 @@ export const StateProvider = ({ children }) => {
 
   // Sync settings/auth on changes
   useEffect(() => {
-    localStorage.setItem('idex_logged_in', isLoggedIn);
-  }, [isLoggedIn]);
+    localStorage.removeItem('idex_logged_in');
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('idex_current_role', currentRole);
