@@ -152,28 +152,53 @@ app.post('/api/waste-posts/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status, collectorId, reservedAt } = req.body;
 
-  await executeQuery(
-    'UPDATE waste_posts SET status = $1, collector_id = $2, reserved_at = $3 WHERE id = $4',
-    [status, collectorId, reservedAt, id],
-    () => {
-      db.waste_posts = db.waste_posts.map(post => {
-        if (post.id === id) {
-          const timestamp = new Date().toISOString();
-          const newHistory = post.history || [];
-          return {
-            ...post,
-            status,
-            collectorId: collectorId !== undefined ? collectorId : post.collectorId,
-            reservedAt: reservedAt !== undefined ? reservedAt : post.reservedAt,
-            history: [...newHistory, { status, timestamp, message: `Status updated: ${status}` }]
-          };
-        }
-        return post;
-      });
-      saveDatabaseToFile();
-      return [];
-    }
-  );
+  const updates = [];
+  const params = [];
+  let paramIdx = 1;
+
+  if (status !== undefined) {
+    updates.push(`status = $${paramIdx++}`);
+    params.push(status);
+  }
+  if (collectorId !== undefined) {
+    updates.push(`collector_id = $${paramIdx++}`);
+    params.push(collectorId);
+  }
+  if (reservedAt !== undefined) {
+    updates.push(`reserved_at = $${paramIdx++}`);
+    params.push(reservedAt);
+  }
+
+  if (updates.length > 0) {
+    params.push(id);
+    const sql = `UPDATE waste_posts SET ${updates.join(', ')} WHERE id = $${paramIdx}`;
+    
+    await executeQuery(
+      sql,
+      params,
+      () => {
+        db.waste_posts = db.waste_posts.map(post => {
+          if (post.id === id) {
+            const timestamp = new Date().toISOString();
+            const newHistory = post.history || [];
+            return {
+              ...post,
+              status: status !== undefined ? status : post.status,
+              collectorId: collectorId !== undefined ? collectorId : post.collectorId,
+              reservedAt: reservedAt !== undefined ? reservedAt : post.reservedAt,
+              history: status !== undefined 
+                ? [...newHistory, { status, timestamp, message: `Status updated: ${status}` }]
+                : newHistory
+            };
+          }
+          return post;
+        });
+        saveDatabaseToFile();
+        return [];
+      }
+    );
+  }
+
   res.json({ success: true });
 });
 
