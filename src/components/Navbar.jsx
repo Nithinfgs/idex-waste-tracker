@@ -12,7 +12,8 @@ import {
   ListOrdered,
   Clock,
   LogOut,
-  MessageSquare
+  MessageSquare,
+  Users
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab }) {
