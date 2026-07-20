@@ -127,7 +127,9 @@ const styles = {
     flexDirection: 'column'
   },
   navContainer: {
-    padding: '0 16px 24px 16px',
+    padding: '0 16px 0 16px',
+    marginTop: '16px',
+    marginBottom: 0,
     width: '100%'
   }
 };
