@@ -194,7 +194,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
         {/* Bottom Row: Integrated Navigation Tabs */}
         <div style={styles.tabRow}>
           {tabs.map(tab => {
-            const Icon = tab.icon;
+            const Icon = tab.icon || (tab.id === 'notifications' ? Bell : tab.id === 'active' || tab.id === 'collections' ? Truck : Home);
             const isActive = activeTab === tab.id || (tab.id === 'dashboard' && activeTab === 'home' && currentRole === 'admin');
             return (
               <button
@@ -206,13 +206,14 @@ export default function Navbar({ activeTab, setActiveTab }) {
                   color: isActive ? '#FFFFFF' : 'var(--color-text-secondary)'
                 }}
               >
-                <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
-                <span style={{ fontSize: '0.68rem', fontWeight: isActive ? 700 : 500 }}>{tab.label}</span>
+                {Icon && <Icon size={15} style={{ flexShrink: 0 }} strokeWidth={isActive ? 2.5 : 2} />}
+                <span style={{ fontSize: '0.68rem', fontWeight: isActive ? 700 : 500, whiteSpace: 'nowrap' }}>{tab.label}</span>
                 {tab.badge > 0 && (
                   <span style={{
                     ...styles.tabBadge,
                     backgroundColor: isActive ? '#FFFFFF' : 'var(--color-error)',
-                    color: isActive ? 'var(--color-primary)' : '#FFFFFF'
+                    color: isActive ? 'var(--color-primary)' : '#FFFFFF',
+                    flexShrink: 0
                   }}>
                     {tab.badge}
                   </span>
@@ -365,16 +366,17 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: '6px',
-    gap: '4px',
-    overflowX: 'auto'
+    gap: '3px',
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch'
   },
   tabPill: {
-    flex: 1,
+    flex: '1 0 auto',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '5px',
-    padding: '6px 8px',
+    gap: '4px',
+    padding: '6px 6px',
     borderRadius: '10px',
     border: 'none',
     cursor: 'pointer',
