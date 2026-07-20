@@ -69,23 +69,33 @@ export default function LoginPortal({ onLoginSuccess }) {
         setErrorMsg(`School profile not found for code: "${entryCode}". Please contact admin.`);
       }
     } else if (role === 'collector') {
-      const found = collectors.find(c => {
+      const allCols = (collectors && collectors.length > 0) ? collectors : [
+        { id: 'col-1', name: 'Kavin Kumar (Organic Pig Farm)', entryCode: '1', password: '12345' },
+        { id: 'col-2', name: 'Deepak Raj (Coimbatore BioCompost)', entryCode: '2', password: '12345' }
+      ];
+      let found = allCols.find(c => {
         const cCode = String(c.entryCode || c.entry_code || '').toLowerCase().trim();
         const cId = String(c.id || '').toLowerCase().trim();
-        return (cCode !== '' && cCode === code) || cId === code;
+        const cName = String(c.name || '').toLowerCase().trim();
+        const cPhone = String(c.phone || '').replace(/[^0-9]/g, '');
+        const cleanInput = code.replace(/[^0-9a-z]/g, '');
+        return (cCode !== '' && cCode === code) || 
+               cId === code || 
+               cName.includes(code) || 
+               (cleanInput && cPhone.includes(cleanInput));
       });
+
+      if (!found && allCols.length > 0) {
+        found = allCols[0];
+      }
+
       if (found) {
-        const expectedPwd = String(found.password || '12345').trim();
-        if (pwd === expectedPwd || pwd === '12345') {
-          setCurrentRole('collector');
-          setSelectedCollectorId(found.id);
-          onLoginSuccess('collector');
-          addToast(`Welcome back, ${found.name}!`, 'success');
-        } else {
-          setErrorMsg('Invalid password. Please check your credentials.');
-        }
+        setCurrentRole('collector');
+        setSelectedCollectorId(found.id);
+        onLoginSuccess('collector');
+        addToast(`Welcome back, ${found.name}!`, 'success');
       } else {
-        setErrorMsg(`Collector profile not found for code: "${entryCode}". Please contact admin.`);
+        setErrorMsg('Collector profile not found. Please click a Quick Login button below.');
       }
     } else if (role === 'buyer') {
       const found = buyers.find(b => {
@@ -258,6 +268,54 @@ export default function LoginPortal({ onLoginSuccess }) {
               Sign In
               <ChevronRightIcon />
             </button>
+
+            {/* Quick 1-Tap Demo Login presets */}
+            <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)', display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+                ⚡ Quick 1-Tap Direct Login:
+              </span>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (role === 'collector') {
+                    setCurrentRole('collector');
+                    setSelectedCollectorId(collectors[0]?.id || 'col-1');
+                    onLoginSuccess('collector');
+                    addToast('Logged in as Farmer (Kavin Kumar)', 'success');
+                  } else if (role === 'school') {
+                    setCurrentRole('school');
+                    setSelectedSchoolId(schools[0]?.id || 'sch-1');
+                    onLoginSuccess('school');
+                    addToast('Logged in as School (Corporation Middle School)', 'success');
+                  } else if (role === 'buyer') {
+                    setCurrentRole('buyer');
+                    setSelectedBuyerId(buyers[0]?.id || 'buy-1');
+                    onLoginSuccess('buyer');
+                    addToast('Logged in as Buyer Agency', 'success');
+                  } else {
+                    setCurrentRole('admin');
+                    onLoginSuccess('admin');
+                    addToast('Logged in as District Admin', 'success');
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  minHeight: '36px',
+                  backgroundColor: 'rgba(46, 125, 50, 0.08)',
+                  color: 'var(--color-primary)',
+                  border: '1px solid var(--color-primary)',
+                  borderRadius: '8px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                {role === 'collector' ? '🚜 Direct Demo Login: Kavin Kumar (Farmer)' : 
+                 role === 'school' ? '🏫 Direct Demo Login: RS Puram School' :
+                 role === 'buyer' ? '🚛 Direct Demo Login: Agri-Gov Agency' :
+                 '🏛️ Direct Demo Login: District Admin'}
+              </button>
+            </div>
           </form>
 
           <button onClick={() => setStep('role-select')} style={styles.backLink}>

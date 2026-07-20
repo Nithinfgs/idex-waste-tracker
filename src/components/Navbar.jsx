@@ -121,100 +121,105 @@ export default function Navbar({ activeTab, setActiveTab }) {
 
   return (
     <>
-      {/* 1. TOP FIXED GREETING HEADER */}
-      <header style={styles.headerFixed}>
-        <div style={styles.headerLeft}>
-          <span style={styles.headerSun}>{greeting.icon}</span>
-          <div style={styles.headerGreetingGroup}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={styles.headerGreeting}>{greeting.text}</span>
-              <span style={{
-                fontSize: '0.58rem',
-                fontWeight: 700,
-                color: saveStatus === 'Saved' ? 'var(--color-primary)' : saveStatus === 'Saving...' ? 'var(--color-accent)' : 'var(--color-error)',
-                display: 'inline-flex',
+      {/* UNIFIED SINGLE HEADER BAR */}
+      <header style={styles.unifiedHeader}>
+        {/* Top Row: Brand, User Greeting & Controls */}
+        <div style={styles.topRow}>
+          <div style={styles.headerLeft}>
+            <span style={styles.headerSun}>{greeting.icon}</span>
+            <div style={styles.headerGreetingGroup}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={styles.headerGreeting}>{greeting.text}</span>
+                <span style={{
+                  fontSize: '0.55rem',
+                  fontWeight: 700,
+                  color: saveStatus === 'Saved' ? 'var(--color-primary)' : saveStatus === 'Saving...' ? 'var(--color-accent)' : 'var(--color-error)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  padding: '1px 5px',
+                  borderRadius: '999px',
+                  backgroundColor: saveStatus === 'Saved' ? 'rgba(46, 125, 50, 0.06)' : saveStatus === 'Saving...' ? 'rgba(249, 168, 37, 0.06)' : 'rgba(211, 47, 47, 0.06)',
+                  border: '1px solid currentColor',
+                  opacity: 0.9
+                }}>
+                  <span style={{
+                    width: '4px',
+                    height: '4px',
+                    borderRadius: '50%',
+                    backgroundColor: 'currentColor',
+                    display: 'inline-block'
+                  }} />
+                  {saveStatus === 'Saved' ? 'Auto-saved' : saveStatus === 'Saving...' ? 'Saving...' : 'Offline'}
+                </span>
+              </div>
+              <h1 style={styles.schoolHeaderName}>{currentName.split(',')[0]}</h1>
+            </div>
+          </div>
+
+          <div style={styles.headerRight}>
+            {/* Simple Role switcher */}
+            <button 
+              onClick={() => setShowRolePanel(!showRolePanel)}
+              style={styles.roleSwitchBtn}
+              title="Switch Profile Role"
+            >
+              <Shield size={12} />
+            </button>
+
+            {/* Logout Button */}
+            <button 
+              onClick={handleLogout}
+              style={{
+                padding: '4px 8px',
+                backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                color: '#D32F2F',
+                border: '1px solid rgba(211, 47, 47, 0.25)',
+                borderRadius: '8px',
+                display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                padding: '1px 6px',
-                borderRadius: '999px',
-                backgroundColor: saveStatus === 'Saved' ? 'rgba(46, 125, 50, 0.06)' : saveStatus === 'Saving...' ? 'rgba(249, 168, 37, 0.06)' : 'rgba(211, 47, 47, 0.06)',
-                border: '1px solid currentColor',
-                opacity: 0.9,
-                letterSpacing: '0.02em'
-              }}>
-                <span style={{
-                  width: '5px',
-                  height: '5px',
-                  borderRadius: '50%',
-                  backgroundColor: 'currentColor',
-                  display: 'inline-block'
-                }} />
-                {saveStatus === 'Saved' ? 'Auto-saved' : saveStatus === 'Saving...' ? 'Saving...' : 'Offline'}
-              </span>
-            </div>
-            <h1 style={styles.schoolHeaderName}>{currentName.split(',')[0]}</h1>
+                cursor: 'pointer',
+                fontSize: '0.7rem',
+                fontWeight: 700
+              }}
+              title="Log Out"
+            >
+              <LogOut size={13} />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
-        <div style={styles.headerRight}>
-          {/* Notification Bell */}
-          <button 
-            onClick={() => setActiveTab('notifications')}
-            style={{
-              ...styles.headerIconBtn,
-              color: activeTab === 'notifications' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-              position: 'relative'
-            }}
-          >
-            <Bell size={18} />
-            {unreadCount > 0 && (
-              <span style={styles.bellBadge}>{unreadCount}</span>
-            )}
-          </button>
-          
-          {/* Profile Shortcut */}
-          <button 
-            onClick={() => setActiveTab('profile')}
-            style={{
-              ...styles.headerIconBtn,
-              color: activeTab === 'profile' ? 'var(--color-primary)' : 'var(--color-text-secondary)'
-            }}
-          >
-            <User size={18} />
-          </button>
 
-          {/* Simple Role switcher badge to simulate roles easily */}
-          <button 
-            onClick={() => setShowRolePanel(!showRolePanel)}
-            style={styles.roleSwitchBtn}
-            title="Switch Profile Role"
-          >
-            <Shield size={12} />
-          </button>
-
-          {/* Logout Button */}
-          <button 
-            onClick={handleLogout}
-            style={{
-              padding: '5px 10px',
-              backgroundColor: 'rgba(211, 47, 47, 0.08)',
-              color: '#D32F2F',
-              border: '1px solid rgba(211, 47, 47, 0.25)',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              cursor: 'pointer',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              marginLeft: '2px',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-              transition: 'all 0.2s ease'
-            }}
-            title="Log Out"
-          >
-            <LogOut size={14} />
-            <span>Logout</span>
-          </button>
+        {/* Bottom Row: Integrated Navigation Tabs */}
+        <div style={styles.tabRow}>
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id || (tab.id === 'dashboard' && activeTab === 'home' && currentRole === 'admin');
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  ...styles.tabPill,
+                  backgroundColor: isActive ? 'var(--color-primary)' : 'transparent',
+                  color: isActive ? '#FFFFFF' : 'var(--color-text-secondary)'
+                }}
+              >
+                <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
+                <span style={{ fontSize: '0.68rem', fontWeight: isActive ? 700 : 500 }}>{tab.label}</span>
+                {tab.badge > 0 && (
+                  <span style={{
+                    ...styles.tabBadge,
+                    backgroundColor: isActive ? '#FFFFFF' : 'var(--color-error)',
+                    color: isActive ? 'var(--color-primary)' : '#FFFFFF'
+                  }}>
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </header>
 
@@ -331,63 +336,59 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </div>
         </div>
       )}
-
-      {/* Bottom Navigation Bar */}
-      <nav style={styles.nav}>
-        <div style={styles.navContainer}>
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id || (tab.id === 'dashboard' && activeTab === 'home' && currentRole === 'admin');
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  ...styles.tabButton,
-                  color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                  transform: isActive ? 'translateY(-6px)' : 'none'
-                }}
-              >
-                <div style={{
-                  ...styles.iconWrapper,
-                  backgroundColor: isActive ? 'rgba(46, 125, 50, 0.08)' : 'transparent',
-                  padding: '6px',
-                  borderRadius: '12px'
-                }}>
-                  <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                  {tab.badge > 0 && (
-                    <span style={styles.badge}>{tab.badge}</span>
-                  )}
-                </div>
-                <span style={{
-                  ...styles.tabLabel,
-                  fontWeight: isActive ? '600' : '400',
-                  color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)'
-                }}>
-                  {tab.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
     </>
   );
 }
 
 const styles = {
-  headerFixed: {
-    height: '70px',
-    backgroundColor: 'var(--color-card)',
+  unifiedHeader: {
+    backgroundColor: '#FFFFFF',
     borderBottom: '1.5px solid var(--color-border)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0 var(--spacing-sm)',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
     position: 'sticky',
     top: 0,
     zIndex: 100,
-    width: '100%'
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '8px 12px 6px 12px'
+  },
+  topRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: '6px',
+    borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
+  },
+  tabRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: '6px',
+    gap: '4px',
+    overflowX: 'auto'
+  },
+  tabPill: {
+    flex: 1,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '5px',
+    padding: '6px 8px',
+    borderRadius: '10px',
+    border: 'none',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    minWidth: 'auto',
+    minHeight: '32px',
+    transition: 'all 150ms ease'
+  },
+  tabBadge: {
+    fontSize: '0.58rem',
+    fontWeight: 800,
+    padding: '1px 5px',
+    borderRadius: '999px',
+    lineHeight: 1
   },
   headerLeft: {
     display: 'flex',
