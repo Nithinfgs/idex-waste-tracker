@@ -1,7 +1,9 @@
 {
   "name": "idex-waste-tracker",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "author": "Nithin Selvaraj",
+  "license": "LicenseRef-Proprietary-IDEX-NithinSelvaraj-2026",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -18,6 +18,10 @@ IDEX Waste Tracker is a multi-portal real-time platform linking Government Schoo
 
 ## 🔒 License & Enforced Intellectual Property Notice
 
+**SPDX License Identifier**: `LicenseRef-Proprietary-IDEX-NithinSelvaraj-2026`  
+**License Classification Code**: `IDEX-PNC-2026-v1.0`  
+**Copyright Registration Tracking Ref**: `CR-IDEX-2026-TN-NITHIN`  
+
 Copyright (c) 2026 **Nithin Selvaraj** / IDEX Waste Tracker Platform. All Rights Reserved.
 
 ### 👤 Ownership & Mandatory Competition Submission Requirement:
