@@ -15,7 +15,8 @@ import {
   Compass,
   Star,
   Award,
-  LogOut
+  LogOut,
+  Check
 } from 'lucide-react';
 
 export default function AdminPortal({ activeTab, setActiveTab }) {
@@ -24,6 +25,8 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
     wastePosts,
     history,
     notifications,
+    markAsRead,
+    markAllAsRead,
     collectors,
     buyers,
     setIsLoggedIn,
@@ -1353,17 +1356,74 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
       {/* 4. NOTIFICATIONS TAB */}
       {activeTab === 'notifications' && (
         <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>District Notifications Log</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={styles.sectionTitle}>District Notifications Log</h3>
+            {adminNotifications.some(n => !n.read) && (
+              <button 
+                onClick={() => markAllAsRead('admin')}
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(62, 107, 95, 0.1)',
+                  color: 'var(--color-primary)',
+                  border: '1px solid var(--color-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Check size={14} /> Mark All as Read
+              </button>
+            )}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {adminNotifications.map(notif => (
-              <div key={notif.id} className="card" style={{ borderLeft: '4px solid var(--color-primary)', padding: '12px' }}>
+              <div 
+                key={notif.id} 
+                className="card" 
+                style={{ 
+                  borderLeft: `4px solid ${notif.read ? 'var(--color-border)' : 'var(--color-primary)'}`, 
+                  padding: '12px',
+                  opacity: notif.read ? 0.85 : 1,
+                  backgroundColor: notif.read ? '#FAFAFA' : '#FFFFFF'
+                }}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                   <strong style={{ fontSize: '0.8rem' }}>{notif.title}</strong>
                   <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>
                     {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{notif.message}</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '8px' }}>{notif.message}</p>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  {notif.read ? (
+                    <span style={{ fontSize: '0.65rem', color: 'var(--color-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      ✓ Read
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => markAsRead(notif.id)}
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        backgroundColor: 'var(--color-primary)',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Check size={12} /> Mark as Read
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
             {adminNotifications.length === 0 && (

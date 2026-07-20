@@ -40,6 +40,8 @@ export default function BuyerPortal() {
     history,
     setHistory,
     notifications,
+    markAsRead,
+    markAllAsRead,
     setIsLoggedIn,
     setNotifications,
     isOfflineMode,
@@ -673,19 +675,81 @@ export default function BuyerPortal() {
       {/* 4. ALERTS / NOTIFICATIONS TAB */}
       {activeTab === 'notifications' && (
         <div style={styles.scrollable}>
-          <h3 style={styles.sectionTitle}>Compost Agency Alerts</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={styles.sectionTitle}>Compost Agency Alerts</h3>
+            {notifications.some(n => n.role === 'buyer' && n.targetId === buyer?.id && !n.read) && (
+              <button 
+                onClick={() => markAllAsRead('buyer', buyer?.id)}
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(62, 107, 95, 0.1)',
+                  color: 'var(--color-primary)',
+                  border: '1px solid var(--color-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Check size={14} /> Mark All as Read
+              </button>
+            )}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {notifications.filter(n => n.role === 'buyer' && n.targetId === buyer.id).map(notif => (
-              <div key={notif.id} className="card" style={{ display: 'flex', gap: '12px', padding: '16px', borderLeft: `4px solid ${notif.type === 'success' ? 'var(--color-success)' : 'var(--color-primary)'}` }}>
-                <span style={{ fontSize: '1.25rem' }}>{notif.type === 'success' ? '✅' : '📢'}</span>
-                <div>
-                  <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-primary)', margin: '0 0 2px 0' }}>{notif.title}</h4>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', margin: '0 0 4px 0', lineHeight: '1.3' }}>{notif.message}</p>
-                  <span style={{ fontSize: '0.62rem', color: 'var(--color-text-secondary)' }}>{new Date(notif.timestamp).toLocaleTimeString()}</span>
+            {notifications.filter(n => n.role === 'buyer' && n.targetId === buyer?.id).map(notif => (
+              <div 
+                key={notif.id} 
+                className="card" 
+                style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  gap: '8px', 
+                  padding: '14px', 
+                  borderLeft: `4px solid ${notif.read ? 'var(--color-border)' : (notif.type === 'success' ? 'var(--color-success)' : 'var(--color-primary)')}`,
+                  opacity: notif.read ? 0.85 : 1,
+                  backgroundColor: notif.read ? '#FAFAFA' : '#FFFFFF'
+                }}
+              >
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '1.25rem' }}>{notif.type === 'success' ? '✅' : '📢'}</span>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-primary)', margin: '0 0 2px 0' }}>{notif.title}</h4>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', margin: '0 0 4px 0', lineHeight: '1.3' }}>{notif.message}</p>
+                    <span style={{ fontSize: '0.62rem', color: 'var(--color-text-secondary)' }}>{new Date(notif.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  {notif.read ? (
+                    <span style={{ fontSize: '0.65rem', color: 'var(--color-primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      ✓ Read
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => markAsRead(notif.id)}
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        backgroundColor: 'var(--color-primary)',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <Check size={12} /> Mark as Read
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
-            {notifications.filter(n => n.role === 'buyer' && n.targetId === buyer.id).length === 0 && (
+            {notifications.filter(n => n.role === 'buyer' && n.targetId === buyer?.id).length === 0 && (
               <div style={styles.emptyContainer}>
                 <span>🔔</span>
                 <p>No new alerts at this time.</p>

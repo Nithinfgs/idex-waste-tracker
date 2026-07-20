@@ -375,13 +375,19 @@ export const StateProvider = ({ children }) => {
           }));
           
           setNotifications(prev => {
+            const localReadMap = new Map(prev.map(p => [p.id, p.read]));
             const existingIds = new Set(prev.map(p => p.id));
+            const updated = mappedNotif.map(n => ({
+              ...n,
+              read: localReadMap.has(n.id) ? localReadMap.get(n.id) : Boolean(n.read)
+            }));
+            
             mappedNotif.forEach(n => {
               if (!existingIds.has(n.id) && !n.read) {
                 sendNativePushAlert(n.title, n.message);
               }
             });
-            return mappedNotif;
+            return updated;
           });
         }
         if (resProduce && resProduce.ok) {
@@ -1226,6 +1232,33 @@ export const StateProvider = ({ children }) => {
     addToast('Admin login ID and Password updated successfully!', 'success');
   };
 
+  // Mark individual notification as read
+  const markAsRead = (notificationId) => {
+    setNotifications(prev => {
+      const next = prev.map(n => n.id === notificationId ? { ...n, read: true } : n);
+      localStorage.setItem('idex_notifications', JSON.stringify(next));
+      return next;
+    });
+    fetch(`${API_URL}/api/notifications/${notificationId}/read`, { method: 'POST' }).catch(() => {});
+  };
+
+  // Mark all notifications as read (optionally filtered by role and targetId)
+  const markAllAsRead = (targetRole, targetId) => {
+    setNotifications(prev => {
+      const next = prev.map(n => {
+        const matchRole = !targetRole || n.role === targetRole || n.role === 'all';
+        const matchTarget = !targetId || !n.targetId || n.targetId === targetId;
+        if (matchRole && matchTarget) {
+          return { ...n, read: true };
+        }
+        return n;
+      });
+      localStorage.setItem('idex_notifications', JSON.stringify(next));
+      return next;
+    });
+    addToast('All notifications marked as read!', 'success');
+  };
+
   // Farmer lists excess produce
   const uploadProducePost = (collectorId, title, quantity, price, deliveryEstimate, imageUrl, description) => {
     const collector = collectors.find(c => c.id === collectorId);
@@ -1431,6 +1464,8 @@ export const StateProvider = ({ children }) => {
       updateProfileCredentials,
       adminCredentials,
       updateAdminCredentials,
+      markAsRead,
+      markAllAsRead,
       districtJurisdiction,
       setDistrictJurisdiction,
       minPostingThreshold,
