@@ -8,6 +8,7 @@ export default function LoginPortal({ onLoginSuccess }) {
     collectors, 
     buyers,
     adminCredentials,
+    setAuthenticatedRole,
     setCurrentRole, 
     setSelectedSchoolId, 
     setSelectedCollectorId,
@@ -65,6 +66,7 @@ export default function LoginPortal({ onLoginSuccess }) {
       if (found) {
         const expectedPwd = String(found.password || '12345').trim();
         if (pwd === expectedPwd || pwd === '12345') {
+          setAuthenticatedRole('school');
           setCurrentRole('school');
           setSelectedSchoolId(found.id);
           onLoginSuccess('school');
@@ -94,6 +96,7 @@ export default function LoginPortal({ onLoginSuccess }) {
       if (found) {
         const expectedPwd = String(found.password || '12345').trim();
         if (pwd === expectedPwd || pwd === '12345') {
+          setAuthenticatedRole('collector');
           setCurrentRole('collector');
           setSelectedCollectorId(found.id);
           onLoginSuccess('collector');
@@ -118,6 +121,7 @@ export default function LoginPortal({ onLoginSuccess }) {
       if (found) {
         const expectedPwd = String(found.password || '12345').trim();
         if (pwd === expectedPwd || pwd === '12345') {
+          setAuthenticatedRole('buyer');
           setCurrentRole('buyer');
           setSelectedBuyerId(found.id);
           onLoginSuccess('buyer');
@@ -133,6 +137,7 @@ export default function LoginPortal({ onLoginSuccess }) {
       const validAdminPwd = String(adminCredentials?.password || 'admin123').trim();
 
       if ((code === validAdminCode || code === 'admin' || code === '1') && (pwd === validAdminPwd || pwd === 'admin123' || pwd === '12345')) {
+        setAuthenticatedRole('admin');
         setCurrentRole('admin');
         onLoginSuccess('admin');
         addToast('Admin logged in successfully.', 'success');

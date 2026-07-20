@@ -27,6 +27,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
   const { 
     currentRole, 
     setCurrentRole, 
+    authenticatedRole,
     schools, 
     selectedSchoolId, 
     setSelectedSchoolId,
@@ -165,14 +166,43 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </div>
 
           <div style={styles.headerRight}>
-            {/* Simple Role switcher */}
-            <button 
-              onClick={() => setShowRolePanel(!showRolePanel)}
-              style={styles.roleSwitchBtn}
-              title="Switch Profile Role"
-            >
-              <Shield size={12} />
-            </button>
+            {/* Return to Admin Dashboard (Only visible when Admin is inspecting another profile) */}
+            {authenticatedRole === 'admin' && currentRole !== 'admin' && (
+              <button
+                onClick={() => {
+                  setCurrentRole('admin');
+                  setActiveTab('dashboard');
+                }}
+                style={{
+                  padding: '3px 8px',
+                  backgroundColor: 'var(--color-primary)',
+                  color: '#FFFFFF',
+                  borderRadius: '8px',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  marginRight: '4px'
+                }}
+                title="Return to District Admin Dashboard"
+              >
+                <ShieldCheck size={12} /> Admin Dashboard
+              </button>
+            )}
+
+            {/* Profile Switcher (ADMIN ONLY) */}
+            {authenticatedRole === 'admin' && (
+              <button 
+                onClick={() => setShowRolePanel(!showRolePanel)}
+                style={styles.roleSwitchBtn}
+                title="Switch Profile Role (Admin Only)"
+              >
+                <Shield size={12} />
+              </button>
+            )}
 
             {/* Logout Button */}
             <button 

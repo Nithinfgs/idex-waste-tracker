@@ -38,6 +38,10 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
     markAllAsRead,
     collectors,
     buyers,
+    setCurrentRole,
+    setSelectedSchoolId,
+    setSelectedCollectorId,
+    setSelectedBuyerId,
     setIsLoggedIn,
     adminCredentials,
     updateAdminCredentials,
@@ -1432,7 +1436,29 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                         📍 {sch.address}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                      <button
+                        onClick={() => {
+                          setSelectedSchoolId(sch.id);
+                          setCurrentRole('school');
+                          setActiveTab('home');
+                        }}
+                        style={{
+                          backgroundColor: 'rgba(46, 125, 50, 0.08)',
+                          color: 'var(--color-primary)',
+                          border: '1px solid rgba(46, 125, 50, 0.25)',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <Building2 size={12} /> Access School Portal
+                      </button>
                       <button
                         onClick={() => {
                           if (confirm(`Are you sure you want to remove school profile "${sch.name}"?`)) {
@@ -1609,7 +1635,29 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                         <span style={{ marginLeft: '12px' }}>Phone: <strong>{col.phone}</strong></span>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                      <button
+                        onClick={() => {
+                          setSelectedCollectorId(col.id);
+                          setCurrentRole('collector');
+                          setActiveTab('home');
+                        }}
+                        style={{
+                          backgroundColor: 'rgba(46, 125, 50, 0.08)',
+                          color: 'var(--color-primary)',
+                          border: '1px solid rgba(46, 125, 50, 0.25)',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <Tractor size={12} /> Access Farmer Portal
+                      </button>
                       <button
                         onClick={() => {
                           if (confirm(`Are you sure you want to remove collector profile "${col.name}"?`)) {
@@ -1767,7 +1815,29 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                         📞 Contact: <strong>{buy.contact}</strong>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                      <button
+                        onClick={() => {
+                          setSelectedBuyerId(buy.id);
+                          setCurrentRole('buyer');
+                          setActiveTab('home');
+                        }}
+                        style={{
+                          backgroundColor: 'rgba(46, 125, 50, 0.08)',
+                          color: 'var(--color-primary)',
+                          border: '1px solid rgba(46, 125, 50, 0.25)',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <Leaf size={12} /> Access Buyer Portal
+                      </button>
                       <button
                         onClick={() => {
                           if (confirm(`Are you sure you want to remove buyer profile "${buy.agencyName || buy.name}"?`)) {

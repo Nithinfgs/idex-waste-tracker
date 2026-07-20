@@ -198,6 +198,9 @@ export const StateProvider = ({ children }) => {
   });
 
   // Current active profiles for role simulation
+  const [authenticatedRole, setAuthenticatedRole] = useState(() => {
+    return localStorage.getItem('idex_authenticated_role') || 'school';
+  });
   const [currentRole, setCurrentRole] = useState(() => {
     return localStorage.getItem('idex_current_role') || 'school';
   });
@@ -221,6 +224,10 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('idex_is_logged_in', isLoggedIn);
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    localStorage.setItem('idex_authenticated_role', authenticatedRole);
+  }, [authenticatedRole]);
 
   useEffect(() => {
     localStorage.setItem('idex_current_role', currentRole);
@@ -1582,6 +1589,8 @@ export const StateProvider = ({ children }) => {
       
       currentRole,
       setCurrentRole,
+      authenticatedRole,
+      setAuthenticatedRole,
       selectedSchoolId,
       setSelectedSchoolId,
       selectedCollectorId,
