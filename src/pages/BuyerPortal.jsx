@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { StateContext } from '../context/StateContext';
+import LicenseViewer from '../components/LicenseViewer';
 import { 
   MapPin, 
   Phone, 
@@ -725,6 +726,8 @@ export default function BuyerPortal() {
                 <span style={styles.profileLabel}>Monthly Budget:</span>
                 <strong style={styles.profileVal}>{buyer.budget}</strong>
               </div>
+
+              <LicenseViewer />
 
               <button 
                 onClick={() => setIsLoggedIn(false)}

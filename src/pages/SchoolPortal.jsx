@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { StateContext } from '../context/StateContext';
+import LicenseViewer from '../components/LicenseViewer';
 import { MapContainer, TileLayer, Marker, Polyline, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -1450,6 +1451,8 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                   </select>
                 </div>
               </div>
+
+              <LicenseViewer />
 
               <button 
                 onClick={() => setIsLoggedIn(false)}

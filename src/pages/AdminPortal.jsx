@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { StateContext } from '../context/StateContext';
+import LicenseViewer from '../components/LicenseViewer';
 import { MapContainer, TileLayer, Circle } from 'react-leaflet';
 import { 
   Building2, 
@@ -1464,6 +1465,8 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
               Save Admin Login Credentials
             </button>
           </div>
+
+          <LicenseViewer />
 
           <div style={{ marginTop: '16px' }}>
             <button 
