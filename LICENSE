@@ -9,30 +9,30 @@ Subject to the terms and conditions of this License, permission is hereby grante
 
 ---
 
-## 2. Strict Prohibition of Plagiarism, Feature Replication & Derivative Misappropriation
+## 2. Strict Prohibition of Plagiarism, Rip-offs & Derivative Misappropriation
 You may **not** copy, clone, adapt, modify, reverse engineer, rebrand, sub-license, distribute, or present this software—in whole or in part—as your own original creation or intellectual property.
 
 ### **Definition of Actionable Plagiarism & Infringement**
 For the purposes of this License and legal enforcement, actionable plagiarism and unauthorized intellectual property infringement includes, **but is not limited to**:
 1. **Replication of Similar Features**: Creating, implementing, or adding substantially similar features, modules, or user workflows derived from or inspired by the IDEX Waste Tracker platform.
-2. **Substantially Similar Implementations**: Utilizing similar code logic, algorithms, UI component layouts, prediction methods, data models, or technical feature implementations.
+2. **Substantially Similar Technical Implementations**: Utilizing similar code logic, algorithms, UI component layouts, prediction methods, data models, or technical feature implementations.
 3. **Compilation of Continuous Features**: Combining, aggregating, or duplicating the specific continuous suite of features unique to this platform (including, but not limited to: real-time school mid-day meal surplus tracking, automated meal prediction algorithms, farmer/collector GPS proximity feedstock dispatch, compost buyer bidding networks, and automated academic audit PDF compilation).
-4. **Uncredited Re-publication & Competition Misappropriation**: Presenting, submitting, or publishing this codebase, its features, or its functional concepts in hackathons, academic competitions, commercial markets, or public software repositories without express written authorization and explicit attribution to Nithin Selvaraj.
+4. **Rip-offs & Uncredited Copies**: Creating any rip-off, clone, fork, or copy of this application or software system under a different name or modified branding.
 
 ---
 
-## 3. Mandatory Attribution Requirement
-Any authorized reference, academic citation, or permitted deployment of this software must clearly, prominently, and permanently include the following copyright attribution notice in all documentation and UI footers:
-
-> *"Original Software Architecture and Design © 2026 Nithin Selvaraj — IDEX Food Waste & Surplus Tracker."*
+## 3. Mandatory Ownership & Competition Submission Clause
+- **Sole Creator & Rights Holder**: **Nithin Selvaraj** is the sole author, developer, and owner of this application, codebase, and underlying system design.
+- **Strict Prohibition on Independent Third-Party Submissions**: Any rip-off, copy, clone, adaptation, or derivative version of this application or codebase **CANNOT be submitted, presented, entered, or showcased in any competition, hackathon, science fair, grant application, academic evaluation, or institutional program by or on behalf of any third-party individuals or teams WITHOUT Nithin Selvaraj being an active, named team member and co-presenter of that submission.**
+- **Automatic Invalidation**: Any project submission or entry using or copying this codebase, feature set, or architecture that omits Nithin Selvaraj as an official team member is strictly unauthorized, fraudulent, and subject to immediate administrative disqualification.
 
 ---
 
 ## 4. Legal Remedies and Administrative Enforcement Notice
-Notice is hereby given that any violation of this License constitutes willful copyright infringement and plagiarism under applicable local, national, and international laws. 
+Notice is hereby given that any violation of this License constitutes willful copyright infringement, academic dishonesty, and plagiarism under applicable local, national, and international laws. 
 
-In the event of non-compliance or unauthorized feature duplication/plagiarism:
-- **Immediate Competition & Platform Actions**: Complaints will be filed directly with competition organizers, university evaluation boards, hosting providers (e.g., GitHub, Render), and app store marketplaces for immediate disqualification, repository removal, and account termination under DMCA / copyright policies.
+In the event of non-compliance, unauthorized submission, or feature duplication/plagiarism:
+- **Immediate Competition & Platform Actions**: Official legal complaints will be filed directly with competition organizers, university evaluation boards, judges, hosting providers (e.g., GitHub, Render), and app store marketplaces for immediate disqualification, submission cancellation, repository removal, and account termination under DMCA / copyright policies.
 - **Legal Actions & Injunctions**: The copyright holder reserves all rights to initiate relevant legal actions ("relevant legal actions will be taken"), including seeking emergency injunctive relief, court orders for immediate cessation of use, and recovery of statutory damages, disgorgement of profits, and all associated legal fees.
 
 ---

@@ -20,17 +20,18 @@ IDEX Waste Tracker is a multi-portal real-time platform linking Government Schoo
 
 Copyright (c) 2026 **Nithin Selvaraj** / IDEX Waste Tracker Platform. All Rights Reserved.
 
-### Terms of Use & Access:
-- **Free Non-Commercial Use**: Anyone is free to inspect, run, use, and evaluate this application for non-commercial, educational, community, or municipal audit evaluation purposes.
+### 👤 Ownership & Mandatory Competition Submission Requirement:
+- **Sole Creator**: **Nithin Selvaraj** is the sole owner, developer, and intellectual property holder of this project.
+- **No Third-Party Submissions**: Any copy, rip-off, clone, or derivative version of this application **CANNOT be submitted or presented in any competition, hackathon, academic evaluation, or showcase on behalf of other people or teams WITHOUT Nithin Selvaraj being an active, named team member of that submission.**
 
-### Enforced Anti-Plagiarism & Feature Protection:
+### Enforced Anti-Plagiarism Protection:
 Actionable plagiarism and unauthorized intellectual property infringement includes, **but is not limited to**:
 1. **Replication of Similar Features**: Adding or building substantially similar features, modules, or workflows derived from or inspired by this platform.
 2. **Similar Technical Implementations**: Using similar code logic, algorithms, UI component layouts, prediction methods, or technical feature implementations.
 3. **Compilation of Continuous Features**: Duplicating or aggregating the unique compilation of continuous features (e.g., school mid-day meal logging + automated meal prediction + farmer GPS dispatch + compost buyer auctions + automated audit PDF reports).
-4. **Uncredited Re-publication & Submission**: Submitting or presenting this codebase, its features, or concepts in hackathons, competitions, or public platforms without express authorization and explicit attribution to **Nithin Selvaraj**.
+4. **Uncredited Rip-offs & Copies**: Presenting any rip-off or modified copy of this app without express written authorization and explicit participation of **Nithin Selvaraj**.
 
 ### Legal Enforcement & Remedies:
-Violations will trigger immediate competition disqualification filings, platform DMCA takedown notices, and all **relevant legal actions** (including injunctive relief and recovery of legal damages).
+Violations will trigger immediate competition disqualification filings, platform DMCA takedown notices, and all **relevant legal actions** (including court injunctions and recovery of legal damages).
 
 *For full legal details, see the [LICENSE](LICENSE) file.*
