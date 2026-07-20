@@ -1,16 +1,39 @@
-# Custom Open-Use & Anti-Plagiarism License
+# IDEX Waste Tracker Software License & Proprietary Rights Agreement
 
-Copyright (c) 2026 Nithin Selvaraj / IDEX Waste Tracker Team. All rights reserved.
-
-## 1. Terms of Use & Access
-Permission is hereby granted, free of charge, to any person or organization to inspect, run, use, and evaluate the **IDEX Food Waste & Surplus Tracker** application and codebase for non-commercial, educational, community food waste audit, or demonstration purposes.
-
-## 2. Anti-Plagiarism & Intellectual Property Restrictions
-- **No Unauthorized Rebranding or Re-publication**: You are strictly prohibited from copying, cloning, re-hosting, republishing, or duplicating this codebase (or any substantial portion thereof) and claiming it as your own original work, project, or competition entry.
-- **Mandatory Attribution**: Any authorized derivative work, fork, reference, or presentation incorporating this project must prominently and explicitly attribute original authorship to **Nithin Selvaraj** and the **IDEX Waste Tracker** platform.
-
-## 3. Enforcement & Legal Notice
-Any unauthorized claims of ownership, direct plagiarism, uncredited re-licensing, or infringement of this software in public competitions, repositories, or commercial services will result in immediate takedown notices, competition disqualification reports, and relevant legal actions.
+Copyright (c) 2026 Nithin Selvaraj / IDEX Waste Tracker Platform. All Rights Reserved.
 
 ---
-*Official License for the IDEX Coimbatore Food Audit & Municipal Waste Diversion Platform.*
+
+## 1. Grant of Limited Permissive Use
+Subject to the terms and conditions of this License, permission is hereby granted to any individual, educational institution, or non-commercial entity to inspect, execute, run, and evaluate the source code and compiled software of the **IDEX Food Waste & Surplus Tracker** solely for educational, personal inspection, or municipal audit evaluation purposes.
+
+---
+
+## 2. Strict Prohibition of Plagiarism, Feature Replication & Derivative Misappropriation
+You may **not** copy, clone, adapt, modify, reverse engineer, rebrand, sub-license, distribute, or present this software—in whole or in part—as your own original creation or intellectual property.
+
+### **Definition of Actionable Plagiarism & Infringement**
+For the purposes of this License and legal enforcement, actionable plagiarism and unauthorized intellectual property infringement includes, **but is not limited to**:
+1. **Replication of Similar Features**: Creating, implementing, or adding substantially similar features, modules, or user workflows derived from or inspired by the IDEX Waste Tracker platform.
+2. **Substantially Similar Implementations**: Utilizing similar code logic, algorithms, UI component layouts, prediction methods, data models, or technical feature implementations.
+3. **Compilation of Continuous Features**: Combining, aggregating, or duplicating the specific continuous suite of features unique to this platform (including, but not limited to: real-time school mid-day meal surplus tracking, automated meal prediction algorithms, farmer/collector GPS proximity feedstock dispatch, compost buyer bidding networks, and automated academic audit PDF compilation).
+4. **Uncredited Re-publication & Competition Misappropriation**: Presenting, submitting, or publishing this codebase, its features, or its functional concepts in hackathons, academic competitions, commercial markets, or public software repositories without express written authorization and explicit attribution to Nithin Selvaraj.
+
+---
+
+## 3. Mandatory Attribution Requirement
+Any authorized reference, academic citation, or permitted deployment of this software must clearly, prominently, and permanently include the following copyright attribution notice in all documentation and UI footers:
+
+> *"Original Software Architecture and Design © 2026 Nithin Selvaraj — IDEX Food Waste & Surplus Tracker."*
+
+---
+
+## 4. Legal Remedies and Administrative Enforcement Notice
+Notice is hereby given that any violation of this License constitutes willful copyright infringement and plagiarism under applicable local, national, and international laws. 
+
+In the event of non-compliance or unauthorized feature duplication/plagiarism:
+- **Immediate Competition & Platform Actions**: Complaints will be filed directly with competition organizers, university evaluation boards, hosting providers (e.g., GitHub, Render), and app store marketplaces for immediate disqualification, repository removal, and account termination under DMCA / copyright policies.
+- **Legal Actions & Injunctions**: The copyright holder reserves all rights to initiate relevant legal actions ("relevant legal actions will be taken"), including seeking emergency injunctive relief, court orders for immediate cessation of use, and recovery of statutory damages, disgorgement of profits, and all associated legal fees.
+
+---
+*Official Legal License for the IDEX Coimbatore Food Audit & Municipal Waste Diversion Platform.*

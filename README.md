@@ -16,14 +16,21 @@ IDEX Waste Tracker is a multi-portal real-time platform linking Government Schoo
 
 ---
 
-## 🔒 License & Intellectual Property Notice
+## 🔒 License & Enforced Intellectual Property Notice
 
-Copyright (c) 2026 **Nithin Selvaraj** / IDEX Waste Tracker Team.
+Copyright (c) 2026 **Nithin Selvaraj** / IDEX Waste Tracker Platform. All Rights Reserved.
 
-### Terms of Use:
-- **Free Open Use**: Anyone is free to use, run, inspect, and evaluate this application for non-commercial, educational, community, or demonstration purposes.
-- **Anti-Plagiarism & Ownership Protection**: You may **NOT** copy, clone, rebrand, republish, or present this project or codebase as your own original creation.
-- **Attribution**: Any authorized fork, reference, or presentation must clearly credit **Nithin Selvaraj** and the **IDEX Waste Tracker** platform.
-- **Enforcement**: Direct plagiarism, unauthorized claiming of ownership, or uncredited re-publication in competitions or public platforms will result in immediate DMCA/competition complaints and **relevant legal actions**.
+### Terms of Use & Access:
+- **Free Non-Commercial Use**: Anyone is free to inspect, run, use, and evaluate this application for non-commercial, educational, community, or municipal audit evaluation purposes.
+
+### Enforced Anti-Plagiarism & Feature Protection:
+Actionable plagiarism and unauthorized intellectual property infringement includes, **but is not limited to**:
+1. **Replication of Similar Features**: Adding or building substantially similar features, modules, or workflows derived from or inspired by this platform.
+2. **Similar Technical Implementations**: Using similar code logic, algorithms, UI component layouts, prediction methods, or technical feature implementations.
+3. **Compilation of Continuous Features**: Duplicating or aggregating the unique compilation of continuous features (e.g., school mid-day meal logging + automated meal prediction + farmer GPS dispatch + compost buyer auctions + automated audit PDF reports).
+4. **Uncredited Re-publication & Submission**: Submitting or presenting this codebase, its features, or concepts in hackathons, competitions, or public platforms without express authorization and explicit attribution to **Nithin Selvaraj**.
+
+### Legal Enforcement & Remedies:
+Violations will trigger immediate competition disqualification filings, platform DMCA takedown notices, and all **relevant legal actions** (including injunctive relief and recovery of legal damages).
 
 *For full legal details, see the [LICENSE](LICENSE) file.*
