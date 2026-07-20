@@ -50,10 +50,17 @@ export default function LoginPortal({ onLoginSuccess }) {
     const pwd = password.trim();
 
     if (role === 'school') {
-      const found = schools.find(s => {
+      const allSchs = (schools && schools.length > 0) ? schools : [
+        { id: 'sch-1', name: 'Corporation Middle School, RS Puram', entryCode: '1', password: '12345' },
+        { id: 'sch-2', name: 'Government Girls High School, Gandhipuram', entryCode: '2', password: '12345' },
+        { id: 'sch-3', name: 'Municipal Higher Secondary School, Peelamedu', entryCode: '3', password: '12345' },
+        { id: 'sch-4', name: 'Corporation School, Town Hall', entryCode: '4', password: '12345' }
+      ];
+      const found = allSchs.find(s => {
         const sCode = String(s.entryCode || s.entry_code || '').toLowerCase().trim();
         const sId = String(s.id || '').toLowerCase().trim();
-        return (sCode !== '' && sCode === code) || sId === code;
+        const sName = String(s.name || '').toLowerCase().trim();
+        return (sCode !== '' && sCode === code) || sId === code || sName.includes(code);
       });
       if (found) {
         const expectedPwd = String(found.password || '12345').trim();
@@ -63,17 +70,17 @@ export default function LoginPortal({ onLoginSuccess }) {
           onLoginSuccess('school');
           addToast(`Welcome back, ${found.name}!`, 'success');
         } else {
-          setErrorMsg('Invalid password. Please check your credentials.');
+          setErrorMsg('Invalid password. Default password is 12345.');
         }
       } else {
-        setErrorMsg(`School profile not found for code: "${entryCode}". Please contact admin.`);
+        setErrorMsg(`School profile not found for "${entryCode}". Try Entry Code: 1, 2, 3, or 4.`);
       }
     } else if (role === 'collector') {
       const allCols = (collectors && collectors.length > 0) ? collectors : [
         { id: 'col-1', name: 'Kavin Kumar (Organic Pig Farm)', entryCode: '1', password: '12345' },
         { id: 'col-2', name: 'Deepak Raj (Coimbatore BioCompost)', entryCode: '2', password: '12345' }
       ];
-      let found = allCols.find(c => {
+      const found = allCols.find(c => {
         const cCode = String(c.entryCode || c.entry_code || '').toLowerCase().trim();
         const cId = String(c.id || '').toLowerCase().trim();
         const cName = String(c.name || '').toLowerCase().trim();
@@ -84,24 +91,29 @@ export default function LoginPortal({ onLoginSuccess }) {
                cName.includes(code) || 
                (cleanInput && cPhone.includes(cleanInput));
       });
-
-      if (!found && allCols.length > 0) {
-        found = allCols[0];
-      }
-
       if (found) {
-        setCurrentRole('collector');
-        setSelectedCollectorId(found.id);
-        onLoginSuccess('collector');
-        addToast(`Welcome back, ${found.name}!`, 'success');
+        const expectedPwd = String(found.password || '12345').trim();
+        if (pwd === expectedPwd || pwd === '12345') {
+          setCurrentRole('collector');
+          setSelectedCollectorId(found.id);
+          onLoginSuccess('collector');
+          addToast(`Welcome back, ${found.name}!`, 'success');
+        } else {
+          setErrorMsg('Invalid password. Default password is 12345.');
+        }
       } else {
-        setErrorMsg('Collector profile not found. Please click a Quick Login button below.');
+        setErrorMsg(`Farmer / Collector profile not found for "${entryCode}". Try Entry Code: 1 or 2.`);
       }
     } else if (role === 'buyer') {
-      const found = buyers.find(b => {
+      const allBuyers = (buyers && buyers.length > 0) ? buyers : [
+        { id: 'buy-1', name: 'Coimbatore Agri-Gov Agency', entryCode: '1', password: '12345' },
+        { id: 'buy-2', name: 'GreenSoil Organics Agency', entryCode: '2', password: '12345' }
+      ];
+      const found = allBuyers.find(b => {
         const bCode = String(b.entryCode || b.entry_code || '').toLowerCase().trim();
         const bId = String(b.id || '').toLowerCase().trim();
-        return (bCode !== '' && bCode === code) || bId === code;
+        const bName = String(b.name || b.agencyName || b.agency_name || '').toLowerCase().trim();
+        return (bCode !== '' && bCode === code) || bId === code || bName.includes(code);
       });
       if (found) {
         const expectedPwd = String(found.password || '12345').trim();
@@ -111,10 +123,10 @@ export default function LoginPortal({ onLoginSuccess }) {
           onLoginSuccess('buyer');
           addToast(`Welcome back, ${found.name}!`, 'success');
         } else {
-          setErrorMsg('Invalid password. Please check your credentials.');
+          setErrorMsg('Invalid password. Default password is 12345.');
         }
       } else {
-        setErrorMsg(`Buyer profile not found for code: "${entryCode}". Please contact admin.`);
+        setErrorMsg(`Buyer Agency profile not found for "${entryCode}". Try Entry Code: 1 or 2.`);
       }
     } else if (role === 'admin') {
       const validAdminCode = String(adminCredentials?.entryCode || 'admin').toLowerCase().trim();
@@ -125,7 +137,7 @@ export default function LoginPortal({ onLoginSuccess }) {
         onLoginSuccess('admin');
         addToast('Admin logged in successfully.', 'success');
       } else {
-        setErrorMsg('Invalid admin credentials. Please check your Admin Entry Code & Password.');
+        setErrorMsg('Invalid admin credentials. Default Admin ID: admin | Password: admin123');
       }
     }
   };
@@ -268,54 +280,6 @@ export default function LoginPortal({ onLoginSuccess }) {
               Sign In
               <ChevronRightIcon />
             </button>
-
-            {/* Quick 1-Tap Demo Login presets */}
-            <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
-              <span style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)', display: 'block', marginBottom: '8px', fontWeight: 600 }}>
-                ⚡ Quick 1-Tap Direct Login:
-              </span>
-              <button 
-                type="button" 
-                onClick={() => {
-                  if (role === 'collector') {
-                    setCurrentRole('collector');
-                    setSelectedCollectorId(collectors[0]?.id || 'col-1');
-                    onLoginSuccess('collector');
-                    addToast('Logged in as Farmer (Kavin Kumar)', 'success');
-                  } else if (role === 'school') {
-                    setCurrentRole('school');
-                    setSelectedSchoolId(schools[0]?.id || 'sch-1');
-                    onLoginSuccess('school');
-                    addToast('Logged in as School (Corporation Middle School)', 'success');
-                  } else if (role === 'buyer') {
-                    setCurrentRole('buyer');
-                    setSelectedBuyerId(buyers[0]?.id || 'buy-1');
-                    onLoginSuccess('buyer');
-                    addToast('Logged in as Buyer Agency', 'success');
-                  } else {
-                    setCurrentRole('admin');
-                    onLoginSuccess('admin');
-                    addToast('Logged in as District Admin', 'success');
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  minHeight: '36px',
-                  backgroundColor: 'rgba(46, 125, 50, 0.08)',
-                  color: 'var(--color-primary)',
-                  border: '1px solid var(--color-primary)',
-                  borderRadius: '8px',
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  cursor: 'pointer'
-                }}
-              >
-                {role === 'collector' ? '🚜 Direct Demo Login: Kavin Kumar (Farmer)' : 
-                 role === 'school' ? '🏫 Direct Demo Login: RS Puram School' :
-                 role === 'buyer' ? '🚛 Direct Demo Login: Agri-Gov Agency' :
-                 '🏛️ Direct Demo Login: District Admin'}
-              </button>
-            </div>
           </form>
 
           <button onClick={() => setStep('role-select')} style={styles.backLink}>
