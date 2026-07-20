@@ -20,7 +20,12 @@ export const INITIAL_BUYERS = [
   { id: 'buy-2', name: 'GreenSoil Organics Agency', agencyName: 'GreenSoil Fertilizers & Compost Corp', contact: '0422 244 5566', latitude: 10.9850, longitude: 76.9420, vehicle: 'Mini Flatbed Dump Truck', radius: 15, budget: '₹80,000/mo', rating: 'A', entryCode: "2", password: "12345" }
 ];
 
-const API_URL = localStorage.getItem('idex_custom_api_url') || import.meta.env.VITE_API_URL || 'https://idex-backend-8qxo.onrender.com';
+const RENDER_BACKEND_URL = 'https://idex-backend-8qxo.onrender.com';
+const API_URL = (() => {
+  const custom = localStorage.getItem('idex_custom_api_url');
+  if (custom && custom.startsWith('http')) return custom;
+  return import.meta.env.VITE_API_URL || RENDER_BACKEND_URL;
+})();
 
 export const StateContext = createContext();
 
