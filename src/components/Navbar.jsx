@@ -13,7 +13,14 @@ import {
   Clock,
   LogOut,
   MessageSquare,
-  Users
+  Users,
+  Sun,
+  Moon,
+  SunMedium,
+  Building2,
+  Tractor,
+  Leaf,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab }) {
@@ -109,9 +116,9 @@ export default function Navbar({ activeTab, setActiveTab }) {
 
   const getGreeting = () => {
     const hr = new Date().getHours();
-    if (hr < 12) return { text: 'Good Morning', icon: '☀' };
-    if (hr < 17) return { text: 'Good Afternoon', icon: '🌤️' };
-    return { text: 'Good Evening', icon: '🌙' };
+    if (hr < 12) return { text: 'Good Morning', icon: <Sun size={15} color="#F57C00" /> };
+    if (hr < 17) return { text: 'Good Afternoon', icon: <SunMedium size={15} color="#F57C00" /> };
+    return { text: 'Good Evening', icon: <Moon size={15} color="#5C6BC0" /> };
   };
 
   const greeting = getGreeting();
@@ -247,7 +254,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
                       border: currentRole === 'school' && selectedSchoolId === sch.id ? '2px solid var(--color-primary)' : '1px solid var(--color-border)'
                     }}
                   >
-                    <span>🏫 {sch.name}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Building2 size={15} color="var(--color-primary)" /> {sch.name}</span>
                     <span style={styles.selectStrength}>{sch.studentStrength} students</span>
                   </button>
                 ))}
@@ -268,7 +275,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
                       border: currentRole === 'collector' && selectedCollectorId === col.id ? '2px solid var(--color-primary)' : '1px solid var(--color-border)'
                     }}
                   >
-                    <span>🚜 {col.name}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Tractor size={15} color="var(--color-primary)" /> {col.name}</span>
                     <span style={styles.selectStrength}>{col.collectorType}</span>
                   </button>
                 ))}
@@ -289,7 +296,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
                       border: currentRole === 'buyer' && selectedBuyerId === buy.id ? '2px solid var(--color-primary)' : '1px solid var(--color-border)'
                     }}
                   >
-                    <span>🌱 {buy.name}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Leaf size={15} color="var(--color-primary)" /> {buy.name}</span>
                     <span style={styles.selectStrength}>{buy.rating} Rating</span>
                   </button>
                 ))}
@@ -306,7 +313,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
                     backgroundColor: '#F5F5FA'
                   }}
                 >
-                  <span>🏛️ District Admin Dashboard</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><ShieldCheck size={15} color="var(--color-primary)" /> District Admin Dashboard</span>
                   <span style={styles.selectStrength}>North District</span>
                 </button>
               </div>

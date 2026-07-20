@@ -1135,11 +1135,11 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                   value={produceForm.title}
                   onChange={(e) => setProduceForm(p => ({ ...p, title: e.target.value }))}
                 >
-                  <option value="Tomatoes">🍅 Tomatoes</option>
-                  <option value="Spinach">Keerai / Spinach 🥬</option>
-                  <option value="Bananas">🍌 Bananas</option>
-                  <option value="Pumpkins">🎃 Pumpkins</option>
-                  <option value="Potatoes">🥔 Potatoes</option>
+                  <option value="Tomatoes">Tomatoes</option>
+                  <option value="Spinach">Keerai / Spinach</option>
+                  <option value="Bananas">Bananas</option>
+                  <option value="Pumpkins">Pumpkins</option>
+                  <option value="Potatoes">Potatoes</option>
                   <option value="Custom">Custom Item...</option>
                 </select>
               </div>

@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { StateContext } from '../context/StateContext';
-import { Shield, Sparkles, Phone, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Shield, Sparkles, Phone, ArrowRight, ShieldCheck, CheckCircle2, Building2, Tractor, Leaf, Settings } from 'lucide-react';
 
 export default function LoginPortal({ onLoginSuccess }) {
   const { 
@@ -182,7 +182,7 @@ export default function LoginPortal({ onLoginSuccess }) {
               className="card card-interactive" 
               style={styles.roleCard}
             >
-              <span style={styles.roleIcon}>🏫</span>
+              <div style={{ ...styles.roleIcon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Building2 size={24} color="var(--color-primary)" /></div>
               <div>
                 <h4 style={styles.roleCardTitle}>Mid-day Meal School</h4>
                 <p style={styles.roleCardDesc}>Cook daily meals, track waste levels, and request pickups.</p>
@@ -194,7 +194,7 @@ export default function LoginPortal({ onLoginSuccess }) {
               className="card card-interactive" 
               style={styles.roleCard}
             >
-              <span style={styles.roleIcon}>🚜</span>
+              <div style={{ ...styles.roleIcon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Tractor size={24} color="var(--color-primary)" /></div>
               <div>
                 <h4 style={styles.roleCardTitle}>Waste Collector / Farmer</h4>
                 <p style={styles.roleCardDesc}>Divert organic waste for composting or livestock feed.</p>
@@ -206,7 +206,7 @@ export default function LoginPortal({ onLoginSuccess }) {
               className="card card-interactive" 
               style={styles.roleCard}
             >
-              <span style={styles.roleIcon}>🌱</span>
+              <div style={{ ...styles.roleIcon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Leaf size={24} color="var(--color-primary)" /></div>
               <div>
                 <h4 style={styles.roleCardTitle}>Compost Buyer / Agency</h4>
                 <p style={styles.roleCardDesc}>Purchase organic feedstock or compost in bulk.</p>
@@ -218,7 +218,7 @@ export default function LoginPortal({ onLoginSuccess }) {
               className="card card-interactive" 
               style={styles.roleCard}
             >
-              <span style={styles.roleIcon}>🏛️</span>
+              <div style={{ ...styles.roleIcon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ShieldCheck size={24} color="var(--color-primary)" /></div>
               <div>
                 <h4 style={styles.roleCardTitle}>District Administrator</h4>
                 <p style={styles.roleCardDesc}>Monitor waste generation and collection success rates.</p>

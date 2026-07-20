@@ -21,7 +21,11 @@ import {
   PieChart,
   Utensils,
   Tractor,
-  Filter
+  Filter,
+  Leaf,
+  MapPin,
+  Phone,
+  Settings
 } from 'lucide-react';
 
 export default function AdminPortal({ activeTab, setActiveTab }) {
@@ -903,32 +907,40 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
           {/* Sub-Section Role Selector Tabs */}
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', backgroundColor: 'rgba(0,0,0,0.03)', padding: '4px', borderRadius: '12px' }}>
             {[
-              { id: 'schools', label: '🏫 Schools', count: schools.length },
-              { id: 'collectors', label: '🚜 Farmers & Collectors', count: collectors.length },
-              { id: 'buyers', label: '🌱 Compost Buyers', count: buyers.length }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setRegistrySection(tab.id);
-                  setSearchQuery('');
-                }}
-                className={registrySection === tab.id ? 'btn-primary' : ''}
-                style={{
-                  flex: 1,
-                  fontSize: '0.72rem',
-                  padding: '6px 4px',
-                  minHeight: 'auto',
-                  borderRadius: '10px',
-                  backgroundColor: registrySection === tab.id ? 'var(--color-primary)' : 'transparent',
-                  color: registrySection === tab.id ? '#FFFFFF' : 'var(--color-text-secondary)',
-                  border: 'none',
-                  boxShadow: 'none'
-                }}
-              >
-                {tab.label} ({tab.count})
-              </button>
-            ))}
+              { id: 'schools', label: 'Schools', icon: Building2, count: schools.length },
+              { id: 'collectors', label: 'Farmers & Collectors', icon: Tractor, count: collectors.length },
+              { id: 'buyers', label: 'Compost Buyers', icon: Leaf, count: buyers.length }
+            ].map(tab => {
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setRegistrySection(tab.id);
+                    setSearchQuery('');
+                  }}
+                  className={registrySection === tab.id ? 'btn-primary' : ''}
+                  style={{
+                    flex: 1,
+                    fontSize: '0.72rem',
+                    padding: '6px 4px',
+                    minHeight: 'auto',
+                    borderRadius: '10px',
+                    backgroundColor: registrySection === tab.id ? 'var(--color-primary)' : 'transparent',
+                    color: registrySection === tab.id ? '#FFFFFF' : 'var(--color-text-secondary)',
+                    border: 'none',
+                    boxShadow: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <TabIcon size={14} style={{ flexShrink: 0 }} />
+                  <span>{tab.label} ({tab.count})</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Search bar & Registration trigger */}

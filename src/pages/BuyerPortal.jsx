@@ -25,7 +25,10 @@ import {
   Home,
   User,
   Bell,
-  LogOut
+  LogOut,
+  Scale,
+  Package,
+  CheckCircle2
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
 import L from 'leaflet';
@@ -546,8 +549,8 @@ export default function BuyerPortal({ activeTab: propActiveTab, setActiveTab: pr
                     </div>
                     <div style={styles.sheetBody}>
                       <div style={styles.sheetMeta}>
-                        <span>⚖️ Available: <strong>{selectedPostForBottomSheet.estimatedWeight} kg</strong></span>
-                        <span>📍 Proximity: <strong>{getDistanceToPost(selectedPostForBottomSheet)} km</strong></span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Scale size={13} /> Available: <strong>{selectedPostForBottomSheet.estimatedWeight} kg</strong></span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><MapPin size={13} /> Proximity: <strong>{getDistanceToPost(selectedPostForBottomSheet)} km</strong></span>
                       </div>
                       <p style={styles.sheetReason}>Surplus Cause: {selectedPostForBottomSheet.reason}</p>
                       <button 
@@ -574,8 +577,8 @@ export default function BuyerPortal({ activeTab: propActiveTab, setActiveTab: pr
                       <span className="badge badge-available">Available Feedstock</span>
                     </div>
                     <div style={{ display: 'flex', gap: '16px', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                      <span>⚖️ Feedstock: <strong style={{ color: 'var(--color-text-primary)' }}>{post.estimatedWeight} kg</strong></span>
-                      <span>📍 Proximity: <strong style={{ color: 'var(--color-text-primary)' }}>{getDistanceToPost(post)} km</strong></span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Scale size={13} /> Feedstock: <strong style={{ color: 'var(--color-text-primary)' }}>{post.estimatedWeight} kg</strong></span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><MapPin size={13} /> Proximity: <strong style={{ color: 'var(--color-text-primary)' }}>{getDistanceToPost(post)} km</strong></span>
                     </div>
                     <button 
                       onClick={() => setShowReserveConfirmationPost(post)}
@@ -660,7 +663,7 @@ export default function BuyerPortal({ activeTab: propActiveTab, setActiveTab: pr
 
           {activePurchases.length === 0 && (
             <div style={styles.emptyContainer}>
-              <span>🌱</span>
+              <Package size={32} color="var(--color-primary)" />
               <p>No active purchases or transit collections currently running.</p>
               <button 
                 onClick={() => setActiveTab('nearby')}
@@ -716,7 +719,7 @@ export default function BuyerPortal({ activeTab: propActiveTab, setActiveTab: pr
                 }}
               >
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '1.25rem' }}>{notif.type === 'success' ? '✅' : '📢'}</span>
+                  <span style={{ fontSize: '1.25rem', marginTop: '2px' }}>{notif.type === 'success' ? <CheckCircle2 size={20} color="var(--color-success)" /> : <Bell size={20} color="var(--color-primary)" />}</span>
                   <div style={{ flex: 1 }}>
                     <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-primary)', margin: '0 0 2px 0' }}>{notif.title}</h4>
                     <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', margin: '0 0 4px 0', lineHeight: '1.3' }}>{notif.message}</p>
