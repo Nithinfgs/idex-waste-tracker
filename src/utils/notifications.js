@@ -28,8 +28,8 @@ export async function sendNativePushAlert(title, body, id = Math.floor(Math.rand
       notifications: [
         {
           id,
-          title: title || 'IDEX Waste Alert',
-          body: body || 'New update in IDEX Waste Tracker',
+          title: title || 'Bloom Alert',
+          body: body || 'New update in Bloom',
           schedule: { at: new Date(Date.now() + 100) },
           sound: 'default',
           attachments: null,

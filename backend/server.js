@@ -208,30 +208,6 @@ app.post('/api/buyers', async (req, res) => {
   );
   res.json({ success: true });
 });
-        agency_name: buyer.agencyName || buyer.agency_name || '',
-        agencyName: buyer.agencyName || buyer.agency_name || '',
-        contact: buyer.contact || '',
-        latitude: parseFloat(buyer.latitude || 11.0),
-        longitude: parseFloat(buyer.longitude || 76.9),
-        vehicle: buyer.vehicle || 'Truck',
-        radius: parseFloat(buyer.radius || 25.0),
-        budget: buyer.budget || '₹50,000/mo',
-        rating: buyer.rating || 'A+',
-        entryCode: buyer.entryCode || '',
-        entry_code: buyer.entryCode || '',
-        password: buyer.password || '12345'
-      };
-      if (idx >= 0) {
-        db.buyers[idx] = mapped;
-      } else {
-        db.buyers.push(mapped);
-      }
-      saveDatabaseToFile();
-      return [];
-    }
-  );
-  res.json({ success: true });
-});
 
 // Admin Credentials Sync API
 app.get('/api/admin', async (req, res) => {
