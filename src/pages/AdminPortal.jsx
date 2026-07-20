@@ -41,6 +41,9 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
     addNewSchoolProfile,
     addNewCollectorProfile,
     addNewBuyerProfile,
+    removeSchoolProfile,
+    removeCollectorProfile,
+    removeBuyerProfile,
     updateProfileCredentials,
     districtJurisdiction,
     setDistrictJurisdiction,
@@ -1417,6 +1420,30 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                         📍 {sch.address}
                       </div>
                     </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to remove school profile "${sch.name}"?`)) {
+                            removeSchoolProfile(sch.id);
+                          }
+                        }}
+                        style={{
+                          backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                          color: '#D32F2F',
+                          border: '1px solid rgba(211, 47, 47, 0.25)',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <Trash2 size={12} /> Remove Profile
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -1570,6 +1597,30 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                         <span style={{ marginLeft: '12px' }}>Phone: <strong>{col.phone}</strong></span>
                       </div>
                     </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to remove collector profile "${col.name}"?`)) {
+                            removeCollectorProfile(col.id);
+                          }
+                        }}
+                        style={{
+                          backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                          color: '#D32F2F',
+                          border: '1px solid rgba(211, 47, 47, 0.25)',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <Trash2 size={12} /> Remove Profile
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -1703,6 +1754,30 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                       <div style={{ gridColumn: 'span 2', fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
                         📞 Contact: <strong>{buy.contact}</strong>
                       </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to remove buyer profile "${buy.agencyName || buy.name}"?`)) {
+                            removeBuyerProfile(buy.id);
+                          }
+                        }}
+                        style={{
+                          backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                          color: '#D32F2F',
+                          border: '1px solid rgba(211, 47, 47, 0.25)',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <Trash2 size={12} /> Remove Profile
+                      </button>
                     </div>
                   </div>
                 );

@@ -209,6 +209,36 @@ app.post('/api/buyers', async (req, res) => {
   res.json({ success: true });
 });
 
+app.delete('/api/schools/:id', async (req, res) => {
+  const { id } = req.params;
+  await executeQuery('DELETE FROM schools WHERE id = $1', [id], () => {
+    db.schools = db.schools.filter(s => s.id !== id);
+    saveDatabaseToFile();
+    return [];
+  });
+  res.json({ success: true });
+});
+
+app.delete('/api/collectors/:id', async (req, res) => {
+  const { id } = req.params;
+  await executeQuery('DELETE FROM collectors WHERE id = $1', [id], () => {
+    db.collectors = db.collectors.filter(c => c.id !== id);
+    saveDatabaseToFile();
+    return [];
+  });
+  res.json({ success: true });
+});
+
+app.delete('/api/buyers/:id', async (req, res) => {
+  const { id } = req.params;
+  await executeQuery('DELETE FROM buyers WHERE id = $1', [id], () => {
+    db.buyers = db.buyers.filter(b => b.id !== id);
+    saveDatabaseToFile();
+    return [];
+  });
+  res.json({ success: true });
+});
+
 // Admin Credentials Sync API
 app.get('/api/admin', async (req, res) => {
   if (pool) {

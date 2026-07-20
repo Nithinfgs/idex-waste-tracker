@@ -427,33 +427,39 @@ export const StateProvider = ({ children }) => {
         if (resBuy && resBuy.ok) {
           const rawBuyers = await resBuy.json();
           const localBuyers = JSON.parse(localStorage.getItem('idex_buyers') || '[]');
-          const mappedBuyers = rawBuyers.map((b, idx) => {
-            const localBuy = localBuyers.find(lb => lb.id === b.id);
-            const code = (b.entry_code && b.entry_code !== '') 
-              ? b.entry_code 
-              : (b.entryCode && b.entryCode !== '') 
-              ? b.entryCode 
-              : (localBuy?.entryCode || localBuy?.entry_code || String(idx + 1));
-            const pwd = (b.password && b.password !== '') ? b.password : (localBuy?.password || '12345');
-            return {
-              id: b.id,
-              name: b.name,
-              agencyName: b.agency_name || b.agencyName,
-              agency_name: b.agency_name || b.agencyName,
-              contact: b.contact,
-              latitude: parseFloat(b.latitude || 0),
-              longitude: parseFloat(b.longitude || 0),
-              vehicle: b.vehicle,
-              radius: parseFloat(b.radius || 25.0),
-              budget: b.budget,
-              rating: b.rating,
-              entryCode: code,
-              entry_code: code,
-              password: pwd
-            };
-          });
-          setBuyers(mappedBuyers);
-          localStorage.setItem('idex_buyers', JSON.stringify(mappedBuyers));
+          if (rawBuyers && rawBuyers.length > 0) {
+            const mappedBuyers = rawBuyers.map((b, idx) => {
+              const localBuy = localBuyers.find(lb => lb.id === b.id);
+              const code = (b.entry_code && b.entry_code !== '') 
+                ? b.entry_code 
+                : (b.entryCode && b.entryCode !== '') 
+                ? b.entryCode 
+                : (localBuy?.entryCode || localBuy?.entry_code || String(idx + 1));
+              const pwd = (b.password && b.password !== '') ? b.password : (localBuy?.password || '12345');
+              return {
+                id: b.id,
+                name: b.name,
+                agencyName: b.agency_name || b.agencyName || b.name,
+                agency_name: b.agency_name || b.agencyName || b.name,
+                contact: b.contact || '',
+                latitude: parseFloat(b.latitude || 11.0250),
+                longitude: parseFloat(b.longitude || 76.9620),
+                vehicle: b.vehicle || 'Truck',
+                radius: parseFloat(b.radius || 25.0),
+                budget: b.budget || '₹50,000/mo',
+                rating: b.rating || 'A+',
+                entryCode: code,
+                entry_code: code,
+                password: pwd
+              };
+            });
+            setBuyers(mappedBuyers);
+            localStorage.setItem('idex_buyers', JSON.stringify(mappedBuyers));
+          } else {
+            const fallback = localBuyers.length > 0 ? localBuyers : INITIAL_BUYERS;
+            setBuyers(fallback);
+            localStorage.setItem('idex_buyers', JSON.stringify(fallback));
+          }
         }
         console.log('Synchronized database data successfully from Express server!');
       } catch (err) {
@@ -1257,6 +1263,84 @@ export const StateProvider = ({ children }) => {
     addToast('Admin login ID and Password updated & synced across all devices!', 'success');
   };
 
+  // Remove School Profile (Admin only)
+  const removeSchoolProfile = (schoolId) => {
+    setSchools(prev => {
+      const next = prev.filter(s => s.id !== schoolId);
+      localStorage.setItem('idex_schools', JSON.stringify(next));
+      return next;
+    });
+    fetch(`${API_URL}/api/schools/${schoolId}`, { method: 'DELETE' }).catch(() => {});
+    addToast('School profile removed successfully!', 'success');
+  };
+
+  // Remove Collector Profile (Admin only)
+  const removeCollectorProfile = (collectorId) => {
+    setCollectors(prev => {
+      const next = prev.filter(c => c.id !== collectorId);
+      localStorage.setItem('idex_collectors', JSON.stringify(next));
+      return next;
+    });
+    fetch(`${API_URL}/api/collectors/${collectorId}`, { method: 'DELETE' }).catch(() => {});
+    addToast('Collector profile removed successfully!', 'success');
+  };
+
+  // Remove Buyer Profile (Admin only)
+  const removeBuyerProfile = (buyerId) => {
+    setBuyers(prev => {
+      const next = prev.filter(b => b.id !== buyerId);
+      localStorage.setItem('idex_buyers', JSON.stringify(next));
+      return next;
+    });
+    fetch(`${API_URL}/api/buyers/${buyerId}`, { method: 'DELETE' }).catch(() => {});
+    addToast('Buyer profile removed successfully!', 'success');
+  };
+
+  // Full Update School Profile (Admin only)
+  const updateFullSchoolProfile = (schoolData) => {
+    setSchools(prev => {
+      const next = prev.map(s => s.id === schoolData.id ? { ...s, ...schoolData } : s);
+      localStorage.setItem('idex_schools', JSON.stringify(next));
+      return next;
+    });
+    fetch(`${API_URL}/api/schools`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(schoolData)
+    }).catch(() => {});
+    addToast(`School profile ${schoolData.name} updated!`, 'success');
+  };
+
+  // Full Update Collector Profile (Admin only)
+  const updateFullCollectorProfile = (collectorData) => {
+    setCollectors(prev => {
+      const next = prev.map(c => c.id === collectorData.id ? { ...c, ...collectorData } : c);
+      localStorage.setItem('idex_collectors', JSON.stringify(next));
+      return next;
+    });
+    fetch(`${API_URL}/api/collectors`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(collectorData)
+    }).catch(() => {});
+    addToast(`Collector profile ${collectorData.name} updated!`, 'success');
+  };
+
+  // Full Update Buyer Profile (Admin only)
+  const updateFullBuyerProfile = (buyerData) => {
+    setBuyers(prev => {
+      const next = prev.map(b => b.id === buyerData.id ? { ...b, ...buyerData } : b);
+      localStorage.setItem('idex_buyers', JSON.stringify(next));
+      return next;
+    });
+    fetch(`${API_URL}/api/buyers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buyerData)
+    }).catch(() => {});
+    addToast(`Buyer profile ${buyerData.name} updated!`, 'success');
+  };
+
   // Mark individual notification as read
   const markAsRead = (notificationId) => {
     setNotifications(prev => {
@@ -1516,6 +1600,12 @@ export const StateProvider = ({ children }) => {
       addNewSchoolProfile,
       addNewCollectorProfile,
       addNewBuyerProfile,
+      removeSchoolProfile,
+      removeCollectorProfile,
+      removeBuyerProfile,
+      updateFullSchoolProfile,
+      updateFullCollectorProfile,
+      updateFullBuyerProfile,
       updateProfileCredentials,
       adminCredentials,
       updateAdminCredentials,
