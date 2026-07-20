@@ -51,6 +51,7 @@ let db = {
     { id: 'buy-1', name: 'Coimbatore Agri-Gov Agency', agency_name: 'Coimbatore Agriculture Department', contact: '0422 230 1122', latitude: 11.0250, longitude: 76.9620, vehicle: 'Agriculture Dept Truck', radius: 25.0, budget: '₹50,000/mo', rating: 'A+', entry_code: '1', password: '12345' },
     { id: 'buy-2', name: 'GreenSoil Organics Agency', agency_name: 'GreenSoil Fertilizers & Compost Corp', contact: '0422 244 5566', latitude: 10.9850, longitude: 76.9420, vehicle: 'Mini Flatbed Dump Truck', radius: 15.0, budget: '₹80,000/mo', rating: 'A', entry_code: '2', password: '12345' }
   ],
+  admin_credentials: { entry_code: 'admin', password: 'admin123' },
   waste_posts: [],
   produce_posts: [],
   notifications: [],
@@ -230,6 +231,52 @@ app.post('/api/buyers', async (req, res) => {
     }
   );
   res.json({ success: true });
+});
+
+// Admin Credentials Sync API
+app.get('/api/admin', async (req, res) => {
+  if (pool) {
+    try {
+      await pool.query(
+        'CREATE TABLE IF NOT EXISTS admin_credentials (id INT PRIMARY KEY, entry_code TEXT, password TEXT)'
+      );
+      const result = await pool.query('SELECT entry_code, password FROM admin_credentials WHERE id = 1');
+      if (result.rows.length > 0) {
+        return res.json({ entryCode: result.rows[0].entry_code, password: result.rows[0].password });
+      }
+    } catch (err) {
+      console.error('Error fetching admin credentials from Postgres:', err.message);
+    }
+  }
+  return res.json({ 
+    entryCode: db.admin_credentials?.entry_code || 'admin', 
+    password: db.admin_credentials?.password || 'admin123' 
+  });
+});
+
+app.post('/api/admin', async (req, res) => {
+  const { entryCode, entry_code, password } = req.body;
+  const cleanCode = String(entryCode || entry_code || 'admin').trim();
+  const cleanPwd = String(password || 'admin123').trim();
+
+  db.admin_credentials = { entry_code: cleanCode, password: cleanPwd };
+
+  if (pool) {
+    try {
+      await pool.query(
+        'CREATE TABLE IF NOT EXISTS admin_credentials (id INT PRIMARY KEY, entry_code TEXT, password TEXT)'
+      );
+      await pool.query(
+        'INSERT INTO admin_credentials (id, entry_code, password) VALUES (1, $1, $2) ON CONFLICT (id) DO UPDATE SET entry_code = EXCLUDED.entry_code, password = EXCLUDED.password',
+        [cleanCode, cleanPwd]
+      );
+    } catch (err) {
+      console.error('Error saving admin credentials to Postgres:', err.message);
+    }
+  }
+
+  saveDatabaseToFile();
+  return res.json({ success: true, entryCode: cleanCode, password: cleanPwd });
 });
 
 // 3. Waste Posts

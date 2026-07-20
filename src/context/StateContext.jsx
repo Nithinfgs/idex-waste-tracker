@@ -252,15 +252,25 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     const loadServerData = async () => {
       try {
-        const [resSch, resCol, resPosts, resHist, resNotif, resProduce, resBuy] = await Promise.all([
+        const [resSch, resCol, resPosts, resHist, resNotif, resProduce, resBuy, resAdmin] = await Promise.all([
           fetch(`${API_URL}/api/schools`),
           fetch(`${API_URL}/api/collectors`),
           fetch(`${API_URL}/api/waste-posts`),
           fetch(`${API_URL}/api/history`),
           fetch(`${API_URL}/api/notifications`),
           fetch(`${API_URL}/api/produce-posts`),
-          fetch(`${API_URL}/api/buyers`).catch(() => null)
+          fetch(`${API_URL}/api/buyers`).catch(() => null),
+          fetch(`${API_URL}/api/admin`).catch(() => null)
         ]);
+
+        if (resAdmin && resAdmin.ok) {
+          const adminData = await resAdmin.json();
+          if (adminData && adminData.entryCode) {
+            const newAdminCreds = { entryCode: adminData.entryCode, password: adminData.password || 'admin123' };
+            setAdminCredentials(newAdminCreds);
+            localStorage.setItem('idex_admin_credentials', JSON.stringify(newAdminCreds));
+          }
+        }
 
         if (resSch.ok) {
           const rawSchools = await resSch.json();
@@ -294,6 +304,7 @@ export const StateProvider = ({ children }) => {
             };
           });
           setSchools(mappedSchools);
+          localStorage.setItem('idex_schools', JSON.stringify(mappedSchools));
         }
         if (resCol.ok) {
           const rawCollectors = await resCol.json();
@@ -322,6 +333,7 @@ export const StateProvider = ({ children }) => {
             };
           });
           setCollectors(mappedCollectors);
+          localStorage.setItem('idex_collectors', JSON.stringify(mappedCollectors));
         }
         if (resPosts.ok) {
           const rawPosts = await resPosts.json();
@@ -436,6 +448,7 @@ export const StateProvider = ({ children }) => {
             };
           });
           setBuyers(mappedBuyers);
+          localStorage.setItem('idex_buyers', JSON.stringify(mappedBuyers));
         }
         console.log('Synchronized database data successfully from Express server!');
       } catch (err) {
@@ -1229,7 +1242,14 @@ export const StateProvider = ({ children }) => {
     const newCreds = { entryCode: cleanCode, password: cleanPwd };
     setAdminCredentials(newCreds);
     localStorage.setItem('idex_admin_credentials', JSON.stringify(newCreds));
-    addToast('Admin login ID and Password updated successfully!', 'success');
+
+    fetch(`${API_URL}/api/admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCreds)
+    }).catch(err => console.warn('Failed to sync updated admin credentials to server:', err.message));
+
+    addToast('Admin login ID and Password updated & synced across all devices!', 'success');
   };
 
   // Mark individual notification as read
