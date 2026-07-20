@@ -67,7 +67,7 @@ body {
   margin: 0 auto;
   background-color: var(--color-background);
   position: relative;
-  padding-bottom: 110px; /* space for fixed bottom navigation bar */
+  padding-bottom: 0px;
 }
 
 /* Page Slide Transition (250ms) */

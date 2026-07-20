@@ -2208,7 +2208,7 @@ const styles = {
     flexDirection: 'column',
     flex: 1,
     overflowY: 'auto',
-    paddingBottom: '110px'
+    paddingBottom: '16px'
   },
   sectionTitle: {
     fontSize: '0.95rem',

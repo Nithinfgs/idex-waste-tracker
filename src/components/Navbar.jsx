@@ -382,17 +382,16 @@ const styles = {
   unifiedHeader: {
     backgroundColor: '#FFFFFF',
     borderTop: '1.5px solid var(--color-border)',
-    boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.12)',
-    position: 'fixed',
+    boxShadow: '0 -4px 18px rgba(0, 0, 0, 0.06)',
+    position: 'sticky',
     bottom: 0,
-    left: '50%',
-    transform: 'translateX(-50%)',
-    zIndex: 1000,
+    zIndex: 100,
     width: '100%',
-    maxWidth: '480px',
     display: 'flex',
     flexDirection: 'column',
-    padding: '8px 12px calc(8px + env(safe-area-inset-bottom, 0px)) 12px'
+    padding: '8px 12px 8px 12px',
+    marginTop: 'auto',
+    marginBottom: 0
   },
   topRow: {
     display: 'flex',
@@ -404,24 +403,25 @@ const styles = {
   tabRow: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     paddingTop: '6px',
-    gap: '2px',
-    width: '100%'
+    gap: '3px',
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch'
   },
   tabPill: {
-    flex: '1 1 0px',
+    flex: '1 0 auto',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '4px',
-    padding: '6px 4px',
+    padding: '6px 6px',
     borderRadius: '10px',
     border: 'none',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
-    minWidth: 0,
-    minHeight: '34px',
+    minWidth: 'auto',
+    minHeight: '32px',
     transition: 'all 150ms ease'
   },
   tabBadge: {

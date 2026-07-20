@@ -1958,7 +1958,7 @@ const styles = {
     flexDirection: 'column',
     flex: 1,
     overflowY: 'auto',
-    paddingBottom: '110px'
+    paddingBottom: '16px'
   },
   headerFlex: {
     display: 'flex',
