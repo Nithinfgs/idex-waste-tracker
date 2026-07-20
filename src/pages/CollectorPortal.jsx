@@ -1293,16 +1293,13 @@ const styles = {
     padding: 'var(--spacing-md)',
     display: 'flex',
     flexDirection: 'column',
-    flex: 1,
-    overflowY: 'hidden',
+    width: '100%',
     position: 'relative'
   },
   scrollable: {
     display: 'flex',
     flexDirection: 'column',
-    flex: 1,
-    overflowY: 'auto',
-    paddingBottom: '16px'
+    width: '100%'
   },
   welcomeSection: {
     marginBottom: 'var(--spacing-md)'

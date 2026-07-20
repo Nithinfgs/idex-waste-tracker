@@ -381,17 +381,15 @@ export default function Navbar({ activeTab, setActiveTab }) {
 const styles = {
   unifiedHeader: {
     backgroundColor: '#FFFFFF',
-    borderTop: '1.5px solid var(--color-border)',
-    boxShadow: '0 -4px 18px rgba(0, 0, 0, 0.06)',
-    position: 'sticky',
-    bottom: 0,
-    zIndex: 100,
+    borderRadius: '16px',
+    border: '1.5px solid var(--color-border)',
+    boxShadow: 'var(--shadow-subtle)',
+    position: 'relative',
+    zIndex: 10,
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
-    padding: '8px 12px 8px 12px',
-    marginTop: 'auto',
-    marginBottom: 0
+    padding: '10px 12px 8px 12px'
   },
   topRow: {
     display: 'flex',

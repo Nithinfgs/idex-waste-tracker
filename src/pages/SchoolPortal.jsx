@@ -1937,8 +1937,7 @@ const styles = {
     padding: 'var(--spacing-md)',
     display: 'flex',
     flexDirection: 'column',
-    flex: 1,
-    overflowY: 'hidden',
+    width: '100%',
     position: 'relative'
   },
   offlineBanner: {
@@ -1956,9 +1955,7 @@ const styles = {
   scrollable: {
     display: 'flex',
     flexDirection: 'column',
-    flex: 1,
-    overflowY: 'auto',
-    paddingBottom: '16px'
+    width: '100%'
   },
   headerFlex: {
     display: 'flex',

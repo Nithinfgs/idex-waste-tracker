@@ -876,16 +876,13 @@ const styles = {
   container: {
     display: 'flex',
     flexDirection: 'column',
-    height: '100%',
     width: '100%',
-    position: 'relative',
-    backgroundColor: 'var(--color-background)'
+    position: 'relative'
   },
   scrollable: {
-    flex: 1,
-    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
     padding: '16px',
-    paddingBottom: '16px',
     width: '100%'
   },
   welcomeHero: {

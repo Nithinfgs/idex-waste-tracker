@@ -2200,15 +2200,12 @@ const styles = {
     padding: 'var(--spacing-md)',
     display: 'flex',
     flexDirection: 'column',
-    flex: 1,
-    overflowY: 'hidden'
+    width: '100%'
   },
   scrollable: {
     display: 'flex',
     flexDirection: 'column',
-    flex: 1,
-    overflowY: 'auto',
-    paddingBottom: '16px'
+    width: '100%'
   },
   sectionTitle: {
     fontSize: '0.95rem',

@@ -79,7 +79,7 @@ function MainApp() {
   }
 
   return (
-    <>
+    <div style={styles.appContainer}>
       {/* Dynamic View Router */}
       <main style={styles.main}>
         {currentRole === 'school' && (
@@ -97,8 +97,10 @@ function MainApp() {
       </main>
 
       {/* Global Navigation & Role Switcher */}
-      <Navbar activeTab={activeTab} setActiveTab={handleTabChange} />
-    </>
+      <div style={styles.navContainer}>
+        <Navbar activeTab={activeTab} setActiveTab={handleTabChange} />
+      </div>
+    </div>
   );
 }
 
@@ -111,10 +113,21 @@ export default function App() {
 }
 
 const styles = {
+  appContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: '100vh',
+    width: '100%',
+    maxWidth: '480px',
+    margin: '0 auto'
+  },
   main: {
     flex: 1,
     display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden'
+    flexDirection: 'column'
+  },
+  navContainer: {
+    padding: '0 16px 24px 16px',
+    width: '100%'
   }
 };
