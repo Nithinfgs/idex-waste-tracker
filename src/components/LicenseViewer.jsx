@@ -34,7 +34,7 @@ export default function LicenseViewer() {
               Software License & Legal Terms
             </h4>
             <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>
-              SPDX: LicenseRef-Proprietary-IDEX-NithinSelvaraj-2026
+              SPDX: LicenseRef-Proprietary-Bloom-NithinSelvaraj-2026
             </span>
           </div>
         </div>
@@ -72,9 +72,9 @@ export default function LicenseViewer() {
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px', padding: '8px 10px', backgroundColor: '#FFFFFF', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-            <div><strong>SPDX Identifier:</strong> <code style={{ color: 'var(--color-primary)', fontWeight: 700 }}>LicenseRef-Proprietary-IDEX-NithinSelvaraj-2026</code></div>
-            <div><strong>Classification Code:</strong> <code>IDEX-PNC-2026-v1.0</code></div>
-            <div><strong>Copyright Tracking Ref:</strong> <code>CR-IDEX-2026-TN-NITHIN</code></div>
+            <div><strong>SPDX Identifier:</strong> <code style={{ color: 'var(--color-primary)', fontWeight: 700 }}>LicenseRef-Proprietary-Bloom-NithinSelvaraj-2026</code></div>
+            <div><strong>Classification Code:</strong> <code>BLOOM-PNC-2026-v1.0</code></div>
+            <div><strong>Copyright Tracking Ref:</strong> <code>CR-BLOOM-2026-TN-NITHIN</code></div>
             <div><strong>Sole Author & Owner:</strong> <strong>Nithin Selvaraj</strong></div>
           </div>
 

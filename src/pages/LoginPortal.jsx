@@ -128,7 +128,7 @@ export default function LoginPortal({ onLoginSuccess }) {
           <div style={styles.logoBadge}>
             <Sparkles size={48} color="var(--color-primary)" />
           </div>
-          <h1 style={styles.brandTitle}>IDEX</h1>
+          <h1 style={styles.brandTitle}>Bloom</h1>
           <p style={styles.tagline}>Waste Less. Feed Better.</p>
           
           <div className="card" style={styles.splashCard}>

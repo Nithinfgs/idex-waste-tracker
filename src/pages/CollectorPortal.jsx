@@ -207,7 +207,7 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
   const handleTicketSubmit = (e) => {
     e.preventDefault();
     if (!ticketMsg.trim()) return;
-    const subject = `IDEX Collector Support Ticket - ${collector.name}`;
+    const subject = `Bloom Collector Support Ticket - ${collector.name}`;
     const body = `Collector Name: ${collector.name}\nCollector ID: ${collector.id}\nType: ${collector.collectorType}\nVehicle: ${collector.vehicle}\n\nIssue:\n${ticketMsg}`;
     window.location.href = `mailto:nithinselvaraj9@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     addToast('Ticket dispatched to nithinselvaraj9@gmail.com!', 'success');

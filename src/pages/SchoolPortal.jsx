@@ -427,7 +427,7 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
   const handleTicketSubmit = (e) => {
     e.preventDefault();
     if (!ticketMsg.trim()) return;
-    const subject = `IDEX Support Ticket - ${school.name}`;
+    const subject = `Bloom Support Ticket - ${school.name}`;
     const body = `School Name: ${school.name}\nSchool ID: ${school.id}\nDistrict: ${school.district}\nContact: ${school.contact}\n\nIssue:\n${ticketMsg}`;
     window.location.href = `mailto:nithinselvaraj9@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     addToast('Ticket dispatched to nithinselvaraj9@gmail.com!', 'success');
@@ -1832,7 +1832,7 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
             {/* Report Header for printing */}
             <div style={{ textAlign: 'center', borderBottom: '2px solid var(--color-primary)', paddingBottom: '10px', marginBottom: '14px' }}>
               <span style={{ fontSize: '1.5rem' }}>🏆</span>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '4px 0', color: 'var(--color-primary)' }}>IDEX Food Audit Report</h2>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '4px 0', color: 'var(--color-primary)' }}>Bloom Food Audit Report</h2>
               <span style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Coimbatore District Mid-Day Meals Scheme
               </span>
