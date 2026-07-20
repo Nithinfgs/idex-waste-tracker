@@ -382,30 +382,30 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                           Claimed by {schools.find(s => s.id === p.claimedBySchoolId)?.name.split(',')[0] || 'Claimed'}
                         </span>
                       ) : (
-                        <>
-                          <span className="badge" style={{ backgroundColor: 'rgba(255, 167, 38, 0.08)', color: '#F57C00' }}>
-                            Available
-                          </span>
-                          <button 
-                            onClick={() => cancelProducePost(p.id)}
-                            style={{
-                              backgroundColor: 'rgba(211, 47, 47, 0.08)',
-                              color: 'var(--color-error)',
-                              border: '1px solid var(--color-error)',
-                              borderRadius: '6px',
-                              padding: '3px 8px',
-                              fontSize: '0.65rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            <Trash2 size={12} /> Cancel Listing
-                          </button>
-                        </>
+                        <span className="badge" style={{ backgroundColor: 'rgba(255, 167, 38, 0.08)', color: '#F57C00' }}>
+                          Available
+                        </span>
                       )}
+                      <button 
+                        onClick={() => cancelProducePost(p.id)}
+                        style={{
+                          backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                          color: 'var(--color-error)',
+                          border: '1px solid var(--color-error)',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          marginTop: '2px'
+                        }}
+                        title="Remove / Cancel this produce post"
+                      >
+                        <Trash2 size={13} /> Cancel Post
+                      </button>
                     </div>
                   </div>
                 </div>
