@@ -30,7 +30,7 @@ import {
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
 import L from 'leaflet';
 
-export default function BuyerPortal() {
+export default function BuyerPortal({ activeTab: propActiveTab, setActiveTab: propSetActiveTab }) {
   const { 
     buyers,
     selectedBuyerId,
@@ -63,7 +63,9 @@ export default function BuyerPortal() {
     rating: 'A+'
   };
 
-  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'nearby' | 'active' | 'notifications' | 'profile'
+  const [internalTab, setInternalTab] = useState('home');
+  const activeTab = propActiveTab || internalTab;
+  const setActiveTab = propSetActiveTab || setInternalTab;
   const [viewMode, setViewMode] = useState('map'); // 'map' | 'list'
   const [selectedPostForBottomSheet, setSelectedPostForBottomSheet] = useState(null);
   const [showReserveConfirmationPost, setShowReserveConfirmationPost] = useState(null);
