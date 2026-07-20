@@ -1,18 +1,29 @@
-# React + Vite
+# ♻️ IDEX Food Waste & Surplus Tracker
+> **Coimbatore District Municipal Mid-Day Meal Surplus Diversion & Agriculture Network**
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+IDEX Waste Tracker is a multi-portal real-time platform linking Government Schools, Piggery & Livestock Farmers, Compost Processing Agencies, and Municipal Administrators across Coimbatore District to eliminate school mid-day meal organic waste.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🌟 Key Features
 
-## React Compiler
+- 🏫 **School Management Portal**: Real-time mid-day meal surplus reporting, menu logging, attendance correlation, and automated prediction.
+- 🚜 **Farmer & Collector Portal**: Proximity-based GPS map, single-click batch reservation, route transit tracking, and excess produce marketplace.
+- 🌿 **Compost Buyer Portal**: Bulk organic waste sourcing and agency purchasing.
+- 🛡️ **Admin Dashboard**: District-wide analytics, customizable entry codes/passwords, registry control, and municipal configuration.
+- 📱 **Native Mobile App (Android)**: Built with Capacitor, featuring zero-delay single-touch controls and real-time native status bar push notifications.
+- 📊 **Academic Report Generator**: Automated 6-page PDF audit report generator for competition and policy evaluation.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## 🔒 License & Intellectual Property Notice
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
-# idex-food-waste
-# idex-food-waste
+Copyright (c) 2026 **Nithin Selvaraj** / IDEX Waste Tracker Team.
+
+### Terms of Use:
+- **Free Open Use**: Anyone is free to use, run, inspect, and evaluate this application for non-commercial, educational, community, or demonstration purposes.
+- **Anti-Plagiarism & Ownership Protection**: You may **NOT** copy, clone, rebrand, republish, or present this project or codebase as your own original creation.
+- **Attribution**: Any authorized fork, reference, or presentation must clearly credit **Nithin Selvaraj** and the **IDEX Waste Tracker** platform.
+- **Enforcement**: Direct plagiarism, unauthorized claiming of ownership, or uncredited re-publication in competitions or public platforms will result in immediate DMCA/competition complaints and **relevant legal actions**.
+
+*For full legal details, see the [LICENSE](LICENSE) file.*
