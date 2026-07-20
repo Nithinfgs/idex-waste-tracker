@@ -373,6 +373,34 @@ app.post('/api/waste-posts/:id/status', async (req, res) => {
   res.json({ success: true });
 });
 
+// Cancel / Delete Waste Post endpoint
+app.post('/api/waste-posts/:id/cancel', async (req, res) => {
+  const { id } = req.params;
+  await executeQuery(
+    'DELETE FROM waste_posts WHERE id = $1',
+    [id],
+    () => {
+      db.waste_posts = db.waste_posts.filter(post => post.id !== id);
+      saveDatabaseToFile();
+      return [];
+    }
+  );
+  res.json({ success: true });
+});
+app.delete('/api/waste-posts/:id', async (req, res) => {
+  const { id } = req.params;
+  await executeQuery(
+    'DELETE FROM waste_posts WHERE id = $1',
+    [id],
+    () => {
+      db.waste_posts = db.waste_posts.filter(post => post.id !== id);
+      saveDatabaseToFile();
+      return [];
+    }
+  );
+  res.json({ success: true });
+});
+
 // 4. Notifications
 app.get('/api/notifications', async (req, res) => {
   const data = await executeQuery('SELECT * FROM notifications ORDER BY created_at DESC', [], () => db.notifications);
@@ -502,6 +530,39 @@ app.post('/api/produce-posts/:id/claim', async (req, res) => {
         });
       }
       saveDatabaseToFile();
+      return [];
+    }
+  );
+  res.json({ success: true });
+});
+
+// Cancel / Delete Produce Post endpoint
+app.post('/api/produce-posts/:id/cancel', async (req, res) => {
+  const { id } = req.params;
+  await executeQuery(
+    'DELETE FROM produce_posts WHERE id = $1',
+    [id],
+    () => {
+      if (db.produce_posts) {
+        db.produce_posts = db.produce_posts.filter(post => post.id !== id);
+        saveDatabaseToFile();
+      }
+      return [];
+    }
+  );
+  res.json({ success: true });
+});
+
+app.delete('/api/produce-posts/:id', async (req, res) => {
+  const { id } = req.params;
+  await executeQuery(
+    'DELETE FROM produce_posts WHERE id = $1',
+    [id],
+    () => {
+      if (db.produce_posts) {
+        db.produce_posts = db.produce_posts.filter(post => post.id !== id);
+        saveDatabaseToFile();
+      }
       return [];
     }
   );

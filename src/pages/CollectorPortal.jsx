@@ -23,7 +23,9 @@ import {
   History,
   ShoppingBag,
   RefreshCw,
-  Check
+  Check,
+  Trash2,
+  Camera
 } from 'lucide-react';
 
 const createMarkerIcon = (weight, status) => {
@@ -85,7 +87,8 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
     setSyncPasscode,
     uploadStateToCloud,
     downloadStateFromCloud,
-    uploadProducePost
+    uploadProducePost,
+    cancelProducePost
   } = useContext(StateContext);
 
   const collector = collectors.find(c => c.id === selectedCollectorId);
@@ -357,7 +360,11 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                   <div style={styles.swiggyMetaRow}>
                     <div style={styles.swiggyLeftCol}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '1.25rem' }}>{getProduceIcon(p.title)}</span>
+                        {p.imageUrl ? (
+                          <img src={p.imageUrl} alt={p.title} style={{ width: '42px', height: '42px', borderRadius: '8px', objectFit: 'cover' }} />
+                        ) : (
+                          <span style={{ fontSize: '1.25rem' }}>{getProduceIcon(p.title)}</span>
+                        )}
                         <h4 style={styles.swiggySchool}>{p.title} ({p.quantity} kg)</h4>
                       </div>
                       <span style={styles.swiggyDetails}>
@@ -369,15 +376,35 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                         </p>
                       )}
                     </div>
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
                       {p.status === 'Claimed' ? (
                         <span className="badge" style={{ backgroundColor: 'rgba(46, 125, 50, 0.08)', color: 'var(--color-primary)' }}>
                           Claimed by {schools.find(s => s.id === p.claimedBySchoolId)?.name.split(',')[0] || 'Claimed'}
                         </span>
                       ) : (
-                        <span className="badge" style={{ backgroundColor: 'rgba(255, 167, 38, 0.08)', color: '#F57C00' }}>
-                          Available
-                        </span>
+                        <>
+                          <span className="badge" style={{ backgroundColor: 'rgba(255, 167, 38, 0.08)', color: '#F57C00' }}>
+                            Available
+                          </span>
+                          <button 
+                            onClick={() => cancelProducePost(p.id)}
+                            style={{
+                              backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                              color: 'var(--color-error)',
+                              border: '1px solid var(--color-error)',
+                              borderRadius: '6px',
+                              padding: '3px 8px',
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Trash2 size={12} /> Cancel Listing
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -1087,7 +1114,7 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                 produceForm.quantity,
                 produceForm.price,
                 finalDelivery,
-                '', // image_url
+                produceForm.imageUrl || '',
                 produceForm.description
               );
               setShowProduceModal(false);
@@ -1115,6 +1142,41 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                   <option value="Potatoes">🥔 Potatoes</option>
                   <option value="Custom">Custom Item...</option>
                 </select>
+              </div>
+
+              {/* Photo Upload / Attachment */}
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <label className="form-label" style={{ fontSize: '0.7rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Camera size={13} color="var(--color-primary)" /> Upload Product Photo
+                </label>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  style={{ fontSize: '0.72rem', width: '100%', marginBottom: '6px' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setProduceForm(p => ({ ...p, imageUrl: reader.result }));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+                {produceForm.imageUrl && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                    <img src={produceForm.imageUrl} alt="Preview" style={{ width: '45px', height: '45px', borderRadius: '6px', objectFit: 'cover', border: '1px solid var(--color-primary)' }} />
+                    <span style={{ fontSize: '0.68rem', color: 'var(--color-primary)', fontWeight: 600 }}>✓ Photo Selected</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setProduceForm(p => ({ ...p, imageUrl: '' }))}
+                      style={{ fontSize: '0.65rem', color: 'var(--color-error)', border: 'none', background: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
 
               {produceForm.title === 'Custom' && (

@@ -42,6 +42,7 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
     notifications,
     markAsRead,
     markAllAsRead,
+    cancelWastePost,
     selectedSchoolId,
     setIsLoggedIn,
     uploadWaste,
@@ -615,13 +616,33 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                   <div>Weight: <strong>{activePost.estimatedWeight} kg</strong></div>
                   <div>Reason: <strong>{activePost.reason}</strong></div>
                 </div>
-                <button 
-                  onClick={() => setActiveTab('collections')}
-                  className="btn-secondary" 
-                  style={{ marginTop: '12px', minHeight: '36px' }}
-                >
-                  Track Collection Progress
-                </button>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                  <button 
+                    onClick={() => setActiveTab('collections')}
+                    className="btn-secondary" 
+                    style={{ flex: 1, minHeight: '36px' }}
+                  >
+                    Track Collection Progress
+                  </button>
+                  <button 
+                    onClick={() => cancelWastePost(activePost.id)}
+                    style={{
+                      backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                      color: 'var(--color-error)',
+                      border: '1px solid var(--color-error)',
+                      borderRadius: '8px',
+                      padding: '0 12px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <Trash2 size={14} /> Remove Post
+                  </button>
+                </div>
               </div>
             ) : (
               <div style={styles.emptyLogsCard}>

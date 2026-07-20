@@ -1362,6 +1362,36 @@ export const StateProvider = ({ children }) => {
     return true;
   };
 
+  // Farmer cancels their own excess produce listing
+  const cancelProducePost = (postId) => {
+    setProducePosts(prev => {
+      const next = prev.filter(p => p.id !== postId);
+      localStorage.setItem('idex_produce_posts', JSON.stringify(next));
+      return next;
+    });
+
+    fetch(`${API_URL}/api/produce-posts/${postId}/cancel`, {
+      method: 'POST'
+    }).catch(err => console.warn('Failed to cancel produce post on backend:', err.message));
+
+    addToast('Produce listing removed successfully!', 'success');
+  };
+
+  // School kitchen cancels their active waste posting
+  const cancelWastePost = (postId) => {
+    setWastePosts(prev => {
+      const next = prev.filter(p => p.id !== postId);
+      localStorage.setItem('idex_waste_posts', JSON.stringify(next));
+      return next;
+    });
+
+    fetch(`${API_URL}/api/waste-posts/${postId}/cancel`, {
+      method: 'POST'
+    }).catch(err => console.warn('Failed to cancel waste post on backend:', err.message));
+
+    addToast('Active waste posting removed successfully!', 'success');
+  };
+
   const forceSimulateTimeout = (postId) => {
     setWastePosts(prev => prev.map(post => {
       if (post.id === postId && post.status === 'Reserved') {
@@ -1494,6 +1524,8 @@ export const StateProvider = ({ children }) => {
       setSystemReservationTimeout,
       uploadProducePost,
       claimProducePost,
+      cancelProducePost,
+      cancelWastePost,
       forceSimulateTimeout,
       addToast,
       triggerConfetti,
