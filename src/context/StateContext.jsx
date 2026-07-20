@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { initNativeNotifications, sendNativePushAlert } from '../utils/notifications';
 import { INITIAL_SCHOOLS, getComparableSchools } from '../state/schools';
 import { INITIAL_WASTE_POSTS, calculateWeight, getDistance, sortWastePosts } from '../state/waste';
 import { INITIAL_COLLECTORS, filterWastePosts } from '../state/collectors';
@@ -31,6 +32,10 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('idex_language', language);
   }, [language]);
+
+  useEffect(() => {
+    initNativeNotifications();
+  }, []);
 
   const t = (key) => {
     const langDict = TRANSLATIONS[language] || TRANSLATIONS['en'];
@@ -109,6 +114,11 @@ export const StateProvider = ({ children }) => {
     return local ? parseInt(local, 10) : 30;
   });
 
+  const [adminCredentials, setAdminCredentials] = useState(() => {
+    const local = localStorage.getItem('idex_admin_credentials');
+    return local ? JSON.parse(local) : { entryCode: 'admin', password: 'admin123' };
+  });
+
   useEffect(() => {
     localStorage.setItem('idex_district_jurisdiction', districtJurisdiction);
   }, [districtJurisdiction]);
@@ -120,6 +130,10 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('idex_system_reservation_timeout', systemReservationTimeout);
   }, [systemReservationTimeout]);
+
+  useEffect(() => {
+    localStorage.setItem('idex_admin_credentials', JSON.stringify(adminCredentials));
+  }, [adminCredentials]);
 
   // Simulated Offline Mode
   const [isOfflineMode, setIsOfflineMode] = useState(false);
@@ -250,39 +264,63 @@ export const StateProvider = ({ children }) => {
 
         if (resSch.ok) {
           const rawSchools = await resSch.json();
-          const mappedSchools = rawSchools.map(s => ({
-            id: s.id,
-            name: s.name,
-            district: s.district,
-            latitude: parseFloat(s.latitude || 0),
-            longitude: parseFloat(s.longitude || 0),
-            studentStrength: parseInt(s.student_strength || s.studentStrength || 0),
-            drumCapacity: parseFloat(s.drum_capacity || s.drumCapacity || 0),
-            contact: s.contact,
-            address: s.address,
-            menuMon: s.menu_mon || s.menuMon || '',
-            menuTue: s.menu_tue || s.menuTue || '',
-            menuWed: s.menu_wed || s.menuWed || '',
-            menuThu: s.menu_thu || s.menuThu || '',
-            menuFri: s.menu_fri || s.menuFri || '',
-            entryCode: s.entry_code || s.entryCode || '',
-            password: s.password || '12345'
-          }));
+          const localSchs = JSON.parse(localStorage.getItem('idex_schools') || '[]');
+          const mappedSchools = rawSchools.map((s, idx) => {
+            const localSch = localSchs.find(ls => ls.id === s.id);
+            const code = (s.entry_code && s.entry_code !== '') 
+              ? s.entry_code 
+              : (s.entryCode && s.entryCode !== '') 
+              ? s.entryCode 
+              : (localSch?.entryCode || localSch?.entry_code || String(idx + 1));
+            const pwd = (s.password && s.password !== '') ? s.password : (localSch?.password || '12345');
+            return {
+              id: s.id,
+              name: s.name,
+              district: s.district,
+              latitude: parseFloat(s.latitude || 0),
+              longitude: parseFloat(s.longitude || 0),
+              studentStrength: parseInt(s.student_strength || s.studentStrength || 0),
+              drumCapacity: parseFloat(s.drum_capacity || s.drumCapacity || 0),
+              contact: s.contact,
+              address: s.address,
+              menuMon: s.menu_mon || s.menuMon || '',
+              menuTue: s.menu_tue || s.menuTue || '',
+              menuWed: s.menu_wed || s.menuWed || '',
+              menuThu: s.menu_thu || s.menuThu || '',
+              menuFri: s.menu_fri || s.menuFri || '',
+              entryCode: code,
+              entry_code: code,
+              password: pwd
+            };
+          });
           setSchools(mappedSchools);
         }
         if (resCol.ok) {
           const rawCollectors = await resCol.json();
-          const mappedCollectors = rawCollectors.map(c => ({
-            id: c.id,
-            name: c.name,
-            collectorType: c.collector_type || c.collectorType,
-            vehicle: c.vehicle,
-            radius: parseFloat(c.radius || 0),
-            latitude: parseFloat(c.latitude || 0),
-            longitude: parseFloat(c.longitude || 0),
-            entryCode: c.entry_code || c.entryCode || '',
-            password: c.password || '12345'
-          }));
+          const localCols = JSON.parse(localStorage.getItem('idex_collectors') || '[]');
+          const mappedCollectors = rawCollectors.map((c, idx) => {
+            const localCol = localCols.find(lc => lc.id === c.id);
+            const code = (c.entry_code && c.entry_code !== '') 
+              ? c.entry_code 
+              : (c.entryCode && c.entryCode !== '') 
+              ? c.entryCode 
+              : (localCol?.entryCode || localCol?.entry_code || String(idx + 1));
+            const pwd = (c.password && c.password !== '') ? c.password : (localCol?.password || '12345');
+            return {
+              id: c.id,
+              name: c.name,
+              phone: c.phone || '',
+              collectorType: c.collector_type || c.collectorType || 'Farmer',
+              collector_type: c.collector_type || c.collectorType || 'Farmer',
+              vehicle: c.vehicle,
+              radius: parseFloat(c.radius || 0),
+              latitude: parseFloat(c.latitude || 0),
+              longitude: parseFloat(c.longitude || 0),
+              entryCode: code,
+              entry_code: code,
+              password: pwd
+            };
+          });
           setCollectors(mappedCollectors);
         }
         if (resPosts.ok) {
@@ -335,7 +373,16 @@ export const StateProvider = ({ children }) => {
             createdAt: n.created_at || n.createdAt || n.timestamp,
             timestamp: n.created_at || n.createdAt || n.timestamp || new Date().toISOString()
           }));
-          setNotifications(mappedNotif);
+          
+          setNotifications(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            mappedNotif.forEach(n => {
+              if (!existingIds.has(n.id) && !n.read) {
+                sendNativePushAlert(n.title, n.message);
+              }
+            });
+            return mappedNotif;
+          });
         }
         if (resProduce && resProduce.ok) {
           const rawProduce = await resProduce.json();
@@ -356,20 +403,32 @@ export const StateProvider = ({ children }) => {
         }
         if (resBuy && resBuy.ok) {
           const rawBuyers = await resBuy.json();
-          const mappedBuyers = rawBuyers.map(b => ({
-            id: b.id,
-            name: b.name,
-            agencyName: b.agency_name || b.agencyName,
-            contact: b.contact,
-            latitude: parseFloat(b.latitude || 0),
-            longitude: parseFloat(b.longitude || 0),
-            vehicle: b.vehicle,
-            radius: parseFloat(b.radius || 25.0),
-            budget: b.budget,
-            rating: b.rating,
-            entryCode: b.entry_code || b.entryCode || '',
-            password: b.password || '12345'
-          }));
+          const localBuyers = JSON.parse(localStorage.getItem('idex_buyers') || '[]');
+          const mappedBuyers = rawBuyers.map((b, idx) => {
+            const localBuy = localBuyers.find(lb => lb.id === b.id);
+            const code = (b.entry_code && b.entry_code !== '') 
+              ? b.entry_code 
+              : (b.entryCode && b.entryCode !== '') 
+              ? b.entryCode 
+              : (localBuy?.entryCode || localBuy?.entry_code || String(idx + 1));
+            const pwd = (b.password && b.password !== '') ? b.password : (localBuy?.password || '12345');
+            return {
+              id: b.id,
+              name: b.name,
+              agencyName: b.agency_name || b.agencyName,
+              agency_name: b.agency_name || b.agencyName,
+              contact: b.contact,
+              latitude: parseFloat(b.latitude || 0),
+              longitude: parseFloat(b.longitude || 0),
+              vehicle: b.vehicle,
+              radius: parseFloat(b.radius || 25.0),
+              budget: b.budget,
+              rating: b.rating,
+              entryCode: code,
+              entry_code: code,
+              password: pwd
+            };
+          });
           setBuyers(mappedBuyers);
         }
         console.log('Synchronized database data successfully from Express server!');
@@ -1084,13 +1143,18 @@ export const StateProvider = ({ children }) => {
 
   // Update credentials for a profile (Admin only)
   const updateProfileCredentials = (role, id, entryCode, password) => {
-    if (role === 'schools' || role === 'school') {
+    const cleanRole = String(role || '').toLowerCase();
+    const cleanEntryCode = String(entryCode || '').trim();
+    const cleanPassword = String(password || '12345').trim();
+
+    if (cleanRole === 'schools' || cleanRole === 'school') {
       const school = schools.find(s => s.id === id);
       if (!school) return;
       const updatedSchool = {
         ...school,
-        entryCode,
-        password
+        entryCode: cleanEntryCode,
+        entry_code: cleanEntryCode,
+        password: cleanPassword
       };
       
       fetch(`${API_URL}/api/schools`, {
@@ -1099,15 +1163,20 @@ export const StateProvider = ({ children }) => {
         body: JSON.stringify(updatedSchool)
       }).catch(err => console.warn('Failed to sync updated school credentials:', err.message));
 
-      setSchools(prev => prev.map(s => s.id === id ? updatedSchool : s));
+      setSchools(prev => {
+        const next = prev.map(s => s.id === id ? updatedSchool : s);
+        localStorage.setItem('idex_schools', JSON.stringify(next));
+        return next;
+      });
       addToast(`Credentials for school ${school.name} updated!`, 'success');
-    } else if (role === 'collectors' || role === 'collector') {
+    } else if (cleanRole === 'collectors' || cleanRole === 'collector') {
       const collector = collectors.find(c => c.id === id);
       if (!collector) return;
       const updatedCollector = {
         ...collector,
-        entryCode,
-        password
+        entryCode: cleanEntryCode,
+        entry_code: cleanEntryCode,
+        password: cleanPassword
       };
 
       fetch(`${API_URL}/api/collectors`, {
@@ -1116,15 +1185,20 @@ export const StateProvider = ({ children }) => {
         body: JSON.stringify(updatedCollector)
       }).catch(err => console.warn('Failed to sync updated collector credentials:', err.message));
 
-      setCollectors(prev => prev.map(c => c.id === id ? updatedCollector : c));
+      setCollectors(prev => {
+        const next = prev.map(c => c.id === id ? updatedCollector : c);
+        localStorage.setItem('idex_collectors', JSON.stringify(next));
+        return next;
+      });
       addToast(`Credentials for collector ${collector.name} updated!`, 'success');
-    } else if (role === 'buyers' || role === 'buyer') {
+    } else if (cleanRole === 'buyers' || cleanRole === 'buyer') {
       const buyer = buyers.find(b => b.id === id);
       if (!buyer) return;
       const updatedBuyer = {
         ...buyer,
-        entryCode,
-        password
+        entryCode: cleanEntryCode,
+        entry_code: cleanEntryCode,
+        password: cleanPassword
       };
 
       fetch(`${API_URL}/api/buyers`, {
@@ -1133,9 +1207,23 @@ export const StateProvider = ({ children }) => {
         body: JSON.stringify(updatedBuyer)
       }).catch(err => console.warn('Failed to sync updated buyer credentials:', err.message));
 
-      setBuyers(prev => prev.map(b => b.id === id ? updatedBuyer : b));
+      setBuyers(prev => {
+        const next = prev.map(b => b.id === id ? updatedBuyer : b);
+        localStorage.setItem('idex_buyers', JSON.stringify(next));
+        return next;
+      });
       addToast(`Credentials for buyer ${buyer.name} updated!`, 'success');
     }
+  };
+
+  // Update Admin's own login credentials
+  const updateAdminCredentials = (entryCode, password) => {
+    const cleanCode = String(entryCode || 'admin').trim();
+    const cleanPwd = String(password || 'admin123').trim();
+    const newCreds = { entryCode: cleanCode, password: cleanPwd };
+    setAdminCredentials(newCreds);
+    localStorage.setItem('idex_admin_credentials', JSON.stringify(newCreds));
+    addToast('Admin login ID and Password updated successfully!', 'success');
   };
 
   // Farmer lists excess produce
@@ -1341,6 +1429,8 @@ export const StateProvider = ({ children }) => {
       addNewCollectorProfile,
       addNewBuyerProfile,
       updateProfileCredentials,
+      adminCredentials,
+      updateAdminCredentials,
       districtJurisdiction,
       setDistrictJurisdiction,
       minPostingThreshold,

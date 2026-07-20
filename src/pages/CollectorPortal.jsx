@@ -63,6 +63,7 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
     notifications,
     selectedCollectorId,
     collectors,
+    setIsLoggedIn,
     reserveWaste,
     startTransit,
     completePickup,
@@ -847,6 +848,29 @@ export default function CollectorPortal({ activeTab, setActiveTab }) {
                   </select>
                 </div>
               </div>
+
+              <button 
+                onClick={() => setIsLoggedIn(false)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#FFEBEE',
+                  color: '#C62828',
+                  border: '1.5px solid #FFCDD2',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  marginTop: '12px'
+                }}
+              >
+                <LogOut size={18} />
+                Log Out of Account
+              </button>
 
               {/* Cross-Device Sync Card */}
               <div className="card">

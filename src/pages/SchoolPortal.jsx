@@ -29,7 +29,8 @@ import {
   Star,
   Sun,
   CloudRain,
-  FileText
+  FileText,
+  LogOut
 } from 'lucide-react';
 
 export default function SchoolPortal({ activeTab, setActiveTab }) {
@@ -39,6 +40,7 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
     history,
     notifications,
     selectedSchoolId,
+    setIsLoggedIn,
     uploadWaste,
     confirmCollection,
     getSchoolStatistics,
@@ -1448,6 +1450,29 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                   </select>
                 </div>
               </div>
+
+              <button 
+                onClick={() => setIsLoggedIn(false)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#FFEBEE',
+                  color: '#C62828',
+                  border: '1.5px solid #FFCDD2',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  marginTop: '8px'
+                }}
+              >
+                <LogOut size={18} />
+                Log Out of Account
+              </button>
 
               {/* Cross-Device Sync Card */}
               <div className="card">

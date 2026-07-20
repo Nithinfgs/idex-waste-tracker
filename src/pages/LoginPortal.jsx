@@ -7,6 +7,7 @@ export default function LoginPortal({ onLoginSuccess }) {
     schools, 
     collectors, 
     buyers,
+    adminCredentials,
     setCurrentRole, 
     setSelectedSchoolId, 
     setSelectedCollectorId,
@@ -49,12 +50,14 @@ export default function LoginPortal({ onLoginSuccess }) {
     const pwd = password.trim();
 
     if (role === 'school') {
-      const found = schools.find(s => 
-        (s.entryCode && s.entryCode.toLowerCase() === code) || 
-        s.id.toLowerCase() === code
-      );
+      const found = schools.find(s => {
+        const sCode = String(s.entryCode || s.entry_code || '').toLowerCase().trim();
+        const sId = String(s.id || '').toLowerCase().trim();
+        return (sCode !== '' && sCode === code) || sId === code;
+      });
       if (found) {
-        if (found.password === pwd || pwd === '12345') {
+        const expectedPwd = String(found.password || '12345').trim();
+        if (pwd === expectedPwd || pwd === '12345') {
           setCurrentRole('school');
           setSelectedSchoolId(found.id);
           onLoginSuccess('school');
@@ -66,12 +69,14 @@ export default function LoginPortal({ onLoginSuccess }) {
         setErrorMsg(`School profile not found for code: "${entryCode}". Please contact admin.`);
       }
     } else if (role === 'collector') {
-      const found = collectors.find(c => 
-        (c.entryCode && c.entryCode.toLowerCase() === code) || 
-        c.id.toLowerCase() === code
-      );
+      const found = collectors.find(c => {
+        const cCode = String(c.entryCode || c.entry_code || '').toLowerCase().trim();
+        const cId = String(c.id || '').toLowerCase().trim();
+        return (cCode !== '' && cCode === code) || cId === code;
+      });
       if (found) {
-        if (found.password === pwd || pwd === '12345') {
+        const expectedPwd = String(found.password || '12345').trim();
+        if (pwd === expectedPwd || pwd === '12345') {
           setCurrentRole('collector');
           setSelectedCollectorId(found.id);
           onLoginSuccess('collector');
@@ -83,12 +88,14 @@ export default function LoginPortal({ onLoginSuccess }) {
         setErrorMsg(`Collector profile not found for code: "${entryCode}". Please contact admin.`);
       }
     } else if (role === 'buyer') {
-      const found = buyers.find(b => 
-        (b.entryCode && b.entryCode.toLowerCase() === code) || 
-        b.id.toLowerCase() === code
-      );
+      const found = buyers.find(b => {
+        const bCode = String(b.entryCode || b.entry_code || '').toLowerCase().trim();
+        const bId = String(b.id || '').toLowerCase().trim();
+        return (bCode !== '' && bCode === code) || bId === code;
+      });
       if (found) {
-        if (found.password === pwd || pwd === '12345') {
+        const expectedPwd = String(found.password || '12345').trim();
+        if (pwd === expectedPwd || pwd === '12345') {
           setCurrentRole('buyer');
           setSelectedBuyerId(found.id);
           onLoginSuccess('buyer');
@@ -100,12 +107,15 @@ export default function LoginPortal({ onLoginSuccess }) {
         setErrorMsg(`Buyer profile not found for code: "${entryCode}". Please contact admin.`);
       }
     } else if (role === 'admin') {
-      if ((code === 'admin' || code === '1') && (pwd === 'admin123' || pwd === '12345')) {
+      const validAdminCode = String(adminCredentials?.entryCode || 'admin').toLowerCase().trim();
+      const validAdminPwd = String(adminCredentials?.password || 'admin123').trim();
+
+      if ((code === validAdminCode || code === 'admin' || code === '1') && (pwd === validAdminPwd || pwd === 'admin123' || pwd === '12345')) {
         setCurrentRole('admin');
         onLoginSuccess('admin');
         addToast('Admin logged in successfully.', 'success');
       } else {
-        setErrorMsg('Invalid admin credentials.');
+        setErrorMsg('Invalid admin credentials. Please check your Admin Entry Code & Password.');
       }
     }
   };

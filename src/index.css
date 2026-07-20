@@ -44,6 +44,11 @@
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+html, body, button, input, select, textarea, a, .card, div {
+  touch-action: manipulation;
 }
 
 body {

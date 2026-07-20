@@ -13,7 +13,8 @@ import {
   Users,
   Compass,
   Star,
-  Award
+  Award,
+  LogOut
 } from 'lucide-react';
 
 export default function AdminPortal({ activeTab, setActiveTab }) {
@@ -24,6 +25,9 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
     notifications,
     collectors,
     buyers,
+    setIsLoggedIn,
+    adminCredentials,
+    updateAdminCredentials,
     getDistrictStatistics,
     addNewSchoolProfile,
     addNewCollectorProfile,
@@ -40,6 +44,15 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
   } = useContext(StateContext);
 
   const [mapMode, setMapMode] = useState('heat'); // 'heat' | 'list'
+  const [adminCodeInput, setAdminCodeInput] = useState(adminCredentials?.entryCode || 'admin');
+  const [adminPasswordInput, setAdminPasswordInput] = useState(adminCredentials?.password || 'admin123');
+
+  React.useEffect(() => {
+    if (adminCredentials) {
+      setAdminCodeInput(adminCredentials.entryCode || 'admin');
+      setAdminPasswordInput(adminCredentials.password || 'admin123');
+    }
+  }, [adminCredentials]);
   const [selectedSmsCollectorId, setSelectedSmsCollectorId] = useState('');
   const [smsPhone, setSmsPhone] = useState('');
   const [smsMessage, setSmsMessage] = useState('');
@@ -924,6 +937,12 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                               type="text"
                               value={editEntryCode}
                               onChange={(e) => setEditEntryCode(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  updateProfileCredentials(registrySection, sch.id, editEntryCode, editPassword);
+                                  setEditingProfileId(null);
+                                }
+                              }}
                               className="form-input"
                               style={{ fontSize: '0.7rem', padding: '4px 6px', minHeight: 'auto' }}
                             />
@@ -934,6 +953,12 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                               type="text"
                               value={editPassword}
                               onChange={(e) => setEditPassword(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  updateProfileCredentials(registrySection, sch.id, editEntryCode, editPassword);
+                                  setEditingProfileId(null);
+                                }
+                              }}
                               className="form-input"
                               style={{ fontSize: '0.7rem', padding: '4px 6px', minHeight: 'auto' }}
                             />
@@ -973,28 +998,31 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                         </div>
                       </div>
                     ) : (
-                      <div style={{
-                        backgroundColor: 'rgba(62, 107, 95, 0.05)',
-                        border: '1.5px dashed var(--color-border)',
-                        borderRadius: '8px',
-                        padding: '8px 12px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '8px'
-                      }}>
+                      <div 
+                        onClick={() => {
+                          setEditingProfileId(sch.id);
+                          setEditEntryCode(sch.entryCode || sch.entry_code || '');
+                          setEditPassword(sch.password || '12345');
+                        }}
+                        style={{
+                          backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                          border: '1.5px dashed var(--color-border)',
+                          borderRadius: '8px',
+                          padding: '8px 12px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '8px',
+                          cursor: 'pointer'
+                        }}
+                      >
                         <div style={{ fontSize: '0.72rem' }}>
-                          Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{sch.entryCode || '-'}</strong>
+                          Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{sch.entryCode || sch.entry_code || '-'}</strong>
                         </div>
                         <div style={{ fontSize: '0.72rem' }}>
                           Password: <strong style={{ color: 'var(--color-text-primary)' }}>{sch.password || '12345'}</strong>
                         </div>
                         <button
-                          onClick={() => {
-                            setEditingProfileId(sch.id);
-                            setEditEntryCode(sch.entryCode || '');
-                            setEditPassword(sch.password || '12345');
-                          }}
                           style={{
                             fontSize: '0.6rem',
                             padding: '2px 6px',
@@ -1060,6 +1088,12 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                               type="text"
                               value={editEntryCode}
                               onChange={(e) => setEditEntryCode(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  updateProfileCredentials(registrySection, col.id, editEntryCode, editPassword);
+                                  setEditingProfileId(null);
+                                }
+                              }}
                               className="form-input"
                               style={{ fontSize: '0.7rem', padding: '4px 6px', minHeight: 'auto' }}
                             />
@@ -1070,6 +1104,12 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                               type="text"
                               value={editPassword}
                               onChange={(e) => setEditPassword(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  updateProfileCredentials(registrySection, col.id, editEntryCode, editPassword);
+                                  setEditingProfileId(null);
+                                }
+                              }}
                               className="form-input"
                               style={{ fontSize: '0.7rem', padding: '4px 6px', minHeight: 'auto' }}
                             />
@@ -1109,28 +1149,31 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                         </div>
                       </div>
                     ) : (
-                      <div style={{
-                        backgroundColor: 'rgba(62, 107, 95, 0.05)',
-                        border: '1.5px dashed var(--color-border)',
-                        borderRadius: '8px',
-                        padding: '8px 12px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '8px'
-                      }}>
+                      <div 
+                        onClick={() => {
+                          setEditingProfileId(col.id);
+                          setEditEntryCode(col.entryCode || col.entry_code || '');
+                          setEditPassword(col.password || '12345');
+                        }}
+                        style={{
+                          backgroundColor: 'rgba(62, 107, 95, 0.05)',
+                          border: '1.5px dashed var(--color-border)',
+                          borderRadius: '8px',
+                          padding: '8px 12px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '8px',
+                          cursor: 'pointer'
+                        }}
+                      >
                         <div style={{ fontSize: '0.72rem' }}>
-                          Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{col.entryCode || '-'}</strong>
+                          Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{col.entryCode || col.entry_code || '-'}</strong>
                         </div>
                         <div style={{ fontSize: '0.72rem' }}>
                           Password: <strong style={{ color: 'var(--color-text-primary)' }}>{col.password || '12345'}</strong>
                         </div>
                         <button
-                          onClick={() => {
-                            setEditingProfileId(col.id);
-                            setEditEntryCode(col.entryCode || '');
-                            setEditPassword(col.password || '12345');
-                          }}
                           style={{
                             fontSize: '0.6rem',
                             padding: '2px 6px',
@@ -1255,7 +1298,7 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                         marginBottom: '8px'
                       }}>
                         <div style={{ fontSize: '0.72rem' }}>
-                          Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{buy.entryCode || '-'}</strong>
+                          Entry Code: <strong style={{ color: 'var(--color-primary)' }}>{buy.entryCode || buy.entry_code || '-'}</strong>
                         </div>
                         <div style={{ fontSize: '0.72rem' }}>
                           Password: <strong style={{ color: 'var(--color-text-primary)' }}>{buy.password || '12345'}</strong>
@@ -1263,7 +1306,7 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                         <button
                           onClick={() => {
                             setEditingProfileId(buy.id);
-                            setEditEntryCode(buy.entryCode || '');
+                            setEditEntryCode(buy.entryCode || buy.entry_code || '');
                             setEditPassword(buy.password || '12345');
                           }}
                           style={{
@@ -1378,6 +1421,72 @@ export default function AdminPortal({ activeTab, setActiveTab }) {
                 Official municipal control board setup. Configuration changes are auto-saved in real-time.
               </p>
             </div>
+          </div>
+
+          {/* Admin Credentials Manager Card */}
+          <div className="card" style={{ marginTop: '16px' }}>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              🔑 Admin Security & Login Credentials
+            </h4>
+            <p style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
+              Change the administrator login ID/Code and Password. When updated, you must use these new credentials to log into the District Admin dashboard.
+            </p>
+
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label className="form-label">Admin Entry Code / Login ID</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                value={adminCodeInput} 
+                onChange={(e) => setAdminCodeInput(e.target.value)}
+                placeholder="e.g. admin"
+              />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label className="form-label">Admin Password</label>
+              <input 
+                type="text" 
+                className="form-input" 
+                value={adminPasswordInput} 
+                onChange={(e) => setAdminPasswordInput(e.target.value)}
+                placeholder="e.g. admin123"
+              />
+            </div>
+
+            <button 
+              onClick={() => {
+                updateAdminCredentials(adminCodeInput, adminPasswordInput);
+              }}
+              className="btn-primary"
+              style={{ width: '100%', marginTop: '4px' }}
+            >
+              Save Admin Login Credentials
+            </button>
+          </div>
+
+          <div style={{ marginTop: '16px' }}>
+            <button 
+              onClick={() => setIsLoggedIn(false)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#FFEBEE',
+                color: '#C62828',
+                border: '1.5px solid #FFCDD2',
+                borderRadius: '12px',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              <LogOut size={18} />
+              Log Out of Admin Account
+            </button>
           </div>
         </div>
       )}

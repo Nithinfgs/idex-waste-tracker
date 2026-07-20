@@ -23,7 +23,8 @@ import {
   Map,
   Home,
   User,
-  Bell
+  Bell,
+  LogOut
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
 import L from 'leaflet';
@@ -38,6 +39,7 @@ export default function BuyerPortal() {
     history,
     setHistory,
     notifications,
+    setIsLoggedIn,
     setNotifications,
     isOfflineMode,
     addToast,
@@ -723,6 +725,29 @@ export default function BuyerPortal() {
                 <span style={styles.profileLabel}>Monthly Budget:</span>
                 <strong style={styles.profileVal}>{buyer.budget}</strong>
               </div>
+
+              <button 
+                onClick={() => setIsLoggedIn(false)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#FFEBEE',
+                  color: '#C62828',
+                  border: '1.5px solid #FFCDD2',
+                  borderRadius: '12px',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  marginTop: '16px'
+                }}
+              >
+                <LogOut size={18} />
+                Log Out of Buyer Account
+              </button>
             </div>
           </div>
         </div>

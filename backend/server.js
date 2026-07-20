@@ -108,26 +108,21 @@ app.get('/api/schools', async (req, res) => {
 
 app.post('/api/schools', async (req, res) => {
   const school = req.body;
+  const entryCode = school.entryCode || school.entry_code || '';
+  const password = school.password || '12345';
   await executeQuery(
-    'INSERT INTO schools (id, name, district, latitude, longitude, student_strength, drum_capacity, contact, address, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (id) DO UPDATE SET student_strength = EXCLUDED.student_strength, drum_capacity = EXCLUDED.drum_capacity, contact = EXCLUDED.contact, address = EXCLUDED.address, entry_code = EXCLUDED.entry_code, password = EXCLUDED.password',
-    [school.id, school.name, school.district || 'Coimbatore', parseFloat(school.latitude || 11.0), parseFloat(school.longitude || 76.9), parseInt(school.studentStrength || 0), parseFloat(school.drumCapacity || 0), school.contact || '', school.address || '', school.entryCode || '', school.password || '12345'],
+    'INSERT INTO schools (id, name, district, latitude, longitude, student_strength, drum_capacity, contact, address, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, student_strength = EXCLUDED.student_strength, drum_capacity = EXCLUDED.drum_capacity, contact = EXCLUDED.contact, address = EXCLUDED.address, entry_code = EXCLUDED.entry_code, password = EXCLUDED.password',
+    [school.id, school.name, school.district || 'Coimbatore', parseFloat(school.latitude || 11.0), parseFloat(school.longitude || 76.9), parseInt(school.studentStrength || school.student_strength || 0), parseFloat(school.drumCapacity || school.drum_capacity || 0), school.contact || '', school.address || '', entryCode, password],
     () => {
       const idx = db.schools.findIndex(s => s.id === school.id);
       const mapped = {
+        ...(db.schools[idx] || {}),
+        ...school,
         id: school.id,
         name: school.name,
-        district: school.district || 'Coimbatore',
-        latitude: parseFloat(school.latitude || 11.0),
-        longitude: parseFloat(school.longitude || 76.9),
-        student_strength: parseInt(school.studentStrength || 0),
-        studentStrength: parseInt(school.studentStrength || 0),
-        drum_capacity: parseFloat(school.drumCapacity || 0),
-        drumCapacity: parseFloat(school.drumCapacity || 0),
-        contact: school.contact || '',
-        address: school.address || '',
-        entryCode: school.entryCode || '',
-        entry_code: school.entryCode || '',
-        password: school.password || '12345'
+        entryCode,
+        entry_code: entryCode,
+        password
       };
       if (idx >= 0) {
         db.schools[idx] = mapped;
@@ -149,26 +144,21 @@ app.get('/api/collectors', async (req, res) => {
 
 app.post('/api/collectors', async (req, res) => {
   const collector = req.body;
+  const entryCode = collector.entryCode || collector.entry_code || '';
+  const password = collector.password || '12345';
   await executeQuery(
-    'INSERT INTO collectors (id, name, phone, collector_type, vehicle, radius, latitude, longitude, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (id) DO UPDATE SET collector_type = EXCLUDED.collector_type, vehicle = EXCLUDED.vehicle, radius = EXCLUDED.radius, phone = EXCLUDED.phone, entry_code = EXCLUDED.entry_code, password = EXCLUDED.password',
-    [collector.id, collector.name, collector.phone || '', collector.collectorType || 'Farmer', collector.vehicle || 'Tractor', parseFloat(collector.radius || 10.0), parseFloat(collector.latitude || 11.0), parseFloat(collector.longitude || 76.9), collector.entryCode || '', collector.password || '12345'],
+    'INSERT INTO collectors (id, name, phone, collector_type, vehicle, radius, latitude, longitude, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, collector_type = EXCLUDED.collector_type, vehicle = EXCLUDED.vehicle, radius = EXCLUDED.radius, phone = EXCLUDED.phone, entry_code = EXCLUDED.entry_code, password = EXCLUDED.password',
+    [collector.id, collector.name, collector.phone || '', collector.collectorType || collector.collector_type || 'Farmer', collector.vehicle || 'Tractor', parseFloat(collector.radius || 10.0), parseFloat(collector.latitude || 11.0), parseFloat(collector.longitude || 76.9), entryCode, password],
     () => {
       const idx = db.collectors.findIndex(c => c.id === collector.id);
       const mapped = {
+        ...(db.collectors[idx] || {}),
+        ...collector,
         id: collector.id,
         name: collector.name,
-        phone: collector.phone || '',
-        collector_type: collector.collectorType || 'Farmer',
-        collectorType: collector.collectorType || 'Farmer',
-        vehicle: collector.vehicle || 'Tractor',
-        radius: parseFloat(collector.radius || 10.0),
-        latitude: parseFloat(collector.latitude || 11.0),
-        longitude: parseFloat(collector.longitude || 76.9),
-        entryCode: collector.entryCode || '',
-        entry_code: collector.entryCode || '',
-        password: collector.password || '12345',
-        totalPickups: 0,
-        rating: 5.0
+        entryCode,
+        entry_code: entryCode,
+        password
       };
       if (idx >= 0) {
         db.collectors[idx] = mapped;
@@ -190,14 +180,33 @@ app.get('/api/buyers', async (req, res) => {
 
 app.post('/api/buyers', async (req, res) => {
   const buyer = req.body;
+  const entryCode = buyer.entryCode || buyer.entry_code || '';
+  const password = buyer.password || '12345';
   await executeQuery(
-    'INSERT INTO buyers (id, name, agency_name, contact, latitude, longitude, vehicle, radius, budget, rating, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (id) DO UPDATE SET agency_name = EXCLUDED.agency_name, vehicle = EXCLUDED.vehicle, radius = EXCLUDED.radius, contact = EXCLUDED.contact, entry_code = EXCLUDED.entry_code, password = EXCLUDED.password',
-    [buyer.id, buyer.name, buyer.agencyName || buyer.agency_name || '', buyer.contact || '', parseFloat(buyer.latitude || 11.0), parseFloat(buyer.longitude || 76.9), buyer.vehicle || 'Truck', parseFloat(buyer.radius || 25.0), buyer.budget || '₹50,000/mo', buyer.rating || 'A+', buyer.entryCode || '', buyer.password || '12345'],
+    'INSERT INTO buyers (id, name, agency_name, contact, latitude, longitude, vehicle, radius, budget, rating, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, agency_name = EXCLUDED.agency_name, vehicle = EXCLUDED.vehicle, radius = EXCLUDED.radius, contact = EXCLUDED.contact, entry_code = EXCLUDED.entry_code, password = EXCLUDED.password',
+    [buyer.id, buyer.name, buyer.agencyName || buyer.agency_name || '', buyer.contact || '', parseFloat(buyer.latitude || 11.0), parseFloat(buyer.longitude || 76.9), buyer.vehicle || 'Truck', parseFloat(buyer.radius || 25.0), buyer.budget || '₹50,000/mo', buyer.rating || 'A+', entryCode, password],
     () => {
       const idx = db.buyers.findIndex(b => b.id === buyer.id);
       const mapped = {
+        ...(db.buyers[idx] || {}),
+        ...buyer,
         id: buyer.id,
         name: buyer.name,
+        entryCode,
+        entry_code: entryCode,
+        password
+      };
+      if (idx >= 0) {
+        db.buyers[idx] = mapped;
+      } else {
+        db.buyers.push(mapped);
+      }
+      saveDatabaseToFile();
+      return [];
+    }
+  );
+  res.json({ success: true });
+});
         agency_name: buyer.agencyName || buyer.agency_name || '',
         agencyName: buyer.agencyName || buyer.agency_name || '',
         contact: buyer.contact || '',
@@ -497,37 +506,39 @@ async function initializeDatabase() {
     }
     console.log('✅ Schools synchronized successfully!');
 
-    // 3. Check and seed collectors
-    const collectorCheck = await pool.query('SELECT COUNT(*) FROM collectors');
-    const collectorCount = parseInt(collectorCheck.rows[0].count);
-    if (collectorCount === 0) {
-      console.log(`🌱 Seeding database with ${db.collectors.length} collectors...`);
-      for (const c of db.collectors) {
-        await pool.query(
-          'INSERT INTO collectors (id, name, collector_type, vehicle, radius, latitude, longitude, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (id) DO NOTHING',
-          [c.id, c.name, c.collector_type || c.collectorType, c.vehicle, c.radius, c.latitude, c.longitude, c.entry_code || '', c.password || '12345']
-        );
-      }
-      console.log('✅ Collectors seeded successfully!');
-    } else {
-      console.log(`ℹ️ Collectors table already contains ${collectorCount} records. Skipping seed.`);
+    // 3. Check and seed/update collectors
+    console.log(`🌱 Seeding/Updating ${db.collectors.length} collectors in database...`);
+    let cIndex = 1;
+    for (const c of db.collectors) {
+      const defaultCode = String(c.entry_code || c.entryCode || cIndex);
+      await pool.query(
+        `INSERT INTO collectors (id, name, collector_type, vehicle, radius, latitude, longitude, entry_code, password) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+         ON CONFLICT (id) DO UPDATE SET 
+           entry_code = CASE WHEN collectors.entry_code IS NULL OR collectors.entry_code = '' THEN EXCLUDED.entry_code ELSE collectors.entry_code END, 
+           password = CASE WHEN collectors.password IS NULL OR collectors.password = '' THEN EXCLUDED.password ELSE collectors.password END`,
+        [c.id, c.name, c.collector_type || c.collectorType, c.vehicle, c.radius, c.latitude, c.longitude, defaultCode, c.password || '12345']
+      );
+      cIndex++;
     }
+    console.log('✅ Collectors synchronized successfully!');
 
-    // 4. Check and seed buyers
-    const buyerCheck = await pool.query('SELECT COUNT(*) FROM buyers');
-    const buyerCount = parseInt(buyerCheck.rows[0].count);
-    if (buyerCount === 0) {
-      console.log(`🌱 Seeding database with ${db.buyers.length} buyers...`);
-      for (const b of db.buyers) {
-        await pool.query(
-          'INSERT INTO buyers (id, name, agency_name, contact, latitude, longitude, vehicle, radius, budget, rating, entry_code, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (id) DO NOTHING',
-          [b.id, b.name, b.agency_name || b.agencyName, b.contact, b.latitude, b.longitude, b.vehicle, b.radius, b.budget, b.rating, b.entry_code || '', b.password || '12345']
-        );
-      }
-      console.log('✅ Buyers seeded successfully!');
-    } else {
-      console.log(`ℹ️ Buyers table already contains ${buyerCount} records. Skipping seed.`);
+    // 4. Check and seed/update buyers
+    console.log(`🌱 Seeding/Updating ${db.buyers.length} buyers in database...`);
+    let bIndex = 1;
+    for (const b of db.buyers) {
+      const defaultCode = String(b.entry_code || b.entryName || bIndex);
+      await pool.query(
+        `INSERT INTO buyers (id, name, agency_name, contact, latitude, longitude, vehicle, radius, budget, rating, entry_code, password) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
+         ON CONFLICT (id) DO UPDATE SET 
+           entry_code = CASE WHEN buyers.entry_code IS NULL OR buyers.entry_code = '' THEN EXCLUDED.entry_code ELSE buyers.entry_code END, 
+           password = CASE WHEN buyers.password IS NULL OR buyers.password = '' THEN EXCLUDED.password ELSE buyers.password END`,
+        [b.id, b.name, b.agency_name || b.agencyName, b.contact, b.latitude, b.longitude, b.vehicle, b.radius, b.budget, b.rating, defaultCode, b.password || '12345']
+      );
+      bIndex++;
     }
+    console.log('✅ Buyers synchronized successfully!');
 
   } catch (err) {
     console.error('❌ Database auto-initialization/seeding failed:', err.message);

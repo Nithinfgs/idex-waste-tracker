@@ -361,7 +361,9 @@
       "vehicle": "Mahindra Bolero Pickup",
       "radius": 15,
       "latitude": 11.0458,
-      "longitude": 76.9158
+      "longitude": 76.9158,
+      "entry_code": "1",
+      "password": "12345"
     },
     {
       "id": "col-2",
@@ -370,7 +372,9 @@
       "vehicle": "Tata Ace Mini Truck",
       "radius": 20,
       "latitude": 10.9858,
-      "longitude": 76.9858
+      "longitude": 76.9858,
+      "entry_code": "2",
+      "password": "12345"
     }
   ],
   "waste_posts": [

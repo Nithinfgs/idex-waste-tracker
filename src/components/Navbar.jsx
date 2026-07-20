@@ -190,6 +190,31 @@ export default function Navbar({ activeTab, setActiveTab }) {
           >
             <Shield size={12} />
           </button>
+
+          {/* Logout Button */}
+          <button 
+            onClick={handleLogout}
+            style={{
+              padding: '5px 10px',
+              backgroundColor: 'rgba(211, 47, 47, 0.08)',
+              color: '#D32F2F',
+              border: '1px solid rgba(211, 47, 47, 0.25)',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              cursor: 'pointer',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              marginLeft: '2px',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+              transition: 'all 0.2s ease'
+            }}
+            title="Log Out"
+          >
+            <LogOut size={14} />
+            <span>Logout</span>
+          </button>
         </div>
       </header>
 
@@ -281,9 +306,28 @@ export default function Navbar({ activeTab, setActiveTab }) {
               </div>
             </div>
 
-            <button onClick={() => setShowRolePanel(false)} style={styles.closeBtn}>
-              Cancel
-            </button>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+              <button 
+                onClick={handleLogout} 
+                style={{
+                  ...styles.closeBtn,
+                  backgroundColor: '#FFEBEE',
+                  color: '#C62828',
+                  border: '1px solid #FFCDD2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  fontWeight: 700
+                }}
+              >
+                <LogOut size={15} />
+                Sign Out / Logout
+              </button>
+              <button onClick={() => setShowRolePanel(false)} style={styles.closeBtn}>
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
