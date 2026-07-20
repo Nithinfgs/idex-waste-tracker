@@ -381,15 +381,18 @@ export default function Navbar({ activeTab, setActiveTab }) {
 const styles = {
   unifiedHeader: {
     backgroundColor: '#FFFFFF',
-    borderBottom: '1.5px solid var(--color-border)',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 100,
+    borderTop: '1.5px solid var(--color-border)',
+    boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.12)',
+    position: 'fixed',
+    bottom: 0,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 1000,
     width: '100%',
+    maxWidth: '480px',
     display: 'flex',
     flexDirection: 'column',
-    padding: '8px 12px 6px 12px'
+    padding: '8px 12px calc(8px + env(safe-area-inset-bottom, 0px)) 12px'
   },
   topRow: {
     display: 'flex',
@@ -401,25 +404,24 @@ const styles = {
   tabRow: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     paddingTop: '6px',
-    gap: '3px',
-    overflowX: 'auto',
-    WebkitOverflowScrolling: 'touch'
+    gap: '2px',
+    width: '100%'
   },
   tabPill: {
-    flex: '1 0 auto',
+    flex: '1 1 0px',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '4px',
-    padding: '6px 6px',
+    padding: '6px 4px',
     borderRadius: '10px',
     border: 'none',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
-    minWidth: 'auto',
-    minHeight: '32px',
+    minWidth: 0,
+    minHeight: '34px',
     transition: 'all 150ms ease'
   },
   tabBadge: {

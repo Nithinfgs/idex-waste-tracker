@@ -885,7 +885,7 @@ const styles = {
     flex: 1,
     overflowY: 'auto',
     padding: '16px',
-    paddingBottom: '80px',
+    paddingBottom: '110px',
     width: '100%'
   },
   welcomeHero: {
