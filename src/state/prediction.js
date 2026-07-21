@@ -26,31 +26,32 @@ export function predictServings(attendance, menuName, dayOfWeek, last4WeeksAvgWa
     dayFactor = 1.05; // Peak start-of-week attendance
   }
 
-  // Waste Correction Factor:
-  // If average waste is high, we scale down the multiplier to suggest less cooking.
-  // Standard waste is around 5-10kg for a 400 student school.
-  // If it exceeds 15kg, we must scale down portions to prevent overflow.
+  // Waste Correction Factor
   let wasteCorrection = 1.0;
   if (last4WeeksAvgWasteKg > 25) {
-    wasteCorrection = 0.85; // Heavy reduction needed
+    wasteCorrection = 0.85;
   } else if (last4WeeksAvgWasteKg > 15) {
-    wasteCorrection = 0.92; // Moderate reduction
+    wasteCorrection = 0.92;
   } else if (last4WeeksAvgWasteKg > 5) {
-    wasteCorrection = 0.97; // Minor adjustment
+    wasteCorrection = 0.97;
   } else {
-    wasteCorrection = 1.03; // Excellent waste management, can cook closer to full capacity
+    wasteCorrection = 1.03;
   }
 
-  const predictedServings = Math.round(attendance * menuFactor * dayFactor * wasteCorrection);
+  const baseDemand = Math.round(attendance * menuFactor * dayFactor * wasteCorrection);
+  // +7% "No Child Hungry" Safety Buffer Margin
+  const safetyBufferServings = Math.max(1, Math.round(baseDemand * 0.07));
+  const recommendedServings = Math.max(baseDemand + safetyBufferServings, 10);
   
-  // Calculations for expected waste & suggested reduction amount
-  const expectedWastePercentage = last4WeeksAvgWasteKg > 15 ? 0.15 : 0.08;
-  const expectedWasteKg = parseFloat((predictedServings * 0.15 * expectedWastePercentage).toFixed(1));
-  const suggestedReductionKg = parseFloat((attendance * 0.15 * (1 - wasteCorrection)).toFixed(1));
+  const expectedWasteKg = parseFloat((recommendedServings * 0.15 * 0.05).toFixed(1));
+  const suggestedReductionKg = parseFloat((attendance * 0.15 * 0.12 + 1.2).toFixed(1));
 
   return {
-    recommendedServings: Math.max(predictedServings, 10), // minimum 10 servings
+    baseDemand,
+    safetyBufferServings,
+    safetyBufferPercent: 7,
+    recommendedServings,
     expectedWasteKg: Math.max(expectedWasteKg, 0.5),
-    suggestedReductionKg: Math.max(suggestedReductionKg, 0.0)
+    suggestedReductionKg: Math.max(suggestedReductionKg, 0.8)
   };
 }

@@ -674,9 +674,9 @@ export const StateProvider = ({ children }) => {
   // --- ACTIONS ---
 
   // School uploads waste
-  const uploadWaste = (schoolId, drumLevelFraction, reason, customWeight = null) => {
+  const uploadWaste = (schoolId, drumLevelFraction, reason, customWeight = null, surplusType = 'plate_waste_farmer') => {
     const school = schools.find(s => s.id === schoolId);
-    if (!school) return;
+    if (!school) return false;
 
     // Enforce data validation: weight cannot exceed 150kg
     const estimatedWeight = customWeight !== null 
@@ -690,6 +690,7 @@ export const StateProvider = ({ children }) => {
     }
 
     const timestamp = new Date().toISOString();
+    const isCleanPrep = (surplusType === 'clean_prep_shelter');
     
     const newPost = {
       id: `post-${Date.now()}`,
@@ -698,12 +699,16 @@ export const StateProvider = ({ children }) => {
       drumLevel: parseFloat(drumLevelFraction),
       estimatedWeight,
       reason,
+      surplusType: surplusType || 'plate_waste_farmer',
+      destinationProgram: isCleanPrep 
+        ? 'Coimbatore Community Homeless Shelter Rescue (2-4h Urgency)' 
+        : 'Coimbatore Corporation Livestock Feed & Composting (12h SLA)',
       status: 'Available',
       createdAt: timestamp,
       collectorId: null,
       reservedAt: null,
       history: [
-        { status: 'Available', timestamp, message: `Waste uploaded: ${Math.round(drumLevelFraction * 100)}% level (${estimatedWeight} kg)` }
+        { status: 'Available', timestamp, message: `Surplus uploaded: ${isCleanPrep ? 'Clean Kitchen Prep (Shelter Rescue)' : 'Plate Waste (Farmer Compost)'} (${estimatedWeight} kg)` }
       ]
     };
 

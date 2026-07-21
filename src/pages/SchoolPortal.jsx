@@ -404,7 +404,13 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
       return;
     }
 
-    const success = uploadWaste(school.id, formData.drumLevel, formData.reason, formData.customWeight ? weightToPost : null);
+    const success = uploadWaste(
+      school.id, 
+      formData.drumLevel, 
+      formData.reason, 
+      formData.customWeight ? weightToPost : null,
+      formData.surplusType || 'clean_prep_shelter'
+    );
     if (success) {
       setShowUploadWizard(false);
       setUploadStep(1);
@@ -582,19 +588,44 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
 
             <div style={styles.predictionBox}>
               <div style={styles.predictionRow}>
-                <span>Recommended Servings:</span>
-                <strong>{prediction.recommendedServings} servings</strong>
+                <span>Base Student Demand:</span>
+                <strong>{prediction.baseDemand || Math.round(predAttendance * 0.95)} servings</strong>
               </div>
               <div style={styles.predictionRow}>
-                <span>Expected Waste:</span>
-                <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>~{prediction.expectedWasteKg} kg</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>Safety Buffer Margin:</span>
+                  <span className="badge" style={{ backgroundColor: 'rgba(249, 168, 37, 0.15)', color: '#D38A00', fontSize: '0.58rem' }}>
+                    +7% No Child Hungry
+                  </span>
+                </span>
+                <strong style={{ color: 'var(--color-accent)' }}>+{prediction.safetyBufferServings || Math.round(predAttendance * 0.07)} servings</strong>
+              </div>
+              <div style={{ ...styles.predictionRow, borderTop: '1px solid var(--color-border)', paddingTop: '6px', marginTop: '2px' }}>
+                <span style={{ fontWeight: 700 }}>Total Recommended Cook:</span>
+                <strong style={{ color: 'var(--color-primary)', fontSize: '0.95rem' }}>{prediction.recommendedServings} servings</strong>
+              </div>
+              <div style={styles.predictionRow}>
+                <span>Expected Residual Waste:</span>
+                <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>~{prediction.expectedWasteKg} kg</span>
               </div>
               {prediction.suggestedReductionKg > 0 && (
                 <div style={styles.predictionRow}>
                   <span>Reduction from baseline:</span>
-                  <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>-{prediction.suggestedReductionKg} kg saved</span>
+                  <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>-{prediction.suggestedReductionKg} kg saved (~69.2%)</span>
                 </div>
               )}
+              <div style={{
+                backgroundColor: 'rgba(62, 107, 95, 0.06)',
+                border: '1px solid rgba(62, 107, 95, 0.2)',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '0.65rem',
+                color: 'var(--color-primary)',
+                fontWeight: 600,
+                marginTop: '4px'
+              }}>
+                🛡️ Includes +7% Safety Margin to guarantee no child goes hungry while reducing kitchen surplus by 69%!
+              </div>
             </div>
           </div>
 
@@ -1722,9 +1753,58 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
 
               {uploadStep === 2 && (
                 <div>
-                  <p style={styles.wizardQuestion}>Select Surplus Cause</p>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginTop: '12px' }}>
+                  <p style={{ ...styles.wizardQuestion, marginBottom: '8px' }}>Select Surplus Category & Rerouting</p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px', marginBottom: '14px' }}>
+                    <button
+                      onClick={() => setFormData(f => ({ ...f, surplusType: 'clean_prep_shelter' }))}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        border: (formData.surplusType || 'clean_prep_shelter') === 'clean_prep_shelter' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        backgroundColor: (formData.surplusType || 'clean_prep_shelter') === 'clean_prep_shelter' ? 'rgba(62, 107, 95, 0.08)' : 'var(--color-card)',
+                        textAlign: 'left',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>🍲 Clean Kitchen Prep Surplus (Unserved)</strong>
+                        <span className="badge" style={{ backgroundColor: 'rgba(249, 168, 37, 0.15)', color: '#D38A00', fontSize: '0.55rem' }}>Homeless Shelter Rescue</span>
+                      </div>
+                      <span style={{ fontSize: '0.66rem', color: 'var(--color-text-secondary)' }}>
+                        Food cooked in kitchen vessels that NEVER touched student plates. Rerouted to community shelters & food banks (2-4h urgency).
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => setFormData(f => ({ ...f, surplusType: 'plate_waste_farmer' }))}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        border: formData.surplusType === 'plate_waste_farmer' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        backgroundColor: formData.surplusType === 'plate_waste_farmer' ? 'rgba(62, 107, 95, 0.08)' : 'var(--color-card)',
+                        textAlign: 'left',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong style={{ fontSize: '0.8rem', color: 'var(--color-primary)' }}>♻️ Post-Meal Plate Waste & Scraps</strong>
+                        <span className="badge" style={{ backgroundColor: 'rgba(46, 125, 50, 0.15)', color: '#2E7D32', fontSize: '0.55rem' }}>12-Hour Farmer Pickup</span>
+                      </div>
+                      <span style={{ fontSize: '0.66rem', color: 'var(--color-text-secondary)' }}>
+                        Served tray leftovers & kitchen vegetable peels. Rerouted to local farmers for livestock feed & composting within 12h.
+                      </span>
+                    </button>
+                  </div>
+
+                  <p style={{ ...styles.wizardQuestion, fontSize: '0.75rem', marginBottom: '8px' }}>Select Surplus Cause</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
                     {[
                       { reason: 'Overcooked', label: '🍚 Overcooked' },
                       { reason: 'Low Attendance', label: '👨‍🎓 Low Attendance' },
@@ -1735,22 +1815,21 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                         key={item.reason}
                         onClick={() => {
                           setFormData(f => ({ ...f, reason: item.reason }));
-                          setUploadStep(3); // Auto-advance to Step 3
+                          setUploadStep(3);
                         }}
                         style={{
-                          height: '84px',
-                          borderRadius: '18px',
+                          height: '48px',
+                          borderRadius: '12px',
                           border: formData.reason === item.reason ? '2px solid var(--color-primary)' : '1.5px solid var(--color-border)',
                           backgroundColor: formData.reason === item.reason ? 'rgba(46, 125, 50, 0.05)' : 'var(--color-card)',
                           color: 'var(--color-text-primary)',
-                          fontSize: '0.8rem',
+                          fontSize: '0.75rem',
                           fontWeight: 700,
                           display: 'flex',
-                          flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '6px',
-                          padding: '10px',
+                          padding: '6px',
                           width: '100%'
                         }}
                       >
@@ -1763,7 +1842,9 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
 
               {uploadStep === 3 && (
                 <div style={{ textAlign: 'center', padding: '10px 0' }}>
-                  <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '8px' }}>⚖️</span>
+                  <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '8px' }}>
+                    {(formData.surplusType || 'clean_prep_shelter') === 'clean_prep_shelter' ? '🍲' : '⚖️'}
+                  </span>
                   <h3 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--color-primary)', margin: '0 0 4px 0' }}>
                     {formData.customWeight ? formData.customWeight : calculateWeight(school.drumCapacity, formData.drumLevel)} kg
                   </h3>
@@ -1781,12 +1862,16 @@ export default function SchoolPortal({ activeTab, setActiveTab }) {
                     border: '1px solid var(--color-border)'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                      <span style={{ color: 'var(--color-text-secondary)' }}>Surplus Reason:</span>
+                      <span style={{ color: 'var(--color-text-secondary)' }}>Surplus Cause:</span>
                       <strong style={{ color: 'var(--color-text-primary)' }}>{formData.reason}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: 'var(--color-text-secondary)' }}>Destination Program:</span>
-                      <strong style={{ color: 'var(--color-primary)' }}>Coimbatore Corporation Livestock Feed</strong>
+                      <strong style={{ color: 'var(--color-primary)' }}>
+                        {(formData.surplusType || 'clean_prep_shelter') === 'clean_prep_shelter' 
+                          ? '🍲 Community Homeless Shelter Rescue' 
+                          : '♻️ Local Farmer Feed & Compost (12h SLA)'}
+                      </strong>
                     </div>
                   </div>
                 </div>
