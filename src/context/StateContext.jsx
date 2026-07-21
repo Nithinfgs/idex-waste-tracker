@@ -101,9 +101,7 @@ export const StateProvider = ({ children }) => {
   }, [syncPasscode]);
 
   // Authentication & Settings states
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('idex_is_logged_in') === 'true';
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('idex_dark_mode') === 'true';
